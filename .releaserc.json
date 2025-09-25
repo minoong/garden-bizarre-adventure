@@ -1,0 +1,53 @@
+{
+  "branches": ["main"],
+  "preset": "conventionalcommits",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "✨ 새로운 기능" },
+            { "type": "fix", "section": "🐛 버그 수정" },
+            { "type": "perf", "section": "⚡ 성능 개선" },
+            { "type": "revert", "section": "⏪ 되돌리기" },
+            { "type": "docs", "section": "📚 문서", "hidden": false },
+            { "type": "style", "section": "💎 스타일", "hidden": false },
+            { "type": "chore", "section": "📦 기타", "hidden": false },
+            { "type": "refactor", "section": "📦 리팩토링", "hidden": false },
+            { "type": "test", "section": "🚨 테스트", "hidden": false },
+            { "type": "build", "section": "🛠 빌드 시스템", "hidden": false },
+            { "type": "ci", "section": "⚙️ CI/CD", "hidden": false }
+          ]
+        }
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": false
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "package.json"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    "@semantic-release/github"
+  ]
+}
