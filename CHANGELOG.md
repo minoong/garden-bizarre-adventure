@@ -1,3 +1,29 @@
+## 1.0.0 (2025-09-25)
+
+### ✨ 새로운 기능
+
+* 스토리북 적용 ([28bde79](https://github.com/minoong/garden-bizarre-adventure/commit/28bde79ec8c6a21b7eebba6a382b171ef74f7aa5))
+* 완전 자동화된 릴리즈 시스템 구축 ([2157d30](https://github.com/minoong/garden-bizarre-adventure/commit/2157d305e0b8341365ee033240ae0e110b5530a8))
+* 첫번째 파문!!! ([3276840](https://github.com/minoong/garden-bizarre-adventure/commit/327684058efcd8f31ee2f301e985d549c1090669))
+* 커밋 메시지 표준화 및 코드 품질 자동화 시스템 구축 ([8f76c9e](https://github.com/minoong/garden-bizarre-adventure/commit/8f76c9e91613906675402e6b5d00f0cde6521856))
+
+### 🐛 버그 수정
+
+* GitHub Actions 권한 문제로 인한 릴리즈 실패 해결 ([5a34ac7](https://github.com/minoong/garden-bizarre-adventure/commit/5a34ac7d4e5e013f4c1f82f1c5d53f444fae09fb))
+* semantic-release와 commitlint 호환성 문제 해결 ([f879dba](https://github.com/minoong/garden-bizarre-adventure/commit/f879dba8919f5a098cc820b04f8035263fd8c543))
+
+### ⚡ 성능 개선
+
+* lint-staged로 커밋 속도 최적화 ([1ebc8ba](https://github.com/minoong/garden-bizarre-adventure/commit/1ebc8ba7365c26600516fabb69e018a757adbc7a))
+
+### 📦 리팩토링
+
+* **ci:** PR 전용 워크플로우로 최적화 ([b5607cd](https://github.com/minoong/garden-bizarre-adventure/commit/b5607cd0d4ad21e5c5e51319211dda78273f7f04))
+
+### ⚙️ CI/CD
+
+* ESLint, GitHub Actions 설정 및 워크플로우 모듈화 ([d256966](https://github.com/minoong/garden-bizarre-adventure/commit/d25696692284d0846a4b866eca7baec6013db072))
+
 # 📋 변경사항 (Changelog)
 
 이 파일은 프로젝트의 모든 중요한 변경사항을 자동으로 기록합니다.
