@@ -1,5 +1,6 @@
 module.exports = {
   extends: ['@commitlint/config-conventional'],
+  ignores: [(commit) => commit.includes('[skip ci]')],
   rules: {
     'type-enum': [
       2,
@@ -22,7 +23,7 @@ module.exports = {
     'subject-case': [0],
     // 한글은 영어보다 문자당 정보량이 많아 길이 제한 완화
     'subject-max-length': [2, 'always', 100],
-    'body-max-line-length': [2, 'always', 120],
+    'body-max-line-length': [2, 'always', 200],
     // 한글에서는 마침표 사용이 자연스러우므로 허용
     'subject-full-stop': [0],
   },
