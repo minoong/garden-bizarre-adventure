@@ -1,3 +1,13 @@
+## [1.1.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.0.0...v1.1.0) (2025-09-25)
+
+### ✨ 새로운 기능
+
+* 탭 컴포넌트 시스템 구현 및 Storybook 설정 개선 ([bdfd234](https://github.com/minoong/garden-bizarre-adventure/commit/bdfd234dd2c7e0d494c10a76f293cf0ce395858d))
+
+### 📦 기타
+
+* pnpm shamefully-hoist 설정 추가 ([859e5fb](https://github.com/minoong/garden-bizarre-adventure/commit/859e5fb1b2551c45c53395f4c7b1890964fca2ff))
+
 ## 1.0.0 (2025-09-25)
 
 ### ✨ 새로운 기능
