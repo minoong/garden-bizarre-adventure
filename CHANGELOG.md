@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.1.0...v1.1.1) (2025-09-25)
+
+### 🐛 버그 수정
+
+* Storybook 배포 권한 문제 해결 ([af4f2ee](https://github.com/minoong/garden-bizarre-adventure/commit/af4f2ee8cba0ffc899fdd9262d47842e04ded33e))
+
 ## [1.1.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.0.0...v1.1.0) (2025-09-25)
 
 ### ✨ 새로운 기능
