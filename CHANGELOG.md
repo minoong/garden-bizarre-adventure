@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.2.0...v1.3.0) (2025-09-26)
+
+### ✨ 새로운 기능
+
+* Material-UI 기반 헤더/푸터 레이아웃 구현 및 헤더에 blur 효과 추가 ([bda64de](https://github.com/minoong/garden-bizarre-adventure/commit/bda64de8efb5ff94ab3c43c7df840d52a3ad79c6))
+
 ## [1.2.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.1.1...v1.2.0) (2025-09-26)
 
 ### ✨ 새로운 기능
