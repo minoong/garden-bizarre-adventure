@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.1.1...v1.2.0) (2025-09-26)
+
+### ✨ 새로운 기능
+
+* Material-UI v7 및 TanStack Query 설정 ([90ce07f](https://github.com/minoong/garden-bizarre-adventure/commit/90ce07f6eecdb3457f08a6d3ab1d098bcb8d0c06))
+
 ## [1.1.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.1.0...v1.1.1) (2025-09-25)
 
 ### 🐛 버그 수정
