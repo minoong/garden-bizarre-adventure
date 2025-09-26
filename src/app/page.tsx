@@ -1,39 +1,60 @@
-import { Container, Typography, Button, Box, Stack } from '@mui/material';
+import { Typography, Button, Box, Stack } from '@mui/material';
+
+import { Container } from '@/shared/ui/container';
+import { LayoutProvider } from '@/app/providers';
 
 export default function Home() {
   return (
-    <Container maxWidth="md">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 4,
-        }}
-      >
-        <Typography variant="h2" component="h1" gutterBottom align="center">
-          Material-UI + Next.js v15
-        </Typography>
+    <LayoutProvider>
+      <Container>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            textAlign: 'center',
+          }}
+        >
+          <Typography
+            variant="h2"
+            component="h1"
+            gutterBottom
+            sx={{
+              fontSize: { xs: '2rem', md: '3rem' },
+              fontWeight: 'bold',
+            }}
+          >
+            Welcome to Garden Bizarre Adventure
+          </Typography>
 
-        <Typography variant="h6" color="text.secondary" paragraph align="center">
-          Material-UI is successfully configured with Next.js App Router
-        </Typography>
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{
+              maxWidth: '600px',
+              fontSize: { xs: '1rem', md: '1.25rem' },
+              mb: 2,
+            }}
+          >
+            Experience the future of web development with Material-UI v7, Next.js v15, and modern architecture patterns.
+          </Typography>
 
-        <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
-          <Button variant="contained" size="large">
-            Primary Button
-          </Button>
-          <Button variant="outlined" size="large">
-            Secondary Button
-          </Button>
-        </Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
+            <Button variant="contained" size="large" sx={{ minWidth: { xs: '200px', sm: 'auto' } }}>
+              Get Started
+            </Button>
+            <Button variant="outlined" size="large" sx={{ minWidth: { xs: '200px', sm: 'auto' } }}>
+              Learn More
+            </Button>
+          </Stack>
 
-        <Typography variant="body1" sx={{ mt: 4 }} align="center">
-          Edit <code>src/app/page.tsx</code> and save to see your changes.
-        </Typography>
-      </Box>
-    </Container>
+          <Typography variant="body1" sx={{ mt: 6 }} color="text.secondary">
+            Built with FSD architecture • Responsive design • TypeScript ready
+          </Typography>
+        </Box>
+      </Container>
+    </LayoutProvider>
   );
 }
