@@ -1,3 +1,9 @@
+## [1.5.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.4.0...v1.5.0) (2025-10-05)
+
+### ✨ 새로운 기능
+
+* 페럴렉스 UI 컴포넌트 ([75f454e](https://github.com/minoong/garden-bizarre-adventure/commit/75f454e1842bb6b9694774faf1793c55f2f70e05))
+
 ## [1.4.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.3.0...v1.4.0) (2025-10-05)
 
 ### ✨ 새로운 기능
