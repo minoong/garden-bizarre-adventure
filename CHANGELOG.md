@@ -1,3 +1,13 @@
+## [1.4.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.3.0...v1.4.0) (2025-10-05)
+
+### ✨ 새로운 기능
+
+* Supabase Auth Providers ([28346c3](https://github.com/minoong/garden-bizarre-adventure/commit/28346c30b728774e720d63ab5b7a60e2291b3dc2))
+
+### 🐛 버그 수정
+
+* release 워크플로우 수정 ([0364738](https://github.com/minoong/garden-bizarre-adventure/commit/036473830bd1556fd4918342d63147c601fa2180))
+
 ## [1.3.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.2.0...v1.3.0) (2025-09-26)
 
 ### ✨ 새로운 기능
