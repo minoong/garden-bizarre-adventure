@@ -2,18 +2,21 @@ import { Typography, Button, Box, Stack } from '@mui/material';
 
 import { Container } from '@/shared/ui/container';
 import { LayoutProvider } from '@/app/providers';
+import { HomeHero } from '@/widgets/home-hero/ui';
 
 export default function Home() {
   return (
     <LayoutProvider>
       <Container>
+        <HomeHero />
+
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: '60vh',
+
             textAlign: 'center',
           }}
         >
@@ -43,10 +46,10 @@ export default function Home() {
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
             <Button variant="contained" size="large" sx={{ minWidth: { xs: '200px', sm: 'auto' } }}>
-              Get Started
+              로그인
             </Button>
             <Button variant="outlined" size="large" sx={{ minWidth: { xs: '200px', sm: 'auto' } }}>
-              Learn More
+              요동친다!!! 비트!
             </Button>
           </Stack>
 
