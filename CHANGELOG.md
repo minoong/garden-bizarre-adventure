@@ -1,3 +1,9 @@
+## [1.6.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.5.0...v1.6.0) (2025-10-09)
+
+### ✨ 새로운 기능
+
+* dropzone 컴포넌트 기능 구현 ([6f50cfb](https://github.com/minoong/garden-bizarre-adventure/commit/6f50cfb31b83c04b81d37f566dcc5231fc6828a1))
+
 ## [1.5.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.4.0...v1.5.0) (2025-10-05)
 
 ### ✨ 새로운 기능
