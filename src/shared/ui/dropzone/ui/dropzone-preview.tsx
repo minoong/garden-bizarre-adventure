@@ -5,6 +5,7 @@ import { Box, IconButton, Typography, Card, CardMedia, CardContent, ImageList, I
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import dayjs from 'dayjs';
+import { filesize } from 'filesize';
 
 import { useDropzoneContext } from './dropzone-root';
 
@@ -77,74 +78,55 @@ export function DropzonePreview() {
                       </Box>
                     )}
 
-                    <CardContent>
-                      <Typography variant="body2" noWrap title={file.name}>
-                        {file.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {(file.size / 1024).toFixed(2)} KB
-                      </Typography>
-
-                      {/* 이미지 크기 */}
-                      {metadata?.width && metadata?.height && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          📐 {metadata.width} × {metadata.height}
+                    <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+                      {/* 노출 정보 (ISO, 초점거리, F값, 셔터스피드) */}
+                      {(metadata?.iso || metadata?.focalLength || metadata?.fNumber || metadata?.exposureTime) && (
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75, fontWeight: 500, letterSpacing: '0.02em' }}>
+                          {metadata.iso && `ISO${metadata.iso}`}
+                          {metadata.focalLength && ` ${metadata.focalLength}mm`}
+                          {metadata.fNumber && ` F${metadata.fNumber}`}
+                          {metadata.exposureTime && ` 1/${Math.round(1 / metadata.exposureTime)}s`}
                         </Typography>
                       )}
 
                       {/* 촬영 일시 */}
                       {metadata?.dateTaken && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          📅 {dayjs(metadata.dateTaken).format('YYYY. MM. DD. A hh:mm:ss')}
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75, lineHeight: 1.6 }}>
+                          {dayjs(metadata.dateTaken).format('YYYY/MM/DD HH:mm:ss')}
                         </Typography>
                       )}
 
-                      {/* 카메라 */}
+                      {/* 카메라 모델 */}
                       {(metadata?.make || metadata?.model) && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          📷 {metadata.make} {metadata.model}
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75, lineHeight: 1.6 }}>
+                          <Box component="span" sx={{ fontWeight: 600 }}>
+                            {metadata.make} {metadata.model}
+                          </Box>
                         </Typography>
                       )}
 
-                      {/* 노출 3요소 */}
-                      {(metadata?.iso || metadata?.fNumber || metadata?.exposureTime) && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {metadata.iso && `ISO ${metadata.iso}`}
-                          {metadata.fNumber && ` • f/${metadata.fNumber}`}
-                          {metadata.exposureTime && ` • ${metadata.exposureTime}s`}
-                        </Typography>
-                      )}
-
-                      {/* 초점거리 */}
-                      {metadata?.focalLength && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          🔍 {metadata.focalLength}mm
-                        </Typography>
-                      )}
-
-                      {/* 소프트웨어 */}
-                      {metadata?.software && (
-                        <Typography variant="caption" color="text.secondary" display="block" noWrap>
-                          💾 {metadata.software}
-                        </Typography>
-                      )}
-
-                      {/* 플래시 */}
-                      {metadata?.flash !== undefined && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          ⚡ {metadata.flash === 0 ? '미사용' : '사용'}
-                        </Typography>
-                      )}
-
-                      {/* 화이트 밸런스 */}
-                      {metadata?.whiteBalance !== undefined && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          ☀️ WB: {metadata.whiteBalance === 0 ? '자동' : '수동'}
-                        </Typography>
-                      )}
+                      {/* 파일 크기 */}
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1.6 }}>
+                        <Box component="span" sx={{ fontWeight: 500 }}>
+                          원본: {filesize(file.size, { standard: 'jedec' })}
+                        </Box>
+                        {fileWithMetadata.optimized && (
+                          <>
+                            <Box component="span" sx={{ mx: 1, opacity: 0.5 }}>
+                              •
+                            </Box>
+                            <Box component="span" sx={{ fontWeight: 500 }}>
+                              압축: {filesize(fileWithMetadata.optimized.size, { standard: 'jedec' })}
+                            </Box>
+                            <Box component="span" sx={{ ml: 0.5, opacity: 0.7 }}>
+                              ({Math.round(((file.size - fileWithMetadata.optimized.size) / file.size) * 100)}% 절감)
+                            </Box>
+                          </>
+                        )}
+                      </Typography>
 
                       {status === 'processing' && (
-                        <Typography variant="caption" color="primary">
+                        <Typography variant="caption" color="primary" sx={{ mt: 1, display: 'block' }}>
                           처리 중...
                         </Typography>
                       )}
