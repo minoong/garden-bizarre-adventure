@@ -1,3 +1,9 @@
+## [1.7.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.6.0...v1.7.0) (2025-10-09)
+
+### ✨ 새로운 기능
+
+* DropzonePreview UI 개선 ([ac613c7](https://github.com/minoong/garden-bizarre-adventure/commit/ac613c75dc89983e382e9e6ae09a36b95806a79b))
+
 ## [1.6.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.5.0...v1.6.0) (2025-10-09)
 
 ### ✨ 새로운 기능
