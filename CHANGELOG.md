@@ -1,3 +1,9 @@
+## [1.8.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.7.0...v1.8.0) (2025-10-10)
+
+### ✨ 새로운 기능
+
+* firebase 연동, firebase storage 업로드 ([2135c59](https://github.com/minoong/garden-bizarre-adventure/commit/2135c590301641c308a2d0d1ebe1d50b5960ac15))
+
 ## [1.7.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.6.0...v1.7.0) (2025-10-09)
 
 ### ✨ 새로운 기능
