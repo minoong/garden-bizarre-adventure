@@ -3,9 +3,11 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@mui/material/styles';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import CssBaseline from '@mui/material/CssBaseline';
+import Script from 'next/script';
 
 import theme from './theme';
-import { AuthProvider } from './providers';
+import { AuthProvider, QueryClientProvider } from './providers';
+
 import './globals.css';
 
 const geistSans = Geist({
@@ -31,12 +33,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <AuthProvider>{children}</AuthProvider>
-          </ThemeProvider>
-        </AppRouterCacheProvider>
+        <QueryClientProvider>
+          <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              <AuthProvider>{children}</AuthProvider>
+            </ThemeProvider>
+          </AppRouterCacheProvider>
+          <Script src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&autoload=false`} strategy="beforeInteractive" />
+        </QueryClientProvider>
       </body>
     </html>
   );
