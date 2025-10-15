@@ -1,3 +1,13 @@
+## [1.9.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.8.0...v1.9.0) (2025-10-15)
+
+### ✨ 새로운 기능
+
+* TanStack Query 설정 및 Next.js 이미지 최적화 추가 ([3020d39](https://github.com/minoong/garden-bizarre-adventure/commit/3020d392dbd901d0f32d42f1653d47a7ba454cb6))
+
+### 📚 문서
+
+* claude & sql ([ade78f7](https://github.com/minoong/garden-bizarre-adventure/commit/ade78f71cc3ca74dc909ca98115340c343476737))
+
 ## [1.8.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.7.0...v1.8.0) (2025-10-10)
 
 ### ✨ 새로운 기능
