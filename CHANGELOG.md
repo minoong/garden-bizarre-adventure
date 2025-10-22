@@ -1,3 +1,9 @@
+## [1.10.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.9.0...v1.10.0) (2025-10-22)
+
+### ✨ 새로운 기능
+
+* heic2any를 heic-to로 교체하여 HEIC 변환 안정성 개선 ([f1fa204](https://github.com/minoong/garden-bizarre-adventure/commit/f1fa204618d608c8ec7f2b9a618597ca262807d3))
+
 ## [1.9.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.8.0...v1.9.0) (2025-10-15)
 
 ### ✨ 새로운 기능
