@@ -1,6 +1,6 @@
 import imageCompression from 'browser-image-compression';
 import exifr from 'exifr';
-import heic2any from 'heic2any';
+import { heicTo, isHeic } from 'heic-to';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { FileWithMetadata } from '../types';
@@ -50,8 +50,6 @@ export async function extractMetadata(file: File): Promise<FileWithMetadata['met
       interop: true,
       ifd1: true,
     });
-
-    console.log({ rawExif });
 
     if (!rawExif) {
       return dimensions ? { width: dimensions.width, height: dimensions.height } : {};
@@ -117,22 +115,29 @@ export async function compressImage(file: File, options = DEFAULT_COMPRESSION_OP
 
 /**
  * HEIC 파일을 JPEG로 변환
- * 참고: heic2any는 EXIF 메타데이터를 보존하지 않습니다.
+ * 참고: HEIC 변환 시 EXIF 메타데이터가 손실될 수 있습니다.
  * 메타데이터는 변환 전에 별도로 추출하여 FileWithMetadata.metadata에 저장합니다.
  */
-async function convertHeicToJpeg(file: File): Promise<File> {
+async function convertHeicToJpeg(file: File): Promise<File | null> {
   try {
-    const convertedBlob = await heic2any({
+    // 파일이 HEIC 형식인지 확인
+    const isHeicFile = await isHeic(file);
+    if (!isHeicFile) {
+      console.warn('File does not appear to be a valid HEIC file');
+      return null;
+    }
+
+    // HEIC를 JPEG로 변환
+    const jpegBlob = await heicTo({
       blob: file,
-      toType: 'image/jpeg',
-      quality: 0.9,
+      type: 'image/jpeg',
+      quality: 1,
     });
 
-    const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-    return new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+    return new File([jpegBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
   } catch (error) {
     console.error('HEIC conversion failed:', error);
-    throw error;
+    return null;
   }
 }
 
@@ -147,13 +152,16 @@ export async function processFile(file: File): Promise<FileWithMetadata> {
   // HEIC 파일 처리
   const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || /\.(heic|heif)$/i.test(file.name);
   if (isHeic) {
-    try {
-      // 변환 전에 원본 HEIC에서 메타데이터 추출
-      metadata = await extractMetadata(file);
-      console.log('HEIC metadata extracted:', metadata);
+    // 변환 전에 원본 HEIC에서 메타데이터 추출
+    metadata = await extractMetadata(file);
+    console.log('HEIC metadata extracted:', metadata);
 
-      // JPEG로 변환 (메타데이터는 손실됨)
-      processedFile = await convertHeicToJpeg(file);
+    // JPEG로 변환 시도 (메타데이터는 손실됨)
+    const convertedFile = await convertHeicToJpeg(file);
+
+    if (convertedFile) {
+      // 변환 성공
+      processedFile = convertedFile;
 
       // 변환된 파일의 실제 크기 업데이트
       const dimensions = await getImageDimensions(processedFile);
@@ -163,12 +171,14 @@ export async function processFile(file: File): Promise<FileWithMetadata> {
       }
 
       console.log('HEIC converted to JPEG, metadata preserved in FileWithMetadata object');
-    } catch (_error) {
+    } else {
+      // 변환 실패 - HEIC 파일을 그대로 반환하고 경고 메시지 추가
+      console.warn('HEIC conversion not supported in this browser. File will be uploaded as-is.');
       return {
         id,
         file,
         status: 'error',
-        error: 'HEIC 변환 실패',
+        error: 'HEIC 파일 변환이 이 브라우저에서 지원되지 않습니다. JPEG 또는 PNG 형식으로 변환하여 업로드해주세요.',
       };
     }
   }
