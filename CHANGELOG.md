@@ -1,3 +1,9 @@
+## [1.11.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.10.0...v1.11.0) (2025-10-29)
+
+### ✨ 새로운 기능
+
+* Admin 포스트 작성 페이지 및 폼 기능 추가 ([8bef3ea](https://github.com/minoong/garden-bizarre-adventure/commit/8bef3ea9420d1a95cba9ecc1b753795b4ad7da2d))
+
 ## [1.10.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.9.0...v1.10.0) (2025-10-22)
 
 ### ✨ 새로운 기능
