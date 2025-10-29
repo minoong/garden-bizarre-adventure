@@ -1,3 +1,9 @@
+## [1.12.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.11.0...v1.12.0) (2025-10-29)
+
+### ✨ 새로운 기능
+
+* 위치 모달 레이아웃 & framer-motion ([98e5b16](https://github.com/minoong/garden-bizarre-adventure/commit/98e5b16aca2eec2f5079586298c079bfa5a0cf3f))
+
 ## [1.11.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.10.0...v1.11.0) (2025-10-29)
 
 ### ✨ 새로운 기능
