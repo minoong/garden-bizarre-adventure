@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Button, Dialog, DialogActions, DialogContent, IconButton, Typography } from '@mui/material';
 import { Close as CloseIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'motion/react';
 
 import type { FileWithMetadata } from '@/shared/ui/dropzone';
 
@@ -252,7 +253,13 @@ export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: Loc
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         {/* 헤더 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Box
+          component={motion.div}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderBottom: 1, borderColor: 'divider' }}
+        >
           <Typography variant="h5" fontWeight="bold">
             위치 설정
           </Typography>
@@ -262,35 +269,64 @@ export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: Loc
         </Box>
 
         {/* 메인 컨텐츠 */}
-        <DialogContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 0, overflow: 'hidden' }}>
-          {/* 이미지 슬라이더 */}
+        <DialogContent sx={{ flex: 1, display: 'flex', p: 0, overflow: 'hidden' }}>
+          {/* 좌측: 이미지 목록 */}
           <Box
+            component={motion.div}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
             sx={{
-              display: 'flex',
-              gap: 2,
-              p: 2,
-              overflowX: 'auto',
-              borderBottom: 1,
+              width: { xs: '100%', md: 280 },
+              borderRight: { md: 1 },
               borderColor: 'divider',
               bgcolor: 'grey.50',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              p: 2,
+              // 커스텀 스크롤바
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                bgcolor: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: 'grey.400',
+                borderRadius: '4px',
+                '&:hover': {
+                  bgcolor: 'grey.600',
+                },
+              },
             }}
           >
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+              이미지 목록 ({imageFiles.length})
+            </Typography>
             {imageFiles.map((file, index) => (
               <Box
                 key={file.id}
+                component={motion.div}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => handleImageSelect(index)}
                 sx={{
-                  minWidth: 120,
-                  height: 120,
+                  flexShrink: 0,
                   cursor: 'pointer',
                   border: 2,
-                  borderColor: selectedIndex === index ? 'primary.main' : 'transparent',
+                  borderColor: selectedIndex === index ? 'primary.main' : 'grey.300',
                   borderRadius: 1,
                   overflow: 'hidden',
                   position: 'relative',
-                  transition: 'all 0.2s',
+                  bgcolor: 'background.paper',
                   '&:hover': {
                     borderColor: 'primary.light',
+                    boxShadow: 2,
                   },
                 }}
               >
@@ -301,138 +337,157 @@ export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: Loc
                     alt={file.file.name}
                     sx={{
                       width: '100%',
-                      height: '100%',
+                      height: 160,
                       objectFit: 'cover',
                     }}
                   />
                 )}
-                {markerPositions.has(index) && (
-                  <Box
+                <AnimatePresence>
+                  {markerPositions.has(index) && (
+                    <Box
+                      component={motion.div}
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      exit={{ scale: 0, rotate: 180 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        bgcolor: 'success.main',
+                        color: 'white',
+                        borderRadius: '50%',
+                        width: 28,
+                        height: 28,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                        boxShadow: 2,
+                      }}
+                    >
+                      ✓
+                    </Box>
+                  )}
+                </AnimatePresence>
+                <Box
+                  component={motion.div}
+                  animate={{
+                    backgroundColor: selectedIndex === index ? 'rgba(25, 118, 210, 0.12)' : 'rgba(255, 255, 255, 1)',
+                  }}
+                  transition={{ duration: 0.2 }}
+                  sx={{ p: 1 }}
+                >
+                  <Typography
+                    variant="caption"
                     sx={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      bgcolor: 'success.main',
-                      color: 'white',
-                      borderRadius: '50%',
-                      width: 24,
-                      height: 24,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      fontWeight: 'bold',
+                      display: 'block',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: selectedIndex === index ? 'bold' : 'normal',
+                      color: selectedIndex === index ? 'primary.main' : 'text.secondary',
                     }}
                   >
-                    ✓
-                  </Box>
-                )}
+                    {file.file.name}
+                  </Typography>
+                </Box>
               </Box>
             ))}
           </Box>
 
-          {/* 지도 및 정보 */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
-            {/* 지도 */}
-            <Box sx={{ flex: 1, position: 'relative' }}>
-              <Box
-                ref={mapRef}
-                sx={{
-                  width: '100%',
-                  height: '100%',
-                  minHeight: 400,
-                }}
-              />
+          {/* 우측: 지도 */}
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            sx={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}
+          >
+            <Box
+              ref={mapRef}
+              sx={{
+                width: '100%',
+                height: '100%',
+                minHeight: 400,
+              }}
+            />
 
-              {/* 지도 위 정보 */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 16,
-                  left: 16,
-                  bgcolor: 'background.paper',
-                  p: 2,
-                  borderRadius: 1,
-                  boxShadow: 2,
-                  zIndex: 10,
-                }}
-              >
-                <Typography variant="body2" fontWeight="bold" gutterBottom>
-                  {selectedFile && selectedFile.file.name}
-                </Typography>
+            {/* 지도 위 정보 */}
+            <Box
+              component={motion.div}
+              initial={{ opacity: 0, scale: 0.9, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              sx={{
+                position: 'absolute',
+                top: 16,
+                left: 16,
+                bgcolor: 'background.paper',
+                p: 2,
+                borderRadius: 1,
+                boxShadow: 2,
+                zIndex: 10,
+                maxWidth: 300,
+              }}
+            >
+              <Typography variant="body2" fontWeight="bold" gutterBottom>
+                {selectedFile && selectedFile.file.name}
+              </Typography>
+              <AnimatePresence mode="wait">
                 {currentPosition ? (
-                  <>
+                  <motion.div key="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                     <Typography variant="caption" display="block">
                       위도: {currentPosition.lat.toFixed(6)}
                     </Typography>
                     <Typography variant="caption" display="block">
                       경도: {currentPosition.lng.toFixed(6)}
                     </Typography>
-                  </>
+                  </motion.div>
                 ) : (
-                  <Typography variant="caption" color="text.secondary">
-                    지도를 클릭하여 위치를 설정하세요
-                  </Typography>
+                  <motion.div key="no-position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      지도를 클릭하여 위치를 설정하세요
+                    </Typography>
+                  </motion.div>
                 )}
-              </Box>
-
-              {/* 초기화 버튼 */}
-              <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
-                <Button variant="contained" startIcon={<RefreshIcon />} onClick={handleReset} disabled={!currentPosition}>
-                  초기화
-                </Button>
-              </Box>
+              </AnimatePresence>
             </Box>
 
-            {/* 사이드바 - 이미지 미리보기 */}
-            {selectedFile && (
-              <Box
-                sx={{
-                  width: { xs: '100%', md: 300 },
-                  borderLeft: { md: 1 },
-                  borderTop: { xs: 1, md: 0 },
-                  borderColor: 'divider',
-                  p: 2,
-                  bgcolor: 'grey.50',
-                }}
+            {/* 초기화 버튼 */}
+            <Box
+              component={motion.div}
+              initial={{ opacity: 0, scale: 0.9, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              sx={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}
+            >
+              <Button
+                component={motion.button}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                variant="contained"
+                startIcon={<RefreshIcon />}
+                onClick={handleReset}
+                disabled={!currentPosition}
               >
-                <Typography variant="subtitle2" gutterBottom>
-                  선택된 이미지
-                </Typography>
-                {selectedFile.preview && (
-                  <Box
-                    component="img"
-                    src={selectedFile.preview}
-                    alt={selectedFile.file.name}
-                    sx={{
-                      width: '100%',
-                      height: 'auto',
-                      borderRadius: 1,
-                      mb: 2,
-                    }}
-                  />
-                )}
-                <Typography variant="caption" color="text.secondary" display="block">
-                  {selectedFile.file.name}
-                </Typography>
-                {selectedFile.metadata?.dateTaken && (
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    촬영: {new Date(selectedFile.metadata.dateTaken).toLocaleDateString()}
-                  </Typography>
-                )}
-              </Box>
-            )}
+                초기화
+              </Button>
+            </Box>
           </Box>
         </DialogContent>
 
         {/* 하단 버튼 */}
         <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider', gap: 1 }}>
-          <Button onClick={handleCancel} variant="outlined" size="large">
-            취소
-          </Button>
-          <Button onClick={handleApply} variant="contained" size="large">
-            적용
-          </Button>
+          <Box component={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+            <Button component={motion.button} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleCancel} variant="outlined" size="large">
+              취소
+            </Button>
+            <Button component={motion.button} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleApply} variant="contained" size="large">
+              적용
+            </Button>
+          </Box>
         </DialogActions>
       </Box>
     </Dialog>
