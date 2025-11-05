@@ -1,3 +1,9 @@
+## [1.14.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.13.0...v1.14.0) (2025-11-05)
+
+### ✨ 새로운 기능
+
+* ShuffleLoading 컴포넌트 구현 ([e55ee23](https://github.com/minoong/garden-bizarre-adventure/commit/e55ee236abbce0bb64ddf7d38c042a48ba4f776e))
+
 ## [1.13.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.12.0...v1.13.0) (2025-11-05)
 
 ### ✨ 새로운 기능
