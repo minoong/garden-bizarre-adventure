@@ -30,6 +30,8 @@ jobs:
 
       - name: Build Storybook
         run: pnpm run build-storybook
+        env:
+          NEXT_PUBLIC_KAKAO_APP_KEY: ${{ secrets.NEXT_PUBLIC_KAKAO_APP_KEY }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
