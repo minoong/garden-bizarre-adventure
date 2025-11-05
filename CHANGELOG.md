@@ -1,3 +1,13 @@
+## [1.13.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.12.0...v1.13.0) (2025-11-05)
+
+### ✨ 새로운 기능
+
+* 위치설정 모달 레이아웃 구현 ([341c4fb](https://github.com/minoong/garden-bizarre-adventure/commit/341c4fb7b0ce82bebc77de8789a200a5a943a5dd))
+
+### 📚 문서
+
+* README.md ([50d072b](https://github.com/minoong/garden-bizarre-adventure/commit/50d072b445eeaba6389186616a155449fa6a0c4e))
+
 ## [1.12.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.11.0...v1.12.0) (2025-10-29)
 
 ### ✨ 새로운 기능
