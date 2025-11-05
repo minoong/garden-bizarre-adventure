@@ -1,0 +1,1 @@
+export { FileMetadataModal } from './ui';
