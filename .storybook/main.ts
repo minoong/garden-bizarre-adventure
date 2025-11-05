@@ -8,5 +8,13 @@ const config: StorybookConfig = {
     options: {},
   },
   staticDirs: ['../public'],
+  env: (config) => ({
+    ...config,
+    NEXT_PUBLIC_KAKAO_APP_KEY: process.env.NEXT_PUBLIC_KAKAO_APP_KEY || '',
+  }),
+  previewHead: (head) => `
+    ${head}
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&autoload=false" async></script>
+  `,
 };
 export default config;

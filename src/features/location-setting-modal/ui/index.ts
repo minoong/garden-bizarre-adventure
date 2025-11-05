@@ -1,0 +1,1 @@
+export { LocationSettingModalLayout } from './layout';
