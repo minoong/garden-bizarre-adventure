@@ -1,15 +1,21 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { Box, IconButton, Typography, Modal, Divider } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import { filesize } from 'filesize';
 import dayjs from 'dayjs';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 import { getCameraBrand, BRAND_LOGOS } from '@/shared/lib/camera';
 import type { FileWithMetadata } from '@/shared/ui/dropzone';
+import { MiniMap } from '@/features/file-metadata-viewer/ui/minimap';
 
 interface FileMetadataModalProps {
   file: FileWithMetadata | null;
@@ -18,6 +24,7 @@ interface FileMetadataModalProps {
 }
 
 export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProps) {
+  const [isPanning, setIsPanning] = useState(false);
   if (!file) return null;
 
   return (
@@ -59,8 +66,9 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
         {/* 이미지 영역 (고정) */}
         <Box
           sx={{
+            position: 'relative', // Needed for positioning controls
             flexShrink: 0,
-            maxHeight: '60vh',
+            height: '60vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -70,16 +78,55 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
         >
           {file.preview ? (
             file.file.type.startsWith('image/') ? (
-              <Box
-                component="img"
-                src={file.preview}
-                alt={file.file.name}
-                sx={{
-                  maxWidth: '100%',
-                  maxHeight: '60vh',
-                  objectFit: 'contain',
-                }}
-              />
+              <TransformWrapper onPanningStart={() => setIsPanning(true)} onPanningStop={() => setIsPanning(false)}>
+                {({ zoomIn, zoomOut, resetTransform }) => (
+                  <>
+                    <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1 }}>
+                      <MiniMap width={150} height={150}>
+                        <Box component="img" src={file.preview} alt="minimap" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      </MiniMap>
+                    </Box>
+                    <TransformComponent
+                      wrapperStyle={{ width: '100%', height: '100%' }}
+                      contentStyle={{ width: '100%', height: '100%', cursor: isPanning ? 'grabbing' : 'grab' }}
+                    >
+                      <Box
+                        component="img"
+                        src={file.preview}
+                        alt={file.file.name}
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                        }}
+                      />
+                    </TransformComponent>
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 16,
+                        right: 16,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1,
+                      }}
+                    >
+                      <IconButton onClick={() => zoomIn()} sx={{ bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, color: 'white' }}>
+                        <ZoomInIcon />
+                      </IconButton>
+                      <IconButton onClick={() => zoomOut()} sx={{ bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, color: 'white' }}>
+                        <ZoomOutIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => resetTransform()}
+                        sx={{ bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, color: 'white' }}
+                      >
+                        <CenterFocusStrongIcon />
+                      </IconButton>
+                    </Box>
+                  </>
+                )}
+              </TransformWrapper>
             ) : (
               <video src={file.preview} controls style={{ maxWidth: '100%', maxHeight: '60vh' }} />
             )
@@ -126,7 +173,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                       position: 'relative',
                       width: 120,
                       height: 40,
-                      bgcolor: 'grey.100',
+                      bgcolor: 'black',
                       borderRadius: 1,
                       p: 1,
                       display: 'flex',
