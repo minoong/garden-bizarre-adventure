@@ -1,3 +1,13 @@
+## [1.16.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.15.0...v1.16.0) (2025-11-06)
+
+### ✨ 새로운 기능
+
+* image zoom & minimap ([908eebf](https://github.com/minoong/garden-bizarre-adventure/commit/908eebfd1ca7e5ac3bdc42811fdca7d1896b800e))
+
+### ⚙️ CI/CD
+
+* 스토리북 깃헙 워크플로우 수정 ([be7a792](https://github.com/minoong/garden-bizarre-adventure/commit/be7a792dcacd6771966acaf6f4766a687c03bcbc))
+
 ## [1.15.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.14.0...v1.15.0) (2025-11-05)
 
 ### ✨ 새로운 기능
