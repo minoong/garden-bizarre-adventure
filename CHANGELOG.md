@@ -1,3 +1,13 @@
+## [1.17.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.16.0...v1.17.0) (2025-11-20)
+
+### ✨ 새로운 기능
+
+* 날짜 범위 선택 컴포넌트 ([#34](https://github.com/minoong/garden-bizarre-adventure/issues/34)) ([ce982ac](https://github.com/minoong/garden-bizarre-adventure/commit/ce982ac27c52aa55970882e194f7f04dd0d23b5c))
+
+### 📦 기타
+
+* Next.js v16, Stroybook v10 업그레이드 ([#32](https://github.com/minoong/garden-bizarre-adventure/issues/32)) ([afad7f7](https://github.com/minoong/garden-bizarre-adventure/commit/afad7f76167358abd443731d94a932978fa657bc))
+
 ## [1.16.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.15.0...v1.16.0) (2025-11-06)
 
 ### ✨ 새로운 기능
