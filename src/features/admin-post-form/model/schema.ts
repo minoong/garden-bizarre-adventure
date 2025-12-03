@@ -51,7 +51,10 @@ export const adminPostFormSchema = z
     // 기본 정보
     title: z.string().max(200, '제목은 200자 이하여야 합니다').optional(),
     content: z.string().max(5000, '내용은 5000자 이하여야 합니다').optional(),
-    theme: z.string().max(50, '테마는 50자 이하여야 합니다').optional(),
+    theme: z
+      .array(z.string().min(1, '테마는 1글자 이상이어야 합니다').max(50, '테마는 50자 이하여야 합니다'))
+      .max(10, '테마는 최대 10개까지 선택할 수 있습니다')
+      .optional(),
     isPublic: z.boolean().optional(),
 
     // 위치 정보

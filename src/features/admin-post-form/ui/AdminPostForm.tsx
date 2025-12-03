@@ -3,28 +3,27 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Alert, Box, Button, Container, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Container, Stack, Typography } from '@mui/material';
 import { Save as SaveIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
+import dayjs from 'dayjs';
 
 import type { FileWithMetadata } from '@/shared/ui/dropzone';
+import { DateRangePicker } from '@/shared/ui/date-range-picker';
 
 import { adminPostFormSchema, type AdminPostFormValues } from '../model/schema';
-import type { UploadedFileInfo } from '../model/types';
 
 import { FileUploadSection } from './FileUploadSection';
-import { FileListSection } from './FileListSection';
 import { LocationSection } from './LocationSection';
-import { DateRangeSection } from './DateRangeSection';
 import { PostFieldsSection } from './PostFieldsSection';
 import { KakaoMapSection } from './KakaoMapSection';
 import { LocationEditModal } from './LocationEditModal';
 
 export function AdminPostForm() {
   // 파일 상태 관리
-  const [files, setFiles] = useState<UploadedFileInfo[]>([]);
-  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const [dropzoneFiles, setDropzoneFiles] = useState<FileWithMetadata[]>([]);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // React Hook Form 설정
   const {
@@ -38,7 +37,7 @@ export function AdminPostForm() {
     defaultValues: {
       title: '',
       content: '',
-      theme: '',
+      theme: [],
       isPublic: true,
       locationName: '',
       latitude: undefined,
@@ -49,11 +48,32 @@ export function AdminPostForm() {
     },
   });
 
+  // 인증 상태 확인
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { supabase } = await import('@/shared/lib/supabase/client');
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        setIsAuthenticated(!!user);
+      } catch (error) {
+        console.error('인증 확인 실패:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   // 파일 메타데이터 기반으로 날짜 범위 자동 설정
   useEffect(() => {
-    if (files.length === 0) return;
+    if (dropzoneFiles.length === 0) return;
 
-    const dates = files.map((f) => f.file.metadata?.dateTaken).filter((date): date is Date => date !== undefined);
+    const dates = dropzoneFiles.map((f) => f.metadata?.dateTaken).filter((date): date is Date => date !== undefined);
 
     if (dates.length > 0) {
       const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
@@ -62,13 +82,7 @@ export function AdminPostForm() {
       setValue('dateFrom', minDate);
       setValue('dateTo', maxDate);
     }
-  }, [files, setValue]);
-
-  // 파일 제거
-  const handleFileRemove = (fileId: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== fileId));
-    setSelectedFileIds((prev) => prev.filter((id) => id !== fileId));
-  };
+  }, [dropzoneFiles, setValue]);
 
   // 위치 설정 모달 열기
   const handleOpenLocationModal = () => {
@@ -84,41 +98,137 @@ export function AdminPostForm() {
     setDropzoneFiles(updatedFiles);
   };
 
-  // 선택된 파일에 위치 정보 적용
-  const handleApplyLocationToSelected = () => {
-    const formValues = watch();
-    const { locationName, latitude, longitude } = formValues;
-
-    console.log('선택된 파일들에 위치 정보 적용:', {
-      selectedFileIds,
-      locationName,
-      latitude,
-      longitude,
-    });
-
-    // TODO: 선택된 파일의 메타데이터에 위치 정보 저장
-    // 실제 구현 시 files 상태를 업데이트하거나
-    // 별도의 위치 정보 매핑 상태를 관리할 수 있음
-  };
-
   // 폼 제출
   const onSubmit = async (data: AdminPostFormValues) => {
     try {
-      console.log('폼 데이터:', data);
-      console.log('업로드된 파일:', files);
+      // 1. Firebase에 이미지 업로드 (dropzoneFiles가 있는 경우)
+      let uploadedImages: Array<{
+        firebaseUrl: string;
+        latitude?: number;
+        longitude?: number;
+        width?: number;
+        height?: number;
+        fileSize?: number;
+        mimeType?: string;
+        takenAt?: Date;
+      }> = [];
 
-      // TODO: Supabase에 저장
-      // 1. posts 테이블에 INSERT
-      // 2. post_images 테이블에 파일 정보 INSERT
-      // 3. tags 테이블과 post_tags 연결
+      if (dropzoneFiles.length > 0) {
+        // Blob을 File로 변환
+        const filesToUpload = await Promise.all(
+          dropzoneFiles.map(async (f) => {
+            if (f.optimized) {
+              const { blobToFile } = await import('@/shared/lib/utils/file-converter');
+              return await blobToFile(f.optimized, f.file.name, f.file.type);
+            }
+            return f.file;
+          }),
+        );
 
-      alert('게시물이 저장되었습니다! (실제 저장은 아직 구현되지 않았습니다)');
+        // Firebase Storage에 업로드
+        const { uploadFiles } = await import('@/shared/lib/firbase');
+        const results = await uploadFiles(filesToUpload, {
+          path: 'playground/',
+        });
+
+        // 업로드 성공한 파일만 필터링하고 위치 및 촬영 날짜 정보 포함
+        uploadedImages = results
+          .map((result, index) => {
+            if (result.status === 'success' && result.downloadURL) {
+              const dropzoneFile = dropzoneFiles[index];
+              return {
+                firebaseUrl: result.downloadURL,
+                latitude: dropzoneFile.metadata?.latitude,
+                longitude: dropzoneFile.metadata?.longitude,
+                width: dropzoneFile.metadata?.width,
+                height: dropzoneFile.metadata?.height,
+                fileSize: dropzoneFile.file.size,
+                mimeType: dropzoneFile.file.type,
+                takenAt: dropzoneFile.metadata?.dateTaken,
+              };
+            }
+            return null;
+          })
+          .filter((item): item is NonNullable<typeof item> => item !== null);
+      }
+
+      // 2. Supabase에 저장
+      const { createPost, createPostImages, getOrCreateCategory, linkPostCategories, getOrCreateTag, linkPostTags } = await import('@/entities/post');
+
+      // 2-1. posts 테이블에 INSERT
+      const post = await createPost({
+        title: data.title,
+        content: data.content,
+        locationName: data.locationName,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        dateFrom: data.dateFrom,
+        dateTo: data.dateTo,
+        isPublic: data.isPublic ?? true,
+      });
+
+      // 2-2. post_images 테이블에 이미지 정보 INSERT (latitude, longitude, takenAt 포함)
+      if (uploadedImages.length > 0) {
+        await createPostImages(
+          post.id,
+          uploadedImages.map((img, index) => ({
+            imageUrl: img.firebaseUrl,
+            width: img.width,
+            height: img.height,
+            fileSize: img.fileSize,
+            mimeType: img.mimeType,
+            latitude: img.latitude,
+            longitude: img.longitude,
+            takenAt: img.takenAt,
+            displayOrder: index,
+          })),
+        );
+      }
+
+      // 2-3. categories 테이블과 post_categories 연결
+      if (data.theme && data.theme.length > 0) {
+        const categoryIds = await Promise.all(data.theme.map((themeName) => getOrCreateCategory(themeName)));
+        await linkPostCategories(post.id, categoryIds);
+      }
+
+      // 2-4. tags 테이블과 post_tags 연결
+      if (data.tags && data.tags.length > 0) {
+        const tagIds = await Promise.all(data.tags.map((tagName) => getOrCreateTag(tagName)));
+        await linkPostTags(post.id, tagIds);
+      }
+
+      alert(
+        `게시물이 저장되었습니다!\n- 게시물 ID: ${post.id}\n- 이미지: ${uploadedImages.length}개\n- 카테고리: ${data.theme?.length || 0}개\n- 태그: ${data.tags?.length || 0}개`,
+      );
     } catch (error) {
       console.error('저장 실패:', error);
+      alert('저장에 실패했습니다: ' + (error as Error).message);
     }
   };
 
-  console.log({ files });
+  // 인증 확인 중
+  if (isCheckingAuth) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+          게시물 작성
+        </Typography>
+        <Alert severity="info">인증 상태를 확인하는 중...</Alert>
+      </Container>
+    );
+  }
+
+  // 인증되지 않은 경우
+  if (!isAuthenticated) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+          게시물 작성
+        </Typography>
+        <Alert severity="warning">로그인이 필요합니다. 게시물을 작성하려면 먼저 로그인해주세요.</Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -129,10 +239,7 @@ export function AdminPostForm() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={3}>
           {/* 파일 업로드 섹션 */}
-          <FileUploadSection files={files} onFilesChange={setFiles} onDropzoneFilesChange={setDropzoneFiles} />
-
-          {/* 업로드된 파일 목록 */}
-          <FileListSection files={files} selectedFileIds={selectedFileIds} onSelectedFilesChange={setSelectedFileIds} onFileRemove={handleFileRemove} />
+          <FileUploadSection onDropzoneFilesChange={setDropzoneFiles} />
 
           {/* 카카오 맵 - 촬영 위치 표시 */}
           <KakaoMapSection dropzoneFiles={dropzoneFiles} />
@@ -147,10 +254,30 @@ export function AdminPostForm() {
           )}
 
           {/* 위치 정보 */}
-          <LocationSection control={control} errors={errors} selectedCount={selectedFileIds.length} onApplyToSelected={handleApplyLocationToSelected} />
+          <LocationSection control={control} errors={errors} />
 
           {/* 날짜 범위 */}
-          <DateRangeSection control={control} errors={errors} />
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                날짜 범위
+              </Typography>
+              <DateRangePicker
+                value={{
+                  from: watch('dateFrom') ? dayjs(watch('dateFrom')) : null,
+                  to: watch('dateTo') ? dayjs(watch('dateTo')) : null,
+                }}
+                onChange={(range) => {
+                  if (range.from) setValue('dateFrom', range.from.toDate());
+                  if (range.to) setValue('dateTo', range.to.toDate());
+                }}
+                fromLabel="시작일"
+                toLabel="종료일"
+                error={errors.dateFrom?.message || errors.dateTo?.message}
+                fullWidth
+              />
+            </CardContent>
+          </Card>
 
           {/* 게시물 정보 */}
           <PostFieldsSection control={control} errors={errors} />
@@ -176,7 +303,7 @@ export function AdminPostForm() {
             <Button type="button" variant="outlined" size="large" disabled={isSubmitting}>
               취소
             </Button>
-            <Button type="submit" variant="contained" size="large" startIcon={<SaveIcon />} disabled={isSubmitting || files.length === 0}>
+            <Button type="submit" variant="contained" size="large" startIcon={<SaveIcon />} disabled={isSubmitting}>
               {isSubmitting ? '저장 중...' : '게시물 저장'}
             </Button>
           </Box>

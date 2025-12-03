@@ -95,6 +95,10 @@ CREATE TABLE post_images (
   mime_type TEXT,                                -- MIME 타입 (예: "image/jpeg", "image/png")
   alt_text TEXT,                                 -- 대체 텍스트 (접근성)
 
+  -- 위치 정보 (EXIF 메타데이터)
+  latitude DECIMAL(10, 8),                       -- 위도 (EXIF에서 추출, 선택사항)
+  longitude DECIMAL(11, 8),                      -- 경도 (EXIF에서 추출, 선택사항)
+
   -- 순서
   display_order INTEGER DEFAULT 0,               -- 표시 순서 (0부터 시작)
 
@@ -107,44 +111,78 @@ COMMENT ON COLUMN post_images.id IS '이미지 고유 식별자';
 COMMENT ON COLUMN post_images.post_id IS '이미지가 속한 포스트 ID';
 COMMENT ON COLUMN post_images.image_url IS 'Firebase Storage에 저장된 이미지 URL';
 COMMENT ON COLUMN post_images.thumbnail_url IS '썸네일 이미지 URL (목록 표시용)';
+COMMENT ON COLUMN post_images.latitude IS '이미지의 위도 좌표 (EXIF 메타데이터에서 추출, 선택사항)';
+COMMENT ON COLUMN post_images.longitude IS '이미지의 경도 좌표 (EXIF 메타데이터에서 추출, 선택사항)';
 COMMENT ON COLUMN post_images.display_order IS '이미지 표시 순서 (작을수록 먼저 표시)';
 COMMENT ON COLUMN post_images.alt_text IS '이미지 설명 (시각장애인 접근성)';
 
 -- ============================================
--- 4. 태그 테이블
+-- 4. 카테고리 테이블
 -- ============================================
-CREATE TABLE tags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 태그 고유 ID
-  name TEXT UNIQUE NOT NULL,                     -- 태그 이름 (예: "여행", "서울")
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 카테고리 고유 ID
+  name TEXT UNIQUE NOT NULL,                     -- 카테고리 이름 (예: "여행", "서울")
   slug TEXT UNIQUE NOT NULL,                     -- URL용 슬러그 (예: "여행" → "yeohaeng")
-  description TEXT,                              -- 태그 설명
+  description TEXT,                              -- 카테고리 설명
   usage_count INTEGER DEFAULT 0,                 -- 사용 횟수 (인기도 측정)
-  created_at TIMESTAMPTZ DEFAULT NOW()           -- 태그 생성일
+  created_at TIMESTAMPTZ DEFAULT NOW()           -- 카테고리 생성일
 );
 
-COMMENT ON TABLE tags IS '포스트 분류를 위한 태그 (해시태그)';
-COMMENT ON COLUMN tags.id IS '태그 고유 식별자';
-COMMENT ON COLUMN tags.name IS '태그 표시명 (대소문자 구분 없음)';
-COMMENT ON COLUMN tags.slug IS 'URL에 사용되는 태그 식별자';
-COMMENT ON COLUMN tags.usage_count IS '태그가 사용된 총 횟수 (인기 태그 판별용)';
+COMMENT ON TABLE categories IS '포스트 분류를 위한 카테고리 (테마)';
+COMMENT ON COLUMN categories.id IS '카테고리 고유 식별자';
+COMMENT ON COLUMN categories.name IS '카테고리 표시명 (대소문자 구분 없음)';
+COMMENT ON COLUMN categories.slug IS 'URL에 사용되는 카테고리 식별자';
+COMMENT ON COLUMN categories.usage_count IS '카테고리가 사용된 총 횟수 (인기 카테고리 판별용)';
 
 -- ============================================
--- 5. 포스트-태그 연결 테이블 (다대다 관계)
+-- 5. 포스트-카테고리 연결 테이블 (다대다 관계)
 -- ============================================
-CREATE TABLE post_tags (
+CREATE TABLE post_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 연결 고유 ID
   post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE, -- 포스트 ID
-  tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,   -- 태그 ID
-  created_at TIMESTAMPTZ DEFAULT NOW(),          -- 태그 추가일
-  UNIQUE(post_id, tag_id)                        -- 중복 방지
+  category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE, -- 카테고리 ID
+  created_at TIMESTAMPTZ DEFAULT NOW(),          -- 카테고리 추가일
+  UNIQUE(post_id, category_id)                   -- 중복 방지
 );
 
-COMMENT ON TABLE post_tags IS '포스트와 태그의 다대다 관계 연결 테이블';
-COMMENT ON COLUMN post_tags.post_id IS '태그가 붙은 포스트 ID';
-COMMENT ON COLUMN post_tags.tag_id IS '포스트에 붙은 태그 ID';
+COMMENT ON TABLE post_categories IS '포스트와 카테고리의 다대다 관계 연결 테이블';
+COMMENT ON COLUMN post_categories.post_id IS '카테고리가 붙은 포스트 ID';
+COMMENT ON COLUMN post_categories.category_id IS '포스트에 붙은 카테고리 ID';
 
 -- ============================================
--- 6. 좋아요 테이블
+-- 6. 태그 테이블 (인스타그램 스타일 해시태그)
+-- ============================================
+CREATE TABLE tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE,                      -- 태그 이름 (예: "여행", "맛집", "일상")
+  slug TEXT NOT NULL UNIQUE,                      -- URL-safe slug (예: "여행", "맛집", "일상")
+  usage_count INTEGER DEFAULT 0,                  -- 사용 횟수
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE tags IS '해시태그 테이블 (인스타그램 스타일)';
+COMMENT ON COLUMN tags.name IS '태그 이름';
+COMMENT ON COLUMN tags.slug IS 'URL-safe 슬러그';
+COMMENT ON COLUMN tags.usage_count IS '태그 사용 횟수 (인기도)';
+
+-- ============================================
+-- 7. 포스트-태그 연결 테이블 (다대다 관계)
+-- ============================================
+CREATE TABLE post_tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(post_id, tag_id)                         -- 중복 방지
+);
+
+COMMENT ON TABLE post_tags IS '게시물-태그 연결 테이블';
+COMMENT ON COLUMN post_tags.post_id IS '게시물 ID';
+COMMENT ON COLUMN post_tags.tag_id IS '태그 ID';
+
+-- ============================================
+-- 8. 좋아요 테이블
 -- ============================================
 CREATE TABLE likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 좋아요 고유 ID
@@ -159,7 +197,7 @@ COMMENT ON COLUMN likes.post_id IS '좋아요를 받은 포스트 ID';
 COMMENT ON COLUMN likes.user_id IS '좋아요를 누른 사용자 ID';
 
 -- ============================================
--- 7. 댓글 테이블
+-- 9. 댓글 테이블
 -- ============================================
 CREATE TABLE comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 댓글 고유 ID
@@ -189,7 +227,7 @@ COMMENT ON COLUMN comments.content IS '댓글 내용';
 COMMENT ON COLUMN comments.is_edited IS '댓글 수정 여부 (수정됨 표시용)';
 
 -- ============================================
--- 8. 댓글 좋아요 테이블
+-- 10. 댓글 좋아요 테이블
 -- ============================================
 CREATE TABLE comment_likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 좋아요 고유 ID
@@ -204,7 +242,7 @@ COMMENT ON COLUMN comment_likes.comment_id IS '좋아요를 받은 댓글 ID';
 COMMENT ON COLUMN comment_likes.user_id IS '좋아요를 누른 사용자 ID';
 
 -- ============================================
--- 9. 북마크 테이블
+-- 11. 북마크 테이블
 -- ============================================
 CREATE TABLE bookmarks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 북마크 고유 ID
@@ -221,7 +259,7 @@ COMMENT ON COLUMN bookmarks.user_id IS '북마크한 사용자 ID';
 COMMENT ON COLUMN bookmarks.collection_name IS '북마크 컬렉션/폴더 이름';
 
 -- ============================================
--- 10. 팔로우 테이블
+-- 12. 팔로우 테이블
 -- ============================================
 CREATE TABLE follows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 팔로우 고유 ID
@@ -257,11 +295,21 @@ CREATE INDEX idx_posts_search_vector ON posts USING GIN(search_vector);
 
 -- post_images 테이블
 CREATE INDEX idx_post_images_post_id ON post_images(post_id, display_order);
+CREATE INDEX idx_post_images_lat_lng ON post_images(latitude, longitude) WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+
+-- categories 테이블
+CREATE INDEX idx_categories_name ON categories(name);
+CREATE INDEX idx_categories_slug ON categories(slug);
+CREATE INDEX idx_categories_usage_count ON categories(usage_count DESC);
+
+-- post_categories 테이블
+CREATE INDEX idx_post_categories_post_id ON post_categories(post_id);
+CREATE INDEX idx_post_categories_category_id ON post_categories(category_id);
 
 -- tags 테이블
 CREATE INDEX idx_tags_name ON tags(name);
-CREATE INDEX idx_tags_slug ON tags(slug);
 CREATE INDEX idx_tags_usage_count ON tags(usage_count DESC);
+CREATE INDEX idx_tags_slug ON tags(slug);
 
 -- post_tags 테이블
 CREATE INDEX idx_post_tags_post_id ON post_tags(post_id);
@@ -365,6 +413,34 @@ CREATE POLICY "사용자는 자신의 포스트 이미지만 삭제 가능"
     )
   );
 
+-- categories 테이블
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "카테고리는 누구나 조회 가능"
+  ON categories FOR SELECT
+  USING (true);
+
+CREATE POLICY "인증된 사용자는 카테고리 생성 가능"
+  ON categories FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+-- post_categories 테이블
+ALTER TABLE post_categories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "카테고리 연결은 누구나 조회 가능"
+  ON post_categories FOR SELECT
+  USING (true);
+
+CREATE POLICY "포스트 작성자는 카테고리 추가 가능"
+  ON post_categories FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM posts
+      WHERE posts.id = post_categories.post_id
+      AND posts.user_id = auth.uid()
+    )
+  );
+
 -- tags 테이블
 ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
 
@@ -386,6 +462,16 @@ CREATE POLICY "태그 연결은 누구나 조회 가능"
 CREATE POLICY "포스트 작성자는 태그 추가 가능"
   ON post_tags FOR INSERT
   WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM posts
+      WHERE posts.id = post_tags.post_id
+      AND posts.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "포스트 작성자는 태그 삭제 가능"
+  ON post_tags FOR DELETE
+  USING (
     EXISTS (
       SELECT 1 FROM posts
       WHERE posts.id = post_tags.post_id
@@ -608,14 +694,41 @@ CREATE TRIGGER trigger_update_bookmarks_count
   AFTER INSERT OR DELETE ON bookmarks
   FOR EACH ROW EXECUTE FUNCTION update_bookmarks_count();
 
--- 7. 태그 사용 횟수 자동 업데이트
+-- 7. 카테고리 사용 횟수 자동 업데이트
+CREATE OR REPLACE FUNCTION update_category_usage_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE categories SET usage_count = usage_count + 1 WHERE id = NEW.category_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE categories SET usage_count = usage_count - 1 WHERE id = OLD.category_id;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION update_category_usage_count() IS '포스트에 카테고리가 추가/삭제될 때 categories.usage_count 자동 업데이트';
+
+CREATE TRIGGER trigger_update_category_usage_count
+  AFTER INSERT OR DELETE ON post_categories
+  FOR EACH ROW EXECUTE FUNCTION update_category_usage_count();
+
+-- 8. 태그 사용 횟수 자동 업데이트
 CREATE OR REPLACE FUNCTION update_tag_usage_count()
 RETURNS TRIGGER AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    UPDATE tags SET usage_count = usage_count + 1 WHERE id = NEW.tag_id;
+    UPDATE tags
+    SET usage_count = usage_count + 1,
+        updated_at = NOW()
+    WHERE id = NEW.tag_id;
+    RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
-    UPDATE tags SET usage_count = usage_count - 1 WHERE id = OLD.tag_id;
+    UPDATE tags
+    SET usage_count = GREATEST(usage_count - 1, 0),
+        updated_at = NOW()
+    WHERE id = OLD.tag_id;
+    RETURN OLD;
   END IF;
   RETURN NULL;
 END;
@@ -627,7 +740,7 @@ CREATE TRIGGER trigger_update_tag_usage_count
   AFTER INSERT OR DELETE ON post_tags
   FOR EACH ROW EXECUTE FUNCTION update_tag_usage_count();
 
--- 8. 전문 검색 벡터 자동 업데이트
+-- 9. 전문 검색 벡터 자동 업데이트
 CREATE OR REPLACE FUNCTION posts_search_vector_update()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -796,7 +909,25 @@ $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_nearby_posts(DECIMAL, DECIMAL, DECIMAL, INTEGER) IS '특정 위치 근처의 포스트 검색 (Haversine 공식)';
 
--- 6. 인기 태그 조회 함수
+-- 6. 인기 카테고리 조회 함수
+CREATE OR REPLACE FUNCTION get_popular_categories(p_limit INTEGER DEFAULT 20)
+RETURNS TABLE (
+  category_id UUID,
+  category_name TEXT,
+  category_usage_count INTEGER
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT id, name, usage_count
+  FROM categories
+  ORDER BY usage_count DESC, name ASC
+  LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION get_popular_categories(INTEGER) IS '사용 횟수 기준 인기 카테고리 조회';
+
+-- 7. 인기 태그 조회 함수
 CREATE OR REPLACE FUNCTION get_popular_tags(p_limit INTEGER DEFAULT 20)
 RETURNS TABLE (
   tag_id UUID,
@@ -812,9 +943,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION get_popular_tags(INTEGER) IS '사용 횟수 기준 인기 태그 조회';
+COMMENT ON FUNCTION get_popular_tags(INTEGER) IS '사용 횟수 기준 인기 태그 조회 (인스타그램 스타일)';
 
--- 7. 사용자 팔로워 수 조회
+-- 9. 사용자 팔로워 수 조회
 CREATE OR REPLACE FUNCTION get_follower_count(p_user_id UUID)
 RETURNS INTEGER AS $$
 DECLARE
@@ -830,7 +961,7 @@ $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_follower_count(UUID) IS '특정 사용자의 팔로워 수 반환';
 
--- 8. 사용자 팔로잉 수 조회
+-- 10. 사용자 팔로잉 수 조회
 CREATE OR REPLACE FUNCTION get_following_count(p_user_id UUID)
 RETURNS INTEGER AS $$
 DECLARE
@@ -846,7 +977,7 @@ $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_following_count(UUID) IS '특정 사용자가 팔로우하는 수 반환';
 
--- 9. 피드 조회 함수 (팔로우한 사용자들의 포스트)
+-- 11. 피드 조회 함수 (팔로우한 사용자들의 포스트)
 CREATE OR REPLACE FUNCTION get_user_feed(
   p_user_id UUID,
   p_limit INTEGER DEFAULT 20,
@@ -871,7 +1002,7 @@ $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_user_feed(UUID, INTEGER, INTEGER) IS '사용자가 팔로우한 사람들의 포스트 피드 조회';
 
--- 10. 포스트 검색 함수
+-- 12. 포스트 검색 함수
 CREATE OR REPLACE FUNCTION search_posts(
   p_query TEXT,
   p_limit INTEGER DEFAULT 20,
@@ -901,7 +1032,7 @@ COMMENT ON FUNCTION search_posts(TEXT, INTEGER, INTEGER) IS '키워드로 포스
 -- 뷰 (View) 생성 - 자주 사용하는 조회 쿼리
 -- ============================================
 
--- 1. 포스트 상세 정보 뷰 (프로필, 이미지, 태그 포함)
+-- 1. 포스트 상세 정보 뷰 (프로필, 이미지, 카테고리, 태그 포함)
 CREATE OR REPLACE VIEW v_posts_detail AS
 SELECT
   p.*,
@@ -909,15 +1040,18 @@ SELECT
   pr.display_name,
   pr.avatar_url,
   ARRAY_AGG(pi.image_url ORDER BY pi.display_order) FILTER (WHERE pi.image_url IS NOT NULL) AS image_urls,
+  ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL) AS category_names,
   ARRAY_AGG(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL) AS tag_names
 FROM posts p
 LEFT JOIN profiles pr ON p.user_id = pr.id
 LEFT JOIN post_images pi ON p.id = pi.post_id
+LEFT JOIN post_categories pc ON p.id = pc.post_id
+LEFT JOIN categories c ON pc.category_id = c.id
 LEFT JOIN post_tags pt ON p.id = pt.post_id
 LEFT JOIN tags t ON pt.tag_id = t.id
 GROUP BY p.id, pr.username, pr.display_name, pr.avatar_url;
 
-COMMENT ON VIEW v_posts_detail IS '포스트 상세 정보 (프로필, 이미지, 태그 포함)';
+COMMENT ON VIEW v_posts_detail IS '포스트 상세 정보 (프로필, 이미지, 카테고리, 태그 포함)';
 
 -- 2. 사용자 통계 뷰
 CREATE OR REPLACE VIEW v_user_stats AS
@@ -955,7 +1089,7 @@ COMMENT ON VIEW v_trending_posts IS '트렌딩 포스트 (최근 24시간 기준
 -- 샘플 데이터 삽입 (개발/테스트용)
 -- ============================================
 
-INSERT INTO tags (name, slug, usage_count) VALUES
+INSERT INTO categories (name, slug, usage_count) VALUES
   ('여행', 'travel', 150),
   ('음식', 'food', 230),
   ('카페', 'cafe', 180),
@@ -973,4 +1107,4 @@ INSERT INTO tags (name, slug, usage_count) VALUES
   ('인천', 'incheon', 95)
 ON CONFLICT (name) DO NOTHING;
 
-COMMENT ON TABLE tags IS '샘플 태그 데이터 삽입됨';
+COMMENT ON TABLE categories IS '샘플 카테고리 데이터 삽입됨';

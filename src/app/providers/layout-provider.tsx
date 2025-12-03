@@ -17,6 +17,7 @@ export const LayoutProvider = ({ children }: LayoutProviderProps) => {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
+        bgcolor: '#000000',
       }}
     >
       <Header />
@@ -24,7 +25,6 @@ export const LayoutProvider = ({ children }: LayoutProviderProps) => {
         component="main"
         sx={{
           flex: 1,
-          py: { xs: 2, md: 4 },
         }}
       >
         {children}

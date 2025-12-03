@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
-import { Autocomplete, Card, CardContent, Chip, FormControlLabel, Grid, Switch, TextField, Typography } from '@mui/material';
+import { Autocomplete, Card, CardContent, FormControlLabel, Grid, Switch, TextField, Typography } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+
+import { getPopularCategories } from '@/entities/category';
+import { getPopularTags } from '@/entities/tag';
 
 import type { AdminPostFormValues } from '../model/schema';
 
@@ -14,8 +18,22 @@ interface PostFieldsSectionProps {
 export function PostFieldsSection({ control, errors }: PostFieldsSectionProps) {
   const [tagInput, setTagInput] = useState('');
 
-  // 인기 테마 목록 (추후 Supabase에서 가져올 수 있음)
-  const popularThemes = ['여행', '음식', '카페', '자연', '일상', '운동', '패션', '예술'];
+  // Supabase에서 인기 카테고리 가져오기
+  const { data: categories = [] } = useQuery({
+    queryKey: ['popular-categories'],
+    queryFn: () => getPopularCategories(20),
+    staleTime: 1000 * 60 * 5, // 5분
+  });
+
+  // Supabase에서 인기 태그 가져오기
+  const { data: tags = [] } = useQuery({
+    queryKey: ['popular-tags'],
+    queryFn: () => getPopularTags(20),
+    staleTime: 1000 * 60 * 5, // 5분
+  });
+
+  const popularThemes = categories.map((cat) => cat.name);
+  const popularTags = tags.map((tag) => tag.name);
 
   return (
     <Card>
@@ -70,10 +88,10 @@ export function PostFieldsSection({ control, errors }: PostFieldsSectionProps) {
               control={control}
               render={({ field }) => (
                 <Autocomplete
-                  {...field}
-                  options={popularThemes}
+                  multiple
                   freeSolo
-                  value={field.value || ''}
+                  options={popularThemes}
+                  value={field.value || []}
                   onChange={(_, newValue) => field.onChange(newValue)}
                   renderInput={(params) => (
                     <TextField
@@ -81,7 +99,35 @@ export function PostFieldsSection({ control, errors }: PostFieldsSectionProps) {
                       label="테마/카테고리"
                       placeholder="테마를 선택하거나 입력하세요"
                       error={!!errors.theme}
-                      helperText={errors.theme?.message}
+                      helperText={errors.theme?.message || `${field.value?.length || 0}/10개`}
+                    />
+                  )}
+                />
+              )}
+            />
+          </Grid>
+
+          {/* 태그 */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Controller
+              name="tags"
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={popularTags}
+                  value={field.value || []}
+                  onChange={(_, newValue) => field.onChange(newValue)}
+                  inputValue={tagInput}
+                  onInputChange={(_, newInputValue) => setTagInput(newInputValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="태그"
+                      placeholder="태그를 입력하고 Enter를 누르세요"
+                      error={!!errors.tags}
+                      helperText={errors.tags?.message || `${field.value?.length || 0}/20개`}
                     />
                   )}
                 />
@@ -90,52 +136,11 @@ export function PostFieldsSection({ control, errors }: PostFieldsSectionProps) {
           </Grid>
 
           {/* 공개 여부 */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12 }}>
             <Controller
               name="isPublic"
               control={control}
               render={({ field }) => <FormControlLabel control={<Switch {...field} checked={field.value} />} label="공개 게시물" sx={{ mt: 1 }} />}
-            />
-          </Grid>
-
-          {/* 태그 */}
-          <Grid size={{ xs: 12 }}>
-            <Controller
-              name="tags"
-              control={control}
-              render={({ field }) => (
-                <Autocomplete
-                  multiple
-                  freeSolo
-                  options={[]}
-                  value={field.value || []}
-                  onChange={(_, newValue) => field.onChange(newValue)}
-                  inputValue={tagInput}
-                  onInputChange={(_, newInputValue) => setTagInput(newInputValue)}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip
-                        label={option}
-                        {...getTagProps({ index })}
-                        key={option}
-                        onDelete={() => {
-                          const newTags = field.value?.filter((_, i) => i !== index);
-                          field.onChange(newTags);
-                        }}
-                      />
-                    ))
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="태그"
-                      placeholder="태그를 입력하고 Enter를 누르세요"
-                      error={!!errors.tags}
-                      helperText={errors.tags?.message || `${field.value?.length || 0}/20개 (Enter로 추가)`}
-                    />
-                  )}
-                />
-              )}
             />
           </Grid>
         </Grid>
