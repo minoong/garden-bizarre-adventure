@@ -1,3 +1,9 @@
+## [1.18.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.17.0...v1.18.0) (2025-12-03)
+
+### ✨ 새로운 기능
+
+* 포스트 피드 등록/리스트 구현 ([#36](https://github.com/minoong/garden-bizarre-adventure/issues/36)) ([506e79e](https://github.com/minoong/garden-bizarre-adventure/commit/506e79ee12d04f1e635f2d062d4e5d406ff3c478))
+
 ## [1.17.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.16.0...v1.17.0) (2025-11-20)
 
 ### ✨ 새로운 기능
