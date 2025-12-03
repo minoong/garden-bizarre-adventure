@@ -9,11 +9,11 @@ import type { AdminPostFormValues } from '../model/schema';
 interface LocationSectionProps {
   control: Control<AdminPostFormValues>;
   errors: FieldErrors<AdminPostFormValues>;
-  selectedCount: number;
+  selectedCount?: number;
   onApplyToSelected?: () => void;
 }
 
-export function LocationSection({ control, errors, selectedCount, onApplyToSelected }: LocationSectionProps) {
+export function LocationSection({ control, errors, selectedCount = 0, onApplyToSelected }: LocationSectionProps) {
   // TODO: 주소 API 연동 함수 (나중에 구현)
   const handleSearchAddress = () => {
     console.log('주소 검색 API 호출 예정');

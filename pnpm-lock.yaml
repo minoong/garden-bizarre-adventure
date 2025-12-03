@@ -32,6 +32,9 @@ importers:
       '@mui/material-nextjs':
         specifier: ^7.3.2
         version: 7.3.2(@emotion/cache@11.14.0)(@emotion/react@11.14.0(@types/react@19.2.3)(react@19.2.0))(@types/react@19.2.3)(next@16.0.1(@babel/core@7.28.4)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
+      '@supabase/ssr':
+        specifier: ^0.7.0
+        version: 0.7.0(@supabase/supabase-js@2.58.0)
       '@supabase/supabase-js':
         specifier: ^2.58.0
         version: 2.58.0
@@ -89,6 +92,9 @@ importers:
       react-zoom-pan-pinch:
         specifier: ^3.7.0
         version: 3.7.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      swiper:
+        specifier: ^12.0.3
+        version: 12.0.3
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -1745,6 +1751,11 @@ packages:
   '@supabase/realtime-js@2.15.5':
     resolution: { integrity: sha512-/Rs5Vqu9jejRD8ZeuaWXebdkH+J7V6VySbCZ/zQM93Ta5y3mAmocjioa/nzlB6qvFmyylUgKVS1KpE212t30OA== }
 
+  '@supabase/ssr@0.7.0':
+    resolution: { integrity: sha512-G65t5EhLSJ5c8hTCcXifSL9Q/ZRXvqgXeNo+d3P56f4U1IxwTqjB64UfmfixvmMcjuxnq2yGqEWVJqUcO+AzAg== }
+    peerDependencies:
+      '@supabase/supabase-js': ^2.43.4
+
   '@supabase/storage-js@2.12.2':
     resolution: { integrity: sha512-SiySHxi3q7gia7NBYpsYRu8gyI0NhFwSORMxbZIxJ/zAVkN6QpwDRan158CJ+UdzD4WB/rQMAGRqIJQP+7ccAQ== }
 
@@ -2548,6 +2559,10 @@ packages:
   cookie@0.7.2:
     resolution: { integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w== }
     engines: { node: '>= 0.6' }
+
+  cookie@1.0.2:
+    resolution: { integrity: sha512-9Kr/j4O16ISv8zBBhJoi4bXOYNTkFLOqSL3UDB0njXxCXNezjeyVrJyGOWtgfs/q2km1gwBcfH8q1yEGoMYunA== }
+    engines: { node: '>=18' }
 
   core-util-is@1.0.3:
     resolution: { integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ== }
@@ -4914,6 +4929,10 @@ packages:
     resolution: { integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w== }
     engines: { node: '>= 0.4' }
 
+  swiper@12.0.3:
+    resolution: { integrity: sha512-BHd6U1VPEIksrXlyXjMmRWO0onmdNPaTAFduzqR3pgjvi7KfmUCAm/0cj49u2D7B0zNjMw02TSeXfinC1hDCXg== }
+    engines: { node: '>= 4.7.0' }
+
   synckit@0.11.11:
     resolution: { integrity: sha512-MeQTA1r0litLUf0Rp/iisCaL8761lKAZHaimlbGK4j0HysC4PLfqygQj9srcs0m2RdtDYnF8UuYyKpbjHYp7Jw== }
     engines: { node: ^14.18.0 || >=16.0.0 }
@@ -7040,6 +7059,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@supabase/ssr@0.7.0(@supabase/supabase-js@2.58.0)':
+    dependencies:
+      '@supabase/supabase-js': 2.58.0
+      cookie: 1.0.2
+
   '@supabase/storage-js@2.12.2':
     dependencies:
       '@supabase/node-fetch': 2.6.15
@@ -7895,6 +7919,8 @@ snapshots:
 
   cookie@0.7.2:
     optional: true
+
+  cookie@1.0.2: {}
 
   core-util-is@1.0.3: {}
 
@@ -10436,6 +10462,8 @@ snapshots:
       supports-color: 7.2.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  swiper@12.0.3: {}
 
   synckit@0.11.11:
     dependencies:
