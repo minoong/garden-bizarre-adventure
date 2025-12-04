@@ -8,9 +8,10 @@ import { Footer } from '@/widgets/footer';
 
 interface LayoutProviderProps {
   children: ReactNode;
+  showFooter?: boolean;
 }
 
-export const LayoutProvider = ({ children }: LayoutProviderProps) => {
+export const LayoutProvider = ({ children, showFooter = true }: LayoutProviderProps) => {
   return (
     <Box
       sx={{
@@ -29,7 +30,7 @@ export const LayoutProvider = ({ children }: LayoutProviderProps) => {
       >
         {children}
       </Box>
-      <Footer />
+      {showFooter && <Footer />}
     </Box>
   );
 };

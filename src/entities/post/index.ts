@@ -10,3 +10,4 @@ export {
 } from './api/create-post';
 
 export { getPosts, getPost, type Post, type GetPostsOptions } from './api/get-posts';
+export { getPostsClient } from './api/get-posts-client';
