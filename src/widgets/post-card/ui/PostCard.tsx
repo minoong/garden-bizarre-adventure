@@ -60,7 +60,6 @@ export function PostCard({ post }: PostCardProps) {
         zIndex: 1,
         bgcolor: '#000000',
         color: 'white',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
       }}
     >
       {/* Header */}
