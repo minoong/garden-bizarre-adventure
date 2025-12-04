@@ -1,3 +1,9 @@
+## [1.19.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.18.0...v1.19.0) (2025-12-04)
+
+### ✨ 새로운 기능
+
+* 무한 스크롤 포스트 피드 및 에러 핸들링 구현 ([#38](https://github.com/minoong/garden-bizarre-adventure/issues/38)) ([deeb24d](https://github.com/minoong/garden-bizarre-adventure/commit/deeb24df2b53f15de2739bb82724544f95cc6e17))
+
 ## [1.18.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.17.0...v1.18.0) (2025-12-03)
 
 ### ✨ 새로운 기능
