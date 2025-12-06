@@ -1,27 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
-import { Avatar, Box, Card, CardActions, CardContent, CardHeader, IconButton, Typography, Stack, GlobalStyles, Chip } from '@mui/material';
 import {
+  Bookmark as BookmarkIcon,
+  BookmarkBorder as BookmarkBorderIcon,
+  ChatBubbleOutline as CommentIcon,
   Favorite as FavoriteIcon,
   FavoriteBorder as FavoriteBorderIcon,
-  ChatBubbleOutline as CommentIcon,
-  BookmarkBorder as BookmarkBorderIcon,
-  Bookmark as BookmarkIcon,
-  MoreVert as MoreVertIcon,
   LocationOn as LocationOnIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination } from 'swiper/modules';
+import { Avatar, Box, Card, CardActions, CardContent, CardHeader, Chip, GlobalStyles, IconButton, Stack, Typography } from '@mui/material';
 import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/ko';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import Image from 'next/image';
+import { Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 import type { Post } from '@/entities/post';
+import { CommentSheet } from '@/features/comment';
+import { formatCountWithComma } from '@/shared/lib/utils';
 
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
@@ -34,6 +36,7 @@ export function PostCard({ post }: PostCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(1);
+  const [isCommentSheetOpen, setIsCommentSheetOpen] = useState(false);
 
   const images = post.post_images.sort((a, b) => a.display_order - b.display_order);
   const categories = post.post_categories.map((pc) => pc.categories).filter((c): c is NonNullable<typeof c> => c !== null);
@@ -46,6 +49,10 @@ export function PostCard({ post }: PostCardProps) {
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked);
     // TODO: API 호출
+  };
+
+  const handleCommentClick = () => {
+    setIsCommentSheetOpen(true);
   };
 
   return (
@@ -154,12 +161,26 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Actions */}
       <CardActions disableSpacing sx={{ px: 2, pt: 0.5, pb: 0.5 }}>
-        <IconButton onClick={handleLike} sx={{ p: 1, color: 'white' }}>
-          {isLiked ? <FavoriteIcon sx={{ color: 'error.main' }} /> : <FavoriteBorderIcon />}
-        </IconButton>
-        <IconButton sx={{ p: 1, color: 'white' }}>
-          <CommentIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton onClick={handleLike} sx={{ p: 0.275, color: 'white' }}>
+            {isLiked ? <FavoriteIcon sx={{ color: 'error.main' }} /> : <FavoriteBorderIcon />}
+          </IconButton>
+          {formatCountWithComma(post.likes_count) && (
+            <Typography variant="body2" sx={{ color: 'white', fontWeight: 500 }} onClick={handleLike}>
+              {formatCountWithComma(post.likes_count)}
+            </Typography>
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+          <IconButton onClick={handleCommentClick} sx={{ p: 0.275, color: 'white' }}>
+            <CommentIcon />
+          </IconButton>
+          {formatCountWithComma(post.comments_count) && (
+            <Typography variant="body2" sx={{ color: 'white', fontWeight: 500 }} onClick={handleCommentClick}>
+              {formatCountWithComma(post.comments_count)}
+            </Typography>
+          )}
+        </Box>
         <Box sx={{ flexGrow: 1 }} />
         <IconButton onClick={handleBookmark} sx={{ p: 1, color: 'white' }}>
           {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
@@ -168,13 +189,6 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Content */}
       <CardContent sx={{ pt: 0, pb: 1.5, '&:last-child': { pb: 1.5 } }}>
-        {/* Likes count */}
-        {post.likes_count > 0 && (
-          <Typography variant="body2" fontWeight="bold" sx={{ mb: 0.5 }}>
-            좋아요 {post.likes_count.toLocaleString()}개
-          </Typography>
-        )}
-
         {/* Title and Content */}
         <Typography variant="body2" component="div" sx={{ mb: 0.5 }}>
           <Box component="span" fontWeight="bold" mr={0.5}>
@@ -195,18 +209,14 @@ export function PostCard({ post }: PostCardProps) {
           </Typography>
         )}
 
-        {/* Comments count */}
-        {post.comments_count > 0 && (
-          <Typography variant="body2" sx={{ mb: 0.5, cursor: 'pointer', color: 'rgba(255, 255, 255, 0.5)' }}>
-            댓글 {post.comments_count.toLocaleString()}개 모두 보기
-          </Typography>
-        )}
-
         {/* Date */}
         <Typography variant="caption" display="block" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
           {dayjs(post.created_at).fromNow()}
         </Typography>
       </CardContent>
+
+      {/* Comment Sheet */}
+      <CommentSheet isOpen={isCommentSheetOpen} onClose={() => setIsCommentSheetOpen(false)} postId={post.id} />
     </Card>
   );
 }
