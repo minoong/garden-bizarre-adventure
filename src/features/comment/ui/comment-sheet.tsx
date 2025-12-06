@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Portal, Typography, useTheme } from '@mui/material';
 import { Sheet, type SheetRef } from 'react-modal-sheet';
 
@@ -14,15 +14,47 @@ interface CommentSheetProps {
 }
 
 export function CommentSheet({ isOpen, onClose, postId }: CommentSheetProps) {
+  const snapPoints = [0, 0.7, 1];
+
   const ref = useRef<SheetRef>(null);
+  const [, setSnapPoint] = useState(1);
+  const snapTo = (i: number) => ref.current?.snapTo(i);
+  const [viewportHeightight, setViewportHeight] = useState(0);
 
   const theme = useTheme();
 
-  const snapPoints = [0, 0.7, 1];
+  const updateViewportHeight = useCallback(() => {
+    if (window.visualViewport) {
+      if (window.visualViewport.height !== window.document.documentElement.clientHeight) {
+        snapTo(2);
+      }
+
+      setViewportHeight(window.visualViewport.height);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    updateViewportHeight();
+
+    const viewport = window.visualViewport;
+    if (viewport) {
+      viewport.addEventListener('resize', updateViewportHeight);
+      viewport.addEventListener('scroll', updateViewportHeight);
+
+      return () => {
+        viewport.removeEventListener('resize', updateViewportHeight);
+        viewport.removeEventListener('scroll', updateViewportHeight);
+        setViewportHeight(0);
+      };
+    }
+  }, [isOpen, updateViewportHeight]);
 
   return (
     <>
-      <Sheet ref={ref} isOpen={isOpen} onClose={onClose} snapPoints={snapPoints} initialSnap={1}>
+      <Sheet ref={ref} isOpen={isOpen} onSnap={setSnapPoint} onClose={onClose} snapPoints={snapPoints} initialSnap={1}>
         <Sheet.Container
           style={{
             backgroundColor: '#111',
@@ -85,18 +117,17 @@ export function CommentSheet({ isOpen, onClose, postId }: CommentSheetProps) {
         />
       </Sheet>
 
-      {/* Portal을 사용하여 CommentInput을 body에 직접 렌더링 */}
       {isOpen && (
         <Portal>
           <Box
             sx={{
               position: 'fixed',
-              bottom: 0,
+              bottom: `calc(100% - ${viewportHeightight}px)`,
               left: 0,
               right: 0,
               bgcolor: '#111',
               borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-              zIndex: theme.zIndex.modal + 9999, // Modal보다 높게
+              zIndex: theme.zIndex.modal + 9999,
               maxWidth: '100vw',
             }}
           >

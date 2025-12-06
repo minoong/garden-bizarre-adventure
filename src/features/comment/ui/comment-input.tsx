@@ -157,6 +157,16 @@ export function CommentInput({ postId: _postId, parentCommentId: _parentCommentI
           이미지, GIF, 동영상을 첨부할 수 있습니다.
         </Typography>
       )}
+
+      <Box
+        sx={{
+          height: '100vh',
+          position: 'absolute',
+          left: 0,
+          bgcolor: '#111',
+          width: '100%',
+        }}
+      />
     </Box>
   );
 }
