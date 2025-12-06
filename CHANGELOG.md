@@ -1,3 +1,9 @@
+## [1.20.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.19.0...v1.20.0) (2025-12-06)
+
+### ✨ 새로운 기능
+
+* 코멘트 모달 시트 UI 구현 ([#40](https://github.com/minoong/garden-bizarre-adventure/issues/40)) ([0e4adb7](https://github.com/minoong/garden-bizarre-adventure/commit/0e4adb7f4adfc7445be0baddde64d4519a3faad3))
+
 ## [1.19.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.18.0...v1.19.0) (2025-12-04)
 
 ### ✨ 새로운 기능
