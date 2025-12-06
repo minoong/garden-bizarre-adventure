@@ -1,3 +1,9 @@
+## [1.20.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.20.0...v1.20.1) (2025-12-06)
+
+### 🐛 버그 수정
+
+* Next.js 보안 취약점 해결 (CVE-2025-55182) ([b2421c3](https://github.com/minoong/garden-bizarre-adventure/commit/b2421c3fd5555fee5657c9ec8aee6aac4b905772))
+
 ## [1.20.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.19.0...v1.20.0) (2025-12-06)
 
 ### ✨ 새로운 기능
