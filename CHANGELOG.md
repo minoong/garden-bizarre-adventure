@@ -1,3 +1,9 @@
+## [1.20.2](https://github.com/minoong/garden-bizarre-adventure/compare/v1.20.1...v1.20.2) (2025-12-06)
+
+### 🐛 버그 수정
+
+* 버그 해결 ([#42](https://github.com/minoong/garden-bizarre-adventure/issues/42)) ([ec84d53](https://github.com/minoong/garden-bizarre-adventure/commit/ec84d5384dc987647c5273b532c6944e6d38e5c4))
+
 ## [1.20.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.20.0...v1.20.1) (2025-12-06)
 
 ### 🐛 버그 수정
