@@ -23,6 +23,7 @@ import 'swiper/css/pagination';
 
 import type { Post } from '@/entities/post';
 import { CommentSheet } from '@/features/comment';
+import { LocationSheet } from '@/features/location';
 import { formatCountWithComma } from '@/shared/lib/utils';
 
 dayjs.extend(relativeTime);
@@ -37,6 +38,7 @@ export function PostCard({ post }: PostCardProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(1);
   const [isCommentSheetOpen, setIsCommentSheetOpen] = useState(false);
+  const [isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
 
   const images = post.post_images.sort((a, b) => a.display_order - b.display_order);
   const categories = post.post_categories.map((pc) => pc.categories).filter((c): c is NonNullable<typeof c> => c !== null);
@@ -54,6 +56,12 @@ export function PostCard({ post }: PostCardProps) {
   const handleCommentClick = () => {
     setIsCommentSheetOpen(true);
   };
+
+  const handleLocationClick = () => {
+    setIsLocationSheetOpen(true);
+  };
+
+  const hasLocation = (post.latitude !== null && post.longitude !== null) || post.post_images.some((img) => img.latitude !== null && img.longitude !== null);
 
   return (
     <Card
@@ -117,7 +125,7 @@ export function PostCard({ post }: PostCardProps) {
               },
               '.post-card-swiper .swiper-pagination-bullet-active': {
                 background: 'rgba(0, 123, 255, 1) !important',
-                transform: 'scale(1.3) !important',
+                transform: 'scale(1.8) !important',
               },
             }}
           />
@@ -181,6 +189,13 @@ export function PostCard({ post }: PostCardProps) {
             </Typography>
           )}
         </Box>
+        {hasLocation && (
+          <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+            <IconButton onClick={handleLocationClick} sx={{ p: 0.275, color: 'white' }}>
+              <LocationOnIcon />
+            </IconButton>
+          </Box>
+        )}
         <Box sx={{ flexGrow: 1 }} />
         <IconButton onClick={handleBookmark} sx={{ p: 1, color: 'white' }}>
           {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
@@ -192,9 +207,8 @@ export function PostCard({ post }: PostCardProps) {
         {/* Title and Content */}
         <Typography variant="body2" component="div" sx={{ mb: 0.5 }}>
           <Box component="span" fontWeight="bold" mr={0.5}>
-            {post.profiles?.username || 'Unknown'}
+            {post.title}
           </Box>
-          {post.title && <Box component="span">{post.title}</Box>}
           {post.content && (
             <Box component="span" sx={{ whiteSpace: 'pre-wrap' }}>
               {post.title ? ` ${post.content}` : post.content}
@@ -217,6 +231,9 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Comment Sheet */}
       <CommentSheet isOpen={isCommentSheetOpen} onClose={() => setIsCommentSheetOpen(false)} postId={post.id} />
+
+      {/* Location Sheet */}
+      {hasLocation && <LocationSheet isOpen={isLocationSheetOpen} onClose={() => setIsLocationSheetOpen(false)} post={post} />}
     </Card>
   );
 }
