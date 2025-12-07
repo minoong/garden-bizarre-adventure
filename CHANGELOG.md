@@ -1,3 +1,9 @@
+## [1.21.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.20.2...v1.21.0) (2025-12-07)
+
+### ✨ 새로운 기능
+
+* 피드 위치 정보 모달 시트 ([#44](https://github.com/minoong/garden-bizarre-adventure/issues/44)) ([768f745](https://github.com/minoong/garden-bizarre-adventure/commit/768f74549056203cbaba93b9404fa0d175f0c57f))
+
 ## [1.20.2](https://github.com/minoong/garden-bizarre-adventure/compare/v1.20.1...v1.20.2) (2025-12-06)
 
 ### 🐛 버그 수정
