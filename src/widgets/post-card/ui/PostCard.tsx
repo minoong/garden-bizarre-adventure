@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Bookmark as BookmarkIcon,
   BookmarkBorder as BookmarkBorderIcon,
@@ -10,7 +10,7 @@ import {
   LocationOn as LocationOnIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
-import { Avatar, Box, Card, CardActions, CardContent, CardHeader, Chip, GlobalStyles, IconButton, Stack, Typography } from '@mui/material';
+import { Avatar, Box, Card, CardActions, CardContent, CardHeader, Chip, IconButton, Stack, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -25,6 +25,7 @@ import type { Post } from '@/entities/post';
 import { CommentSheet } from '@/features/comment';
 import { LocationSheet } from '@/features/location';
 import { formatCountWithComma } from '@/shared/lib/utils';
+import { SwiperPaginationStyles } from '@/shared/ui/swiper-pagination-styles';
 
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
@@ -39,9 +40,34 @@ export function PostCard({ post }: PostCardProps) {
   const [currentSlide, setCurrentSlide] = useState(1);
   const [isCommentSheetOpen, setIsCommentSheetOpen] = useState(false);
   const [isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [shouldShowMore, setShouldShowMore] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const images = post.post_images.sort((a, b) => a.display_order - b.display_order);
   const categories = post.post_categories.map((pc) => pc.categories).filter((c): c is NonNullable<typeof c> => c !== null);
+
+  useEffect(() => {
+    if (!post.content || isContentExpanded) return;
+
+    const checkOverflow = () => {
+      const element = contentRef.current;
+      if (!element) return;
+
+      if (post.content && post.content.includes('\n')) {
+        setShouldShowMore(true);
+        return;
+      }
+
+      const isOverflowing = element.scrollHeight > element.clientHeight;
+      setShouldShowMore(isOverflowing);
+    };
+
+    checkOverflow();
+
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [post.content, isContentExpanded]);
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -112,23 +138,7 @@ export function PostCard({ post }: PostCardProps) {
       {/* Images - Swiper */}
       {images.length > 0 && (
         <Box sx={{ width: '100%' }}>
-          <GlobalStyles
-            styles={{
-              '.post-card-swiper .swiper-pagination-bullet': {
-                width: '4px !important',
-                height: '4px !important',
-                background: 'rgba(0, 0, 0, 0.4) !important',
-                opacity: '1 !important',
-                margin: '0 2px !important',
-                transition: 'all 0.3s !important',
-                display: 'inline-block !important',
-              },
-              '.post-card-swiper .swiper-pagination-bullet-active': {
-                background: 'rgba(0, 123, 255, 1) !important',
-                transform: 'scale(1.8) !important',
-              },
-            }}
-          />
+          <SwiperPaginationStyles className="post-card-swiper" />
           <Box sx={{ aspectRatio: '1/1', bgcolor: 'black', position: 'relative' }}>
             {images.length > 1 && (
               <Chip
@@ -205,16 +215,58 @@ export function PostCard({ post }: PostCardProps) {
       {/* Content */}
       <CardContent sx={{ pt: 0, pb: 1.5, '&:last-child': { pb: 1.5 } }}>
         {/* Title and Content */}
-        <Typography variant="body2" component="div" sx={{ mb: 0.5 }}>
-          <Box component="span" fontWeight="bold" mr={0.5}>
-            {post.title}
-          </Box>
+        <Box sx={{ mb: 0.5 }}>
+          {/* Title */}
+          {post.title && (
+            <Typography variant="body2" component="div" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+              {post.title}
+            </Typography>
+          )}
+
+          {/* Content */}
           {post.content && (
-            <Box component="span" sx={{ whiteSpace: 'pre-wrap' }}>
-              {post.title ? ` ${post.content}` : post.content}
+            <Box>
+              <Typography
+                ref={contentRef}
+                variant="body2"
+                component="div"
+                sx={{
+                  display: isContentExpanded ? 'block' : '-webkit-box',
+                  WebkitLineClamp: isContentExpanded ? 'unset' : 1,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  textOverflow: isContentExpanded ? 'clip' : 'ellipsis',
+                  whiteSpace: isContentExpanded ? 'pre-wrap' : 'pre-line',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {post.content}
+              </Typography>
+              {shouldShowMore && !isContentExpanded && (
+                <Box
+                  component="span"
+                  onClick={() => setIsContentExpanded(true)}
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                    display: 'inline-block',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      color: 'rgba(255, 255, 255, 0.7)',
+                    },
+                    '&:active': {
+                      transform: 'scale(0.95)',
+                    },
+                  }}
+                >
+                  더 보기
+                </Box>
+              )}
             </Box>
           )}
-        </Typography>
+        </Box>
 
         {/* Categories */}
         {categories.length > 0 && (

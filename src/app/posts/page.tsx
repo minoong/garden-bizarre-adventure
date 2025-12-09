@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Container } from '@mui/material';
 
 import { createClient } from '@/shared/lib/supabase/server';
@@ -8,6 +9,11 @@ import { POSTS_PER_PAGE } from '@/shared/config/pagination';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+export const metadata: Metadata = {
+  title: '포스트',
+  description: '포스트 둘러보기',
+};
 
 export default async function PostsPage() {
   const supabase = await createClient();
