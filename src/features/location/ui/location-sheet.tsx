@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, useMemo } from 'react';
-import { Box, Typography, Divider, Chip, GlobalStyles, IconButton, Snackbar, Alert, Skeleton } from '@mui/material';
+import { Box, Typography, Divider, Chip, IconButton, Snackbar, Alert, Skeleton } from '@mui/material';
 import { Sheet, type SheetRef } from 'react-modal-sheet';
 import { useQueries } from '@tanstack/react-query';
 import { ContentCopy as ContentCopyIcon, PhotoCamera as PhotoCameraIcon } from '@mui/icons-material';
@@ -15,6 +15,7 @@ import 'swiper/css/pagination';
 
 import type { Post } from '@/entities/post';
 import { reverseGeocoding } from '@/shared/api/tmap/reverse-geocoding';
+import { SwiperPaginationStyles } from '@/shared/ui/swiper-pagination-styles';
 
 import { KakaoMap, type MapMarker } from './kakao-map';
 
@@ -134,23 +135,7 @@ export function LocationSheet({ isOpen, onClose, post }: LocationSheetProps) {
         <Sheet.Content style={{ backgroundColor: '#111', paddingBottom: '20px' }} disableDrag>
           {hasImageLocations && imagesWithLocation.length > 0 && (
             <Box sx={{ mb: 2 }}>
-              <GlobalStyles
-                styles={{
-                  '.location-sheet-swiper .swiper-pagination-bullet': {
-                    width: '4px !important',
-                    height: '4px !important',
-                    background: 'rgba(0, 0, 0, 0.4) !important',
-                    opacity: '1 !important',
-                    margin: '0 2px !important',
-                    transition: 'all 0.3s !important',
-                    display: 'inline-block !important',
-                  },
-                  '.location-sheet-swiper .swiper-pagination-bullet-active': {
-                    background: 'rgba(0, 123, 255, 1) !important',
-                    transform: 'scale(1.8) !important',
-                  },
-                }}
-              />
+              <SwiperPaginationStyles className="location-sheet-swiper" activeScale={1.8} />
               <Box sx={{ width: '100%', height: '200px', bgcolor: '#111', position: 'relative' }}>
                 {imagesWithLocation.length > 1 && (
                   <Chip
