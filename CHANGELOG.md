@@ -1,3 +1,9 @@
+## [1.22.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.21.0...v1.22.0) (2025-12-18)
+
+### ✨ 새로운 기능
+
+* Swiper pagination 컴포넌트화 및 포스트 카드 UX 개선 ([#46](https://github.com/minoong/garden-bizarre-adventure/issues/46)) ([f2ca607](https://github.com/minoong/garden-bizarre-adventure/commit/f2ca607ada53196ccbd671c1631bc703ef0578e3))
+
 ## [1.21.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.20.2...v1.21.0) (2025-12-07)
 
 ### ✨ 새로운 기능
