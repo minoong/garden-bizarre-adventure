@@ -4,6 +4,24 @@
 
 * force deploy ([#49](https://github.com/minoong/garden-bizarre-adventure/issues/49)) ([b43b80a](https://github.com/minoong/garden-bizarre-adventure/commit/b43b80aad25e00cd24b92db2720bde09f9efe747))
 * Swiper pagination 컴포넌트화 및 포스트 카드 UX 개선 ([#46](https://github.com/minoong/garden-bizarre-adventure/issues/46)) ([f2ca607](https://github.com/minoong/garden-bizarre-adventure/commit/f2ca607ada53196ccbd671c1631bc703ef0578e3))
+* 스타일 제거 ([#50](https://github.com/minoong/garden-bizarre-adventure/issues/50)) ([18dedec](https://github.com/minoong/garden-bizarre-adventure/commit/18dedec1959d537f0ad852841f50d10e6d632b55))
+
+### 🐛 버그 수정
+
+* CVE-2025-55184, CVE-2025-55183, CVE-2025-67779 ([#48](https://github.com/minoong/garden-bizarre-adventure/issues/48)) ([3233476](https://github.com/minoong/garden-bizarre-adventure/commit/323347620094c29fc05be35c8213462046645fc8))
+
+### 📦 기타
+
+* **release:** 1.22.0 [skip ci] ([19e2b6f](https://github.com/minoong/garden-bizarre-adventure/commit/19e2b6f49318e00c1fb490744f3205ca19a84dea))
+* **release:** 1.22.0 [skip ci] ([4c7d3c6](https://github.com/minoong/garden-bizarre-adventure/commit/4c7d3c67bd8cc6759f2b02bfc948ac0c63934acb))
+* **release:** 1.22.0 [skip ci] ([8849c01](https://github.com/minoong/garden-bizarre-adventure/commit/8849c01ca6f34f9a9f7b800825256216c4feaf62))
+
+## [1.22.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.21.0...v1.22.0) (2025-12-18)
+
+### ✨ 새로운 기능
+
+* force deploy ([#49](https://github.com/minoong/garden-bizarre-adventure/issues/49)) ([b43b80a](https://github.com/minoong/garden-bizarre-adventure/commit/b43b80aad25e00cd24b92db2720bde09f9efe747))
+* Swiper pagination 컴포넌트화 및 포스트 카드 UX 개선 ([#46](https://github.com/minoong/garden-bizarre-adventure/issues/46)) ([f2ca607](https://github.com/minoong/garden-bizarre-adventure/commit/f2ca607ada53196ccbd671c1631bc703ef0578e3))
 
 ### 🐛 버그 수정
 
