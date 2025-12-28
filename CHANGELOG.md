@@ -1,3 +1,9 @@
+## [1.23.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.22.0...v1.23.0) (2025-12-28)
+
+### ✨ 새로운 기능
+
+* 로고 만들기 ([#52](https://github.com/minoong/garden-bizarre-adventure/issues/52)) ([34f3425](https://github.com/minoong/garden-bizarre-adventure/commit/34f3425aa483a75c32d7af07d72d4461aaa494dd))
+
 ## [1.22.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.21.0...v1.22.0) (2025-12-18)
 
 ### ✨ 새로운 기능
