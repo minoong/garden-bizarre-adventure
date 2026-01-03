@@ -1,3 +1,9 @@
+## [1.25.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.24.0...v1.25.0) (2026-01-03)
+
+### ✨ 새로운 기능
+
+* d3 캔들스틱 ([#56](https://github.com/minoong/garden-bizarre-adventure/issues/56)) ([4f05f2b](https://github.com/minoong/garden-bizarre-adventure/commit/4f05f2b3738f931e0fc282be2054ecb0a0e231f7))
+
 ## [1.24.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.23.0...v1.24.0) (2026-01-03)
 
 ### ✨ 새로운 기능
