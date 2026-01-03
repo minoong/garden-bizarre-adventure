@@ -1,3 +1,9 @@
+## [1.27.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.26.0...v1.27.0) (2026-01-03)
+
+### ✨ 새로운 기능
+
+* 차트 툴팁 커스텀 구현 ([#60](https://github.com/minoong/garden-bizarre-adventure/issues/60)) ([559c954](https://github.com/minoong/garden-bizarre-adventure/commit/559c95418bf27593eabcc438a44db271a86666a4))
+
 ## [1.26.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.25.0...v1.26.0) (2026-01-03)
 
 ### ✨ 새로운 기능
