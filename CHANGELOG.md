@@ -1,3 +1,9 @@
+## [1.24.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.23.0...v1.24.0) (2026-01-03)
+
+### ✨ 새로운 기능
+
+* UPbit API, Lightweight Charts, Claude Code Skills ([#54](https://github.com/minoong/garden-bizarre-adventure/issues/54)) ([48a887d](https://github.com/minoong/garden-bizarre-adventure/commit/48a887d1f3d700853e38b1911f92feaafb6041e4))
+
 ## [1.23.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.22.0...v1.23.0) (2025-12-28)
 
 ### ✨ 새로운 기능
