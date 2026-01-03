@@ -32,6 +32,8 @@ jobs:
         run: pnpm run build-storybook
         env:
           NEXT_PUBLIC_KAKAO_APP_KEY: ${{ secrets.NEXT_PUBLIC_KAKAO_APP_KEY }}
+          NEXT_PUBLIC_BITHUMB_REST_API_URL: ${{ secrets.NEXT_PUBLIC_BITHUMB_REST_API_URL }}
+          NEXT_PUBLIC_BITHUMB_WEBSOCKET_API_URL: ${{ secrets.NEXT_PUBLIC_BITHUMB_WEBSOCKET_API_URL }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

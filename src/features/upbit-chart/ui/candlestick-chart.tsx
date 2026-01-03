@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createChart, CandlestickSeries, HistogramSeries, CrosshairMode } from 'lightweight-charts';
-import type { IChartApi, ISeriesApi, DeepPartial, ChartOptions as LWChartOptions, LogicalRange } from 'lightweight-charts';
+import type { IChartApi, ISeriesApi, DeepPartial, ChartOptions as LWChartOptions, LogicalRange, Time } from 'lightweight-charts';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
 import {
@@ -14,12 +14,11 @@ import {
   type DayCandle,
   type WeekCandle,
   type MonthCandle,
-  MINUTE_UNIT_TO_WS_TYPE,
 } from '@/entities/upbit';
 
 import type { ChartOptions } from '../model/types';
 import { DEFAULT_CHART_OPTIONS } from '../model/types';
-import { getPreviousCandleTime, toChartCandles, toVolumeDataArray, wsToChartCandle, wsToVolumeData } from '../lib/transform';
+import { toChartCandles, toVolumeDataArray } from '../lib/transform';
 
 type CandleData = MinuteCandle | DayCandle | WeekCandle | MonthCandle;
 
@@ -27,6 +26,33 @@ type CandleData = MinuteCandle | DayCandle | WeekCandle | MonthCandle;
 const INFINITE_SCROLL_THRESHOLD = 10;
 /** 한 번에 로드할 추가 캔들 개수 */
 const LOAD_MORE_COUNT = 100;
+
+/**
+ * ticker timestamp를 기준으로 캔들 시작 시간 계산
+ */
+function getCandleStartTime(timestamp: number, timeframe: CandleTimeframe): Date {
+  const date = new Date(timestamp);
+
+  if (timeframe.type === 'minutes') {
+    const unit = timeframe.unit;
+    const minutes = date.getMinutes();
+    const alignedMinutes = Math.floor(minutes / unit) * unit;
+    date.setMinutes(alignedMinutes);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+  } else if (timeframe.type === 'days') {
+    date.setHours(0, 0, 0, 0);
+  } else if (timeframe.type === 'weeks') {
+    const day = date.getDay();
+    date.setDate(date.getDate() - day);
+    date.setHours(0, 0, 0, 0);
+  } else if (timeframe.type === 'months') {
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0);
+  }
+
+  return date;
+}
 
 interface CandlestickChartProps {
   /** 마켓 코드 */
@@ -77,11 +103,9 @@ export function CandlestickChart({
   // REST API로 초기 데이터 로드
   const { data: candles, isLoading, error } = useCandles(market, timeframe, { count: initialCount });
 
-  // WebSocket 실시간 데이터 (realtime이 true이고 분봉일 때만)
-  const candleType = timeframe.type === 'minutes' ? MINUTE_UNIT_TO_WS_TYPE[timeframe.unit] : undefined;
-  const { candles: realtimeCandles, status: wsStatus } = useUpbitSocket(realtime && candleType ? [market] : [], realtime && candleType ? ['candle'] : [], {
-    autoConnect: realtime && !!candleType,
-    candleType,
+  // WebSocket ticker로 실시간 업데이트 (빗썸은 캔들 WebSocket 미지원)
+  const { tickers, status: wsStatus } = useUpbitSocket(realtime ? [market] : [], realtime ? ['ticker'] : [], {
+    autoConnect: realtime,
   });
 
   // 추가 과거 데이터 로드 함수
@@ -99,8 +123,9 @@ export function CandlestickChart({
     // fetch 전에 가장 오래된 캔들 시간 캡처 (병합 검증용)
     const oldestCandleTime = allCandlesRef.current[allCandlesRef.current.length - 1].candle_date_time_kst;
 
-    // to parameter는 inclusive이므로 1 타임프레임 단위 이전 시간 사용 (중복 방지)
-    const toParam = getPreviousCandleTime(oldestCandleTime, timeframe);
+    // to parameter는 exclusive이므로 oldest 시간을 그대로 전달
+    // API는 to 미만의 데이터를 반환하므로 중복 없이 이전 캔들들을 가져옴
+    const toParam = oldestCandleTime;
 
     isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
@@ -121,35 +146,10 @@ export function CandlestickChart({
         return;
       }
 
-      console.log('📊 [loadMoreCandles] Fetched:', {
-        market,
-        timeframe,
-        oldestCandleTime,
-        toParam,
-        moreCandlesCount: moreCandles.length,
-        firstCandle: moreCandles[0]?.candle_date_time_kst,
-        lastCandle: moreCandles[moreCandles.length - 1]?.candle_date_time_kst,
-      });
-
-      // 중복 제거: candle_date_time_kst와 candle_date_time_utc 둘 다 체크
-      const existingKeys = new Set(allCandlesRef.current.map((c) => `${c.candle_date_time_kst}|${c.candle_date_time_utc}`));
-
-      console.log('🔑 [loadMoreCandles] Existing keys:', existingKeys.size);
-
-      const newCandles = moreCandles.filter((candle) => !existingKeys.has(`${candle.candle_date_time_kst}|${candle.candle_date_time_utc}`));
-
-      const duplicatesRemoved = moreCandles.length - newCandles.length;
-      console.log('🔄 [loadMoreCandles] After dedup:', {
-        newCandlesCount: newCandles.length,
-        duplicatesRemoved,
-        duplicates:
-          duplicatesRemoved > 0
-            ? moreCandles.filter((c) => existingKeys.has(`${c.candle_date_time_kst}|${c.candle_date_time_utc}`)).map((c) => c.candle_date_time_kst)
-            : [],
-      });
+      // const newCandles = moreCandles.filter((candle) => !existingKeys.has(`${candle.candle_date_time_kst}|${candle.candle_date_time_utc}`));
+      const newCandles = [...moreCandles];
 
       if (newCandles.length === 0) {
-        console.log('⚠️ [loadMoreCandles] No new candles after dedup');
         hasMoreDataRef.current = false;
         return;
       }
@@ -168,24 +168,11 @@ export function CandlestickChart({
       // 기존 데이터에 추가 (과거 데이터는 뒤에 추가 - API는 최신순 반환)
       allCandlesRef.current = [...allCandlesRef.current, ...newCandles];
 
-      console.log('📈 [loadMoreCandles] Total candles after merge:', allCandlesRef.current.length);
-
       // allCandlesRef 기반으로 전체 데이터 재설정
       const allChartCandles = toChartCandles(allCandlesRef.current);
 
-      console.log('⏰ [loadMoreCandles] Chart candles timestamps:', {
-        first: { time: allChartCandles[0]?.time, kst: allCandlesRef.current[0]?.candle_date_time_kst },
-        last: { time: allChartCandles[allChartCandles.length - 1]?.time, kst: allCandlesRef.current[allCandlesRef.current.length - 1]?.candle_date_time_kst },
-      });
-
       // 시간순 정렬 보장 (타임존 변환 이슈 방지)
       const sortedCandles = [...allChartCandles].sort((a, b) => (a.time as number) - (b.time as number));
-
-      // 정렬 전후 비교
-      const needsSort = JSON.stringify(allChartCandles) !== JSON.stringify(sortedCandles);
-      if (needsSort) {
-        console.warn('⚠️ [loadMoreCandles] Data was not sorted! Sorting now...');
-      }
 
       candleSeriesRef.current.setData(sortedCandles);
 
@@ -323,36 +310,96 @@ export function CandlestickChart({
     };
   }, [candles, height, darkMode, upColor, downColor, showGrid, showVolume, infiniteScroll, handleVisibleRangeChange]);
 
-  // 실시간 업데이트
+  // ticker WebSocket으로 실시간 가격 업데이트 + 새 캔들 생성
   useEffect(() => {
-    // 차트가 초기화되지 않았으면 스킵 (타임프레임 변경 중 stale 업데이트 방지)
-    if (!realtime || !chartInitializedRef.current || !candleSeriesRef.current) return;
+    if (!realtime || !chartInitializedRef.current || !candleSeriesRef.current || !volumeSeriesRef.current) return;
 
-    const realtimeCandle = realtimeCandles.get(market);
-    if (!realtimeCandle) return;
+    const ticker = tickers.get(market);
+    if (!ticker || !allCandlesRef.current.length) return;
 
-    // 현재 차트의 캔들 타입과 WebSocket 캔들 타입이 일치하는지 확인
-    const expectedCandleType = timeframe.type === 'minutes' ? MINUTE_UNIT_TO_WS_TYPE[timeframe.unit] : undefined;
-    if (!expectedCandleType || realtimeCandle.type !== expectedCandleType) {
-      return; // 타입 불일치 시 무시
+    // ticker timestamp를 기준으로 캔들 시작 시간 계산
+    const candleStartTime = getCandleStartTime(ticker.timestamp, timeframe);
+    const candleTimestamp = Math.floor(candleStartTime.getTime() / 1000);
+
+    // 최신 캔들 가져오기
+    const latestCandle = allCandlesRef.current[0];
+    const latestCandleTime = Math.floor(new Date(latestCandle.candle_date_time_kst + '+09:00').getTime() / 1000);
+
+    // 새로운 캔들 시작 여부 확인
+    if (candleTimestamp > latestCandleTime) {
+      // 새 캔들 생성
+      const newCandle = {
+        time: candleTimestamp as Time,
+        open: ticker.trade_price,
+        high: ticker.trade_price,
+        low: ticker.trade_price,
+        close: ticker.trade_price,
+      };
+
+      candleSeriesRef.current.update(newCandle);
+
+      // allCandlesRef에도 추가 (새 캔들 데이터 생성)
+      const candleStartKst = new Date(candleTimestamp * 1000 + 9 * 60 * 60 * 1000);
+      const newCandleData: CandleData = {
+        market,
+        candle_date_time_utc: new Date(candleTimestamp * 1000).toISOString().slice(0, 19).replace('T', ' '),
+        candle_date_time_kst: candleStartKst.toISOString().slice(0, 19).replace('T', ' '),
+        opening_price: ticker.trade_price,
+        high_price: ticker.trade_price,
+        low_price: ticker.trade_price,
+        trade_price: ticker.trade_price,
+        timestamp: ticker.timestamp,
+        candle_acc_trade_price: ticker.acc_trade_price_24h,
+        candle_acc_trade_volume: ticker.acc_trade_volume_24h,
+        ...(timeframe.type === 'minutes' && { unit: timeframe.unit }),
+      } as CandleData;
+
+      allCandlesRef.current = [newCandleData, ...allCandlesRef.current];
+
+      // Volume 추가
+      if (showVolume) {
+        const volumeData = {
+          time: candleTimestamp as Time,
+          value: ticker.acc_trade_volume_24h,
+          color: upColor + '80', // 새 캔들은 일단 상승색
+        };
+        volumeSeriesRef.current.update(volumeData);
+      }
+    } else {
+      // 기존 캔들 업데이트
+      const updatedCandle = {
+        time: latestCandleTime as Time,
+        open: latestCandle.opening_price,
+        high: Math.max(latestCandle.high_price, ticker.trade_price),
+        low: Math.min(latestCandle.low_price, ticker.trade_price),
+        close: ticker.trade_price,
+      };
+
+      candleSeriesRef.current.update(updatedCandle);
+
+      // allCandlesRef도 업데이트
+      allCandlesRef.current[0] = {
+        ...latestCandle,
+        high_price: updatedCandle.high,
+        low_price: updatedCandle.low,
+        trade_price: updatedCandle.close,
+        timestamp: ticker.timestamp,
+        candle_acc_trade_price: ticker.acc_trade_price_24h,
+        candle_acc_trade_volume: ticker.acc_trade_volume_24h,
+      };
+
+      // Volume 업데이트
+      if (showVolume) {
+        const isUp = ticker.trade_price >= latestCandle.opening_price;
+        const volumeData = {
+          time: latestCandleTime as Time,
+          value: ticker.acc_trade_volume_24h,
+          color: isUp ? upColor + '80' : downColor + '80',
+        };
+        volumeSeriesRef.current.update(volumeData);
+      }
     }
-
-    console.log('🔴 [Realtime] Update received:', {
-      market,
-      timeframe,
-      candleType: realtimeCandle.type,
-      timestamp: realtimeCandle.timestamp,
-      kst: new Date(realtimeCandle.timestamp).toISOString(),
-    });
-
-    const chartCandle = wsToChartCandle(realtimeCandle);
-    candleSeriesRef.current.update(chartCandle);
-
-    if (showVolume && volumeSeriesRef.current) {
-      const volumeData = wsToVolumeData(realtimeCandle, upColor + '80', downColor + '80');
-      volumeSeriesRef.current.update(volumeData);
-    }
-  }, [realtimeCandles, market, realtime, showVolume, upColor, downColor, timeframe]);
+  }, [tickers, market, realtime, timeframe, showVolume, upColor, downColor]);
 
   // 로딩 상태
   if (isLoading) {
@@ -418,7 +465,7 @@ export function CandlestickChart({
         </Box>
       )}
 
-      {/* 실시간 연결 표시 */}
+      {/* 실시간 연결 표시 (ticker WebSocket) */}
       {realtime && wsStatus === 'connected' && (
         <Box
           sx={{

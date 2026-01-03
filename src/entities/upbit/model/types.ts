@@ -250,10 +250,26 @@ export interface WebSocketTicker {
   signed_change_rate: number;
   /** 거래량 */
   trade_volume: number;
-  /** 24시간 누적 거래 금액 */
-  acc_trade_price_24h: number;
+  /** 누적 거래량 (KST 0시 기준) */
+  acc_trade_volume: number;
   /** 24시간 누적 거래량 */
   acc_trade_volume_24h: number;
+  /** 누적 거래대금 (KST 0시 기준) */
+  acc_trade_price: number;
+  /** 24시간 누적 거래 금액 */
+  acc_trade_price_24h: number;
+  /** 체결 일자 (KST, yyyyMMdd) */
+  trade_date: string;
+  /** 체결 시각 (KST, HHmmss) */
+  trade_time: string;
+  /** 체결 타임스탬프 (ms) */
+  trade_timestamp: number;
+  /** 매수/매도 구분 */
+  ask_bid: 'ASK' | 'BID';
+  /** 누적 매도량 */
+  acc_ask_volume: number;
+  /** 누적 매수량 */
+  acc_bid_volume: number;
   /** 52주 최고가 */
   highest_52_week_price: number;
   /** 52주 최고가 달성일 */
@@ -262,10 +278,14 @@ export interface WebSocketTicker {
   lowest_52_week_price: number;
   /** 52주 최저가 달성일 */
   lowest_52_week_date: string;
-  /** 체결 일자 (UTC) */
-  trade_date: string;
-  /** 체결 시각 (UTC) */
-  trade_time: string;
+  /** 거래 상태 */
+  market_state: string;
+  /** 거래 정지 여부 */
+  is_trading_suspended: boolean;
+  /** 거래지원 종료일 */
+  delisting_date: string | null;
+  /** 유의 종목 여부 */
+  market_warning: 'NONE' | 'CAUTION';
   /** 타임스탬프 (ms) */
   timestamp: number;
   /** 스트림 타입 */

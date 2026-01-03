@@ -1,5 +1,9 @@
 /**
- * 업비트 WebSocket 매니저
+ * 암호화폐 거래소 WebSocket 매니저
+ *
+ * 참고: 빗썸 WebSocket 사용 (업비트 호환)
+ * - Rate limit 회피를 위해 빗썸 WebSocket 사용
+ * - 요청/응답 형식은 업비트와 동일
  *
  * 최적화:
  * - requestAnimationFrame 기반 버퍼 플러시 (초당 60회 제한)
@@ -168,7 +172,7 @@ export class UpbitWebSocketManager {
       // 플러시 스케줄링
       this.scheduleFlush();
     } catch (error) {
-      console.error('[UpbitWebSocket] Message parse error:', error);
+      console.error('[WebSocket] Message parse error:', error);
     }
   }
 
