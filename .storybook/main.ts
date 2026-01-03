@@ -11,6 +11,8 @@ const config: StorybookConfig = {
   env: (config) => ({
     ...config,
     NEXT_PUBLIC_KAKAO_APP_KEY: process.env.NEXT_PUBLIC_KAKAO_APP_KEY || '',
+    NEXT_PUBLIC_BITHUMB_REST_API_URL: process.env.NEXT_PUBLIC_BITHUMB_REST_API_URL || 'https://api.bithumb.com',
+    NEXT_PUBLIC_BITHUMB_WEBSOCKET_API_URL: `${process.env.NEXT_PUBLIC_BITHUMB_WEBSOCKET_API_URL}/websocket/v1` || 'wss://ws-api.bithumb.com/websocket/v1',
   }),
   previewHead: (head) => `
     ${head}

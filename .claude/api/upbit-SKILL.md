@@ -1,6 +1,12 @@
-# Upbit API 사용 가이드
+# 암호화폐 거래소 API 사용 가이드
 
-이 스킬은 **Upbit API** 엔티티 및 차트 컴포넌트 사용 방법을 정의합니다.
+이 스킬은 **암호화폐 거래소 API** 엔티티 및 차트 컴포넌트 사용 방법을 정의합니다.
+
+**참고**: 빗썸 API 사용 (업비트 호환)
+
+- 업비트 API의 rate limit (HTTP 429) 회피를 위해 빗썸 API 사용
+- 빗썸은 업비트와 동일한 REST/WebSocket API 스펙 제공
+- 코드베이스에서는 `upbit` 이름을 유지하지만 실제로는 빗썸 엔드포인트 사용
 
 ## 📁 디렉토리 구조
 
@@ -40,22 +46,24 @@ src/
 
 ### 공통 사항
 
-- **Base URL**: `https://api.upbit.com`
+- **REST Base URL**: `https://api.bithumb.com` (빗썸, 업비트 호환)
+- **WebSocket URL**: `wss://ws-api.bithumb.com/websocket/v1` (빗썸 공개형)
 - **인증**: Public API는 인증 불필요
 - **응답 형식**: JSON
 - **시간 형식**: ISO 8601 (`yyyy-MM-ddTHH:mm:ss`)
+- **Rate Limit**: WebSocket 연결 요청은 IP 기준 초당 10회
 
 ### 지원 API
 
-| API       | 엔드포인트                         | 설명                |
-| --------- | ---------------------------------- | ------------------- |
-| 마켓 목록 | `GET /v1/market/all`               | 전체 마켓 조회      |
-| 현재가    | `GET /v1/ticker`                   | 실시간 시세 조회    |
-| 분봉 캔들 | `GET /v1/candles/minutes/{unit}`   | 1, 3, 5, ..., 240분 |
-| 일봉 캔들 | `GET /v1/candles/days`             | 일봉                |
-| 주봉 캔들 | `GET /v1/candles/weeks`            | 주봉                |
-| 월봉 캔들 | `GET /v1/candles/months`           | 월봉                |
-| WebSocket | `wss://api.upbit.com/websocket/v1` | 실시간 데이터       |
+| API       | 엔드포인트                              | 설명                                     |
+| --------- | --------------------------------------- | ---------------------------------------- |
+| 마켓 목록 | `GET /v1/market/all`                    | 전체 마켓 조회                           |
+| 현재가    | `GET /v1/ticker`                        | 실시간 시세 조회                         |
+| 분봉 캔들 | `GET /v1/candles/minutes/{unit}`        | 1, 3, 5, ..., 240분                      |
+| 일봉 캔들 | `GET /v1/candles/days`                  | 일봉                                     |
+| 주봉 캔들 | `GET /v1/candles/weeks`                 | 주봉                                     |
+| 월봉 캔들 | `GET /v1/candles/months`                | 월봉                                     |
+| WebSocket | `wss://ws-api.bithumb.com/websocket/v1` | 실시간 데이터 (ticker, trade, orderbook) |
 
 ## 📊 캔들 데이터 API
 
@@ -165,18 +173,36 @@ import { CandlestickChart } from '@/features/upbit-chart/ui';
 />
 ```
 
-### 실시간 업데이트
+### 실시간 업데이트 (ticker WebSocket)
+
+**⚠️ 중요**: 빗썸 WebSocket은 **캔들 데이터를 제공하지 않습니다!**
+
+빗썸 WebSocket 지원 타입:
+
+- ✅ `ticker` (현재가)
+- ✅ `trade` (체결)
+- ✅ `orderbook` (호가)
+- ❌ `candle` (캔들) - **미지원**
+
+**해결 방법**: ticker WebSocket으로 실시간 업데이트 구현
 
 ```typescript
 <CandlestickChart
   market="KRW-BTC"
-  timeframe={{ type: 'minutes', unit: 1 }}
-  realtime={true}  // WebSocket 실시간 업데이트
+  timeframe={{ type: 'minutes', unit: 5 }}
+  realtime={true}  // ✅ ticker 데이터로 실시간 가격 업데이트
   options={{ height: 500 }}
 />
 ```
 
-**중요**: 실시간 업데이트는 **분봉에서만** 작동합니다. 일봉/주봉/월봉은 지원하지 않습니다.
+**동작 방식**:
+
+1. REST API로 초기 캔들 데이터 로드
+2. ticker WebSocket 구독하여 실시간 가격 수신
+3. ticker 가격으로 최신 캔들의 OHLC 업데이트
+4. 타임프레임 시간이 지나면 자동으로 새 캔들 생성
+
+**주의**: 완벽한 캔들 데이터는 아니며 ticker 가격 기반 근사값입니다.
 
 ### 무한 스크롤 (과거 데이터 로드)
 
@@ -200,7 +226,7 @@ import { CandlestickChart } from '@/features/upbit-chart/ui';
 
 **문제**: `candle_date_time_kst`는 타임존 정보가 없어서 로컬 시간으로 해석될 수 있습니다.
 
-**해결**: `getPreviousCandleTime` 및 `parseKstToTimestamp` 함수 사용
+**해결**: KST 타임존 명시 (`+09:00` 추가)
 
 ```typescript
 // src/features/upbit-chart/lib/transform.ts
@@ -209,33 +235,28 @@ import { CandlestickChart } from '@/features/upbit-chart/ui';
 function parseKstToTimestamp(kstDateString: string): number {
   return Math.floor(new Date(kstDateString + '+09:00').getTime() / 1000);
 }
-
-// ✅ DO: 타임프레임 단위만큼 이전 시간 계산
-export function getPreviousCandleTime(kstDateString: string, timeframe: CandleTimeframe): string {
-  const date = new Date(kstDateString + '+09:00');
-
-  if (timeframe.type === 'minutes') {
-    date.setMinutes(date.getMinutes() - timeframe.unit);
-  } else if (timeframe.type === 'days') {
-    date.setDate(date.getDate() - 1);
-  }
-  // ...
-
-  return date.toISOString().slice(0, 19); // 'yyyy-MM-ddTHH:mm:ss'
-}
 ```
 
-**사용 예시** (무한 스크롤):
+### `to` parameter 사용법 (무한 스크롤)
+
+**중요**: API의 `to` parameter는 **exclusive**입니다!
 
 ```typescript
+// ✅ DO: oldest 시간을 그대로 전달 (exclusive이므로 중복 없음)
 const oldestCandleTime = allCandles[allCandles.length - 1].candle_date_time_kst;
-const toParam = getPreviousCandleTime(oldestCandleTime, timeframe);
 
 const moreCandles = await fetchCandles(market, timeframe, {
-  to: toParam, // ✅ 중복 방지를 위해 1 단위 이전 시간 사용
+  to: oldestCandleTime, // ✅ exclusive: oldest 미만의 데이터만 반환 (중복 없음)
   count: 100,
 });
 ```
+
+**설명**:
+
+- `to` parameter는 **exclusive** (미만)
+- oldest가 `2024-01-01 14:00:00`이면 → API는 `14:00:00` **미만** 데이터 반환
+- `13:55:00`, `13:50:00`... 등 이전 캔들만 반환 (14:00:00 제외)
+- 따라서 **그대로 전달하면 중복 없이 과거 데이터 로드**
 
 ## 🔌 WebSocket 실시간 데이터
 
@@ -278,6 +299,26 @@ function RealtimeTicker() {
 | `candle.60m`  | 60분봉  |
 | `candle.240m` | 240분봉 |
 
+### WebSocket 요청 형식 (Bithumb)
+
+빗썸 WebSocket은 업비트와 동일한 요청 형식을 사용합니다:
+
+```json
+[{ "ticket": "unique-ticket-id" }, { "type": "ticker", "codes": ["KRW-BTC"] }, { "format": "DEFAULT" }]
+```
+
+**지원 타입**:
+
+- `ticker`: 현재가 (실시간 시세)
+- `trade`: 체결 (실시간 거래 내역)
+- `orderbook`: 호가 (실시간 호가창)
+- `candle.Xm`: 분봉 캔들 (X = 1, 3, 5, 10, 15, 30, 60, 240)
+
+**응답 구조**:
+
+- 각 메시지에는 `type` 필드 포함
+- `stream_type`: `SNAPSHOT` (최초 데이터) 또는 `REALTIME` (실시간 업데이트)
+
 ## 🚫 Anti-patterns (금지 사항)
 
 ### ❌ 타임존 누락
@@ -291,37 +332,44 @@ const timestamp = new Date(candle.candle_date_time_kst).getTime();
 const timestamp = new Date(candle.candle_date_time_kst + '+09:00').getTime();
 ```
 
-### ❌ 중복 데이터 미처리
+### ❌ to parameter 잘못 사용
 
 ```typescript
-// ❌ DON'T: to parameter 그대로 사용
+// ❌ DON'T: API가 exclusive인데 1 단위 빼기 (데이터 누락!)
+const oldestTime = candles[candles.length - 1].candle_date_time_kst;
+const toParam = getPreviousCandleTime(oldestTime, timeframe); // ❌ 1개 누락!
+const more = await fetchCandles(market, timeframe, {
+  to: toParam,
+});
+
+// ✅ DO: exclusive이므로 그대로 전달
 const oldestTime = candles[candles.length - 1].candle_date_time_kst;
 const more = await fetchCandles(market, timeframe, {
-  to: oldestTime, // ❌ API가 inclusive이므로 중복 발생!
-});
-
-// ✅ DO: 1 단위 이전 시간 사용
-const toParam = getPreviousCandleTime(oldestTime, timeframe);
-const more = await fetchCandles(market, timeframe, {
-  to: toParam, // ✅ 중복 없음
+  to: oldestTime, // ✅ exclusive: oldest 미만만 반환되므로 중복 없음
 });
 ```
 
-### ❌ 실시간 업데이트를 일봉/주봉에 사용
+### ✅ 실시간 업데이트 (ticker WebSocket)
+
+빗썸은 WebSocket 캔들을 지원하지 않지만, **ticker WebSocket으로 대체 구현**되어 있습니다:
 
 ```typescript
-// ❌ DON'T: 일봉에 realtime 사용
+// ✅ realtime={true}: ticker WebSocket으로 실시간 가격 업데이트
 <CandlestickChart
-  timeframe={{ type: 'days' }}
-  realtime={true}  // ❌ 분봉만 지원!
-/>
-
-// ✅ DO: 분봉에만 realtime 사용
-<CandlestickChart
+  market="KRW-BTC"
   timeframe={{ type: 'minutes', unit: 1 }}
-  realtime={true}  // ✅ OK
+  realtime={true}  // ✅ ticker 데이터로 최신 캔들 업데이트
 />
 ```
+
+**동작 방식**:
+
+1. REST API로 초기 캔들 데이터 로드
+2. ticker WebSocket 구독
+3. ticker 가격으로 최신 캔들의 OHLC 업데이트
+4. 시간이 지나면 자동으로 새 캔들 생성
+
+**주의**: 완벽한 캔들 데이터는 아니며 ticker 가격 기반 근사값입니다.
 
 ### ❌ 하드코딩된 마켓 코드
 

@@ -130,10 +130,10 @@ function PlaygroundExample() {
   };
 
   const [selectedMarket, setSelectedMarket] = useState<Market>(defaultMarketObject);
-  const [timeframe, setTimeframe] = useState<CandleTimeframe>({ type: 'minutes', unit: 15 });
+  const [timeframe, setTimeframe] = useState<CandleTimeframe>({ type: 'minutes', unit: 1 });
   const [darkMode, setDarkMode] = useState(true);
   const [showVolume, setShowVolume] = useState(true);
-  const [realtime, setRealtime] = useState(false);
+  const [realtime, setRealtime] = useState(true);
   const [infiniteScroll, setInfiniteScroll] = useState(true);
 
   // KRW 마켓 목록 조회

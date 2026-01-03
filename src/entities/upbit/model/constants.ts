@@ -1,5 +1,10 @@
 /**
- * 업비트 API 상수 정의
+ * 암호화폐 거래소 API 상수 정의
+ *
+ * 참고: 빗썸 API 사용 (업비트 호환)
+ * - 업비트 API rate limit (HTTP 429) 회피를 위해 빗썸 API 사용
+ * - 빗썸은 업비트와 동일한 REST/WebSocket API 스펙 제공
+ * - 엔드포인트와 응답 형식은 업비트와 호환
  */
 
 import type { MinuteUnit, WebSocketCandleType } from './types';
@@ -8,11 +13,11 @@ import type { MinuteUnit, WebSocketCandleType } from './types';
 // API URL
 // ============================================================
 
-/** 업비트 REST API 기본 URL */
-export const UPBIT_API_BASE_URL = 'https://api.upbit.com';
+/** 빗썸 REST API 기본 URL (업비트 호환) */
+export const UPBIT_API_BASE_URL = process.env.NEXT_PUBLIC_BITHUMB_REST_API_URL || 'https://api.bithumb.com';
 
-/** 업비트 WebSocket URL */
-export const UPBIT_WEBSOCKET_URL = 'wss://api.upbit.com/websocket/v1';
+/** 빗썸 WebSocket URL */
+export const UPBIT_WEBSOCKET_URL = `${process.env.NEXT_PUBLIC_BITHUMB_WEBSOCKET_API_URL}/websocket/v1` || 'wss://ws-api.bithumb.com/websocket/v1';
 
 // ============================================================
 // API 엔드포인트
