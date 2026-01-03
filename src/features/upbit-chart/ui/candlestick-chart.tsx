@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createChart, CandlestickSeries, HistogramSeries, CrosshairMode } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi, DeepPartial, ChartOptions as LWChartOptions, LogicalRange, Time } from 'lightweight-charts';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography, Popper } from '@mui/material';
+import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
 
 import {
   useCandles,
@@ -18,7 +19,7 @@ import {
 
 import type { ChartOptions } from '../model/types';
 import { DEFAULT_CHART_OPTIONS } from '../model/types';
-import { toChartCandles, toVolumeDataArray } from '../lib/transform';
+import { toChartCandles, toVolumeDataArray, calculatePriceChange } from '../lib';
 
 type CandleData = MinuteCandle | DayCandle | WeekCandle | MonthCandle;
 
@@ -95,6 +96,21 @@ export function CandlestickChart({
   const epochRef = useRef(0); // 타임프레임/마켓 변경 시 증가
   const chartInitializedRef = useRef(false); // 차트가 현재 데이터로 초기화되었는지
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // 툴팁 상태
+  const [tooltip, setTooltip] = useState<{
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume?: number;
+  } | null>(null);
+
+  // 툴팁 anchor element (가상 element, 마우스 커서 위치)
+  const [tooltipAnchor, setTooltipAnchor] = useState<{
+    getBoundingClientRect: () => DOMRect;
+  } | null>(null);
 
   // 옵션 병합
   const chartOptions = { ...DEFAULT_CHART_OPTIONS, ...options };
@@ -298,6 +314,61 @@ export function CandlestickChart({
       chart.timeScale().subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
     }
 
+    // 마우스 호버 시 캔들 정보 표시 (Crosshair Move)
+    chart.subscribeCrosshairMove((param) => {
+      // 차트 밖이거나 데이터가 없으면 툴팁 숨김
+      if (!param.time || !param.point || param.point.x < 0 || param.point.y < 0) {
+        setTooltip(null);
+        setTooltipAnchor(null);
+        return;
+      }
+
+      // 현재 캔들 데이터 가져오기
+      const candleData = param.seriesData.get(candleSeries);
+      const volumeData = volumeSeries ? param.seriesData.get(volumeSeries) : null;
+
+      if (candleData && 'open' in candleData) {
+        // 시간 포맷팅 (Unix timestamp → 날짜/시간)
+        const time = new Date((param.time as number) * 1000);
+        const timeStr = time.toLocaleString('ko-KR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+
+        // 차트 컨테이너의 절대 좌표 계산
+        const containerRect = container.getBoundingClientRect();
+        const x = containerRect.left + param.point.x;
+        const y = containerRect.top + param.point.y;
+
+        // 가상 anchor element 생성 (Popper가 마우스 커서 위치를 기준으로 계산)
+        setTooltipAnchor({
+          getBoundingClientRect: () =>
+            ({
+              width: 0,
+              height: 0,
+              top: y,
+              left: x,
+              right: x,
+              bottom: y,
+              x: x,
+              y: y,
+            }) as DOMRect,
+        });
+
+        setTooltip({
+          time: timeStr,
+          open: candleData.open,
+          high: candleData.high,
+          low: candleData.low,
+          close: candleData.close,
+          volume: volumeData && 'value' in volumeData && typeof volumeData.value === 'number' ? volumeData.value : undefined,
+        });
+      }
+    });
+
     return () => {
       chartInitializedRef.current = false; // 실시간 업데이트 차단
       if (infiniteScroll) {
@@ -496,6 +567,114 @@ export function CandlestickChart({
           </Typography>
         </Box>
       )}
+
+      {/* 마우스 호버 툴팁 (Popper로 자동 위치 조정) */}
+      <Popper
+        open={Boolean(tooltip && tooltipAnchor)}
+        anchorEl={tooltipAnchor}
+        placement="right-start"
+        modifiers={[
+          {
+            name: 'flip',
+            enabled: true,
+            options: {
+              fallbackPlacements: ['left-start', 'top-start', 'bottom-start'],
+            },
+          },
+          {
+            name: 'preventOverflow',
+            enabled: true,
+            options: {
+              boundary: chartContainerRef.current,
+              padding: 8,
+            },
+          },
+          {
+            name: 'offset',
+            options: {
+              offset: [0, 10],
+            },
+          },
+        ]}
+        style={{ zIndex: 1000, pointerEvents: 'none' }}
+      >
+        <Box
+          sx={{
+            bgcolor: darkMode ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            border: `1px solid ${darkMode ? '#3c3c3c' : '#e1e1e1'}`,
+            borderRadius: 1,
+            px: 1.5,
+            py: 1,
+            minWidth: 180,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          }}
+        >
+          {tooltip &&
+            (() => {
+              // 시가 대비 종가 변화율 계산 (유틸리티 함수 사용)
+              const priceChange = calculatePriceChange(tooltip.open, tooltip.close, upColor, downColor);
+
+              return (
+                <>
+                  {/* 종가 + 변화율 (강조) */}
+                  <Box sx={{ mb: 1, pb: 0.75, borderBottom: `1px solid ${darkMode ? '#3c3c3c' : '#e1e1e1'}` }}>
+                    <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 700, mb: 0.5, color: priceChange.changeColor }}>
+                      종가: {tooltip.close.toLocaleString()}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {priceChange.isRise ? (
+                        <ArrowDropUp sx={{ fontSize: '1.25rem', color: priceChange.changeColor }} />
+                      ) : (
+                        <ArrowDropDown sx={{ fontSize: '1.25rem', color: priceChange.changeColor }} />
+                      )}
+                      <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600, color: priceChange.changeColor }}>
+                        {priceChange.formattedChange}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* OHLC 상세 정보 */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                    <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                      <Box component="span" sx={{ color: darkMode ? '#999' : '#666', minWidth: 40, display: 'inline-block' }}>
+                        시가:
+                      </Box>
+                      <Box component="span" sx={{ fontWeight: 600 }}>
+                        {tooltip.open.toLocaleString()}
+                      </Box>
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                      <Box component="span" sx={{ color: darkMode ? '#999' : '#666', minWidth: 40, display: 'inline-block' }}>
+                        고가:
+                      </Box>
+                      <Box component="span" sx={{ fontWeight: 600, color: upColor }}>
+                        {tooltip.high.toLocaleString()}
+                      </Box>
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                      <Box component="span" sx={{ color: darkMode ? '#999' : '#666', minWidth: 40, display: 'inline-block' }}>
+                        저가:
+                      </Box>
+                      <Box component="span" sx={{ fontWeight: 600, color: downColor }}>
+                        {tooltip.low.toLocaleString()}
+                      </Box>
+                    </Typography>
+                    {tooltip.volume !== undefined && (
+                      <Typography variant="body2" sx={{ fontSize: '0.75rem', mt: 0.5, pt: 0.5, borderTop: `1px solid ${darkMode ? '#3c3c3c' : '#e1e1e1'}` }}>
+                        <Box component="span" sx={{ color: darkMode ? '#999' : '#666', minWidth: 40, display: 'inline-block' }}>
+                          거래량:
+                        </Box>
+                        <Box component="span" sx={{ fontWeight: 600 }}>
+                          {tooltip.volume.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </Box>
+                      </Typography>
+                    )}
+                  </Box>
+                </>
+              );
+            })()}
+        </Box>
+      </Popper>
     </Box>
   );
 }
