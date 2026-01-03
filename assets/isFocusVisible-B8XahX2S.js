@@ -1,0 +1,1 @@
+import"./iframe-Dx8Q026r.js";import{h as s,T as r,i as t}from"./Box-D9i6h9tN.js";function a(){const e=s(t);return e[r]||e}function c(e){try{return e.matches(":focus-visible")}catch{}return!1}export{c as i,a as u};
