@@ -2,9 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📚 Documentation Structure
+
+- **This file (CLAUDE.md)**: Project overview, technology stack, and development commands
+- **`.claude/` directory**: Detailed coding conventions, API guides, and workflows
+  - `conventions/SKILL.md`: Code standards and anti-patterns
+  - `api/upbit-SKILL.md`: Upbit API usage guide
+  - `workflows/SKILL.md`: Git workflow and commit rules
+  - `examples/`: Code examples
+
+**For specific coding patterns and rules, always refer to `.claude/` Skills first.**
+
 ## Project Overview
 
-**Garden Bizarre Adventure** is a Next.js 15 social media platform using the App Router with TypeScript, React 19, MUI v7, and Tailwind CSS v4. The project follows Feature-Sliced Design (FSD) architecture and uses Supabase for backend services and Firebase Storage for file uploads.
+**Garden Bizarre Adventure** is a Next.js 15 social media platform using the App Router with TypeScript, React 19, MUI v7, and Tailwind CSS v4. The project follows Feature-Sliced Design (FSD) architecture and uses Supabase for backend services, Firebase Storage for file uploads, and Upbit API for cryptocurrency data.
 
 ## Development Commands
 
@@ -48,12 +59,23 @@ src/
 ├── app/              # Next.js App Router pages and layouts
 │   └── providers/    # React context providers (auth, layout, etc.)
 ├── widgets/          # Large UI compositions (header, footer, hero sections)
-├── features/         # Business logic features (auth, tabs, etc.)
+├── features/         # Business logic features
+│   ├── auth/         # Authentication features
+│   ├── upbit-chart/  # Upbit candlestick chart
+│   │   ├── ui/       # Chart components & stories
+│   │   ├── model/    # Chart types & options
+│   │   └── lib/      # Data transformation (toChartCandles, etc.)
 │   └── [feature]/
 │       ├── ui/       # Feature-specific UI components
 │       ├── model/    # State management
 │       └── lib/      # Feature utilities
 ├── entities/         # Business entities
+│   ├── upbit/        # Upbit API entity
+│   │   ├── api/      # REST API clients (markets, tickers, candles)
+│   │   ├── model/    # Types, constants, WebSocket store
+│   │   ├── hooks/    # TanStack Query hooks (useCandles, useKrwMarkets)
+│   │   └── lib/      # Format utilities (parseMarketCode, getMarketLabel)
+│   └── [entity]/
 ├── shared/           # Shared utilities and components
 │   ├── ui/           # Reusable UI components (dropzone, container, etc.)
 │   ├── lib/          # Shared libraries (supabase, firbase, utils)
@@ -77,11 +99,15 @@ src/
 - **Next.js 15** with App Router and Turbopack
 - **React 19** with React DOM 19
 - **MUI v7** (Material-UI) - Component library
-  - **IMPORTANT**: MUI v7 does NOT have `Grid2`. Use regular `Grid` component with `item` and `xs`/`sm` props
-  - Example: `<Grid container><Grid item xs={12} sm={6}>...</Grid></Grid>`
+  - **IMPORTANT**: MUI v7 does NOT have `Grid2`. Use regular `Grid` component
+  - Example: `<Grid container spacing={2}><Grid item xs={12} sm={6}>...</Grid></Grid>`
 - **Tailwind CSS v4** - Utility-first CSS
 - **Motion** (Framer Motion) - Animations
-- **TanStack Query** - Server state management
+- **TanStack Query** - Server state management and caching
+- **lightweight-charts** - TradingView-style charts for cryptocurrency data
+  - Candlestick charts with volume
+  - Real-time updates via WebSocket
+  - Infinite scroll for historical data
 
 ### Backend & Services
 
@@ -93,6 +119,12 @@ src/
   - Client: `src/shared/lib/firbase/client.ts` (note: typo "firbase" is intentional in folder name)
   - Upload utility: `src/shared/lib/firbase/upload.ts`
   - Supports parallel uploads with progress tracking
+- **Upbit API** - Cryptocurrency market data (Public API)
+  - Entity: `src/entities/upbit/`
+  - REST API: Markets, Tickers, Candles (minutes/days/weeks/months)
+  - WebSocket: Real-time ticker, orderbook, candle updates
+  - Features: `src/features/upbit-chart/` (Candlestick chart component)
+  - API Docs: `/upbit/*.md`
 
 ### Development Tools
 
@@ -276,10 +308,83 @@ import { supabase } from '@/shared/lib/supabase/client';
 const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
 ```
 
+### Upbit Chart Component
+
+```typescript
+import { CandlestickChart } from '@/features/upbit-chart/ui';
+import { useKrwMarkets } from '@/entities/upbit';
+
+// Basic usage
+<CandlestickChart
+  market="KRW-BTC"
+  timeframe={{ type: 'minutes', unit: 15 }}
+  options={{ height: 500, darkMode: true, showVolume: true }}
+/>
+
+// With real-time updates (minutes only)
+<CandlestickChart
+  market="KRW-BTC"
+  timeframe={{ type: 'minutes', unit: 1 }}
+  realtime={true}
+  options={{ height: 500 }}
+/>
+
+// With infinite scroll
+<CandlestickChart
+  market="KRW-ETH"
+  timeframe={{ type: 'days' }}
+  infiniteScroll={true}
+  initialCount={100}
+  options={{ height: 600 }}
+/>
+```
+
+**See `.claude/examples/upbit-chart-component.tsx` for more examples.**
+
+### Upbit API Usage
+
+```typescript
+import { useCandles, useKrwMarkets, getMarketLabel } from '@/entities/upbit';
+
+// Fetch candle data with TanStack Query
+const { data: candles, isLoading } = useCandles('KRW-BTC', { type: 'minutes', unit: 5 }, { count: 200 });
+
+// Get KRW markets
+const { data: krwMarkets } = useKrwMarkets();
+
+// Format market label: "비트코인 (BTC/KRW)"
+const label = getMarketLabel(krwMarkets[0]);
+```
+
+**See `.claude/api/upbit-SKILL.md` for complete API documentation.**
+
 ## Important Notes
 
-1. **Firebase folder naming**: The folder is named `firbase` (not `firebase`) - this is intentional
-2. **MUI Grid2**: Does not exist in MUI v7 - use regular `Grid` component
-3. **Import style**: Always use type imports for TypeScript types
-4. **Korean commits**: Commit messages in Korean are supported and encouraged
-5. **Turbopack**: Both dev and build use Turbopack for faster builds
+1. **`.claude/` Skills**: Always check `.claude/` directory for detailed coding patterns and anti-patterns
+2. **Firebase folder naming**: The folder is named `firbase` (not `firebase`) - this is intentional
+3. **MUI Grid2**: Does not exist in MUI v7 - use regular `Grid` component
+4. **Import style**: Always use type imports for TypeScript types
+5. **Korean commits**: Commit messages in Korean are supported and encouraged
+6. **Turbopack**: Both dev and build use Turbopack for faster builds
+7. **Upbit timezone**: `candle_date_time_kst` requires explicit `+09:00` timezone when converting
+8. **Infinite scroll**: Use `getPreviousCandleTime` to avoid duplicate data when paginating
+
+## Claude Code Skills System
+
+This project uses the `.claude/` directory to store detailed coding conventions and API guides that Claude Code automatically references.
+
+### Quick Reference
+
+- **Coding standards**: `.claude/conventions/SKILL.md`
+- **Upbit API patterns**: `.claude/api/upbit-SKILL.md`
+- **Git workflow**: `.claude/workflows/SKILL.md`
+- **Code examples**: `.claude/examples/`
+
+### When to Check Skills
+
+- Before implementing a new feature
+- When unsure about coding patterns
+- When working with Upbit API
+- When creating git commits or PRs
+
+The Skills system ensures consistent code quality across the team and provides Claude Code with project-specific best practices.
