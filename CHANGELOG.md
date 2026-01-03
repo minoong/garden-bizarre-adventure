@@ -1,3 +1,9 @@
+## [1.26.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.25.0...v1.26.0) (2026-01-03)
+
+### ✨ 새로운 기능
+
+* Bithumb API 로 교체 ([#58](https://github.com/minoong/garden-bizarre-adventure/issues/58)) ([33ef29c](https://github.com/minoong/garden-bizarre-adventure/commit/33ef29cf029f678a977cbc595e7ae5395491c357))
+
 ## [1.25.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.24.0...v1.25.0) (2026-01-03)
 
 ### ✨ 새로운 기능
