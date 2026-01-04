@@ -32,7 +32,7 @@ interface WebSocketManagerOptions {
 const DEFAULT_OPTIONS: Required<WebSocketManagerOptions> = {
   reconnectInterval: 1000,
   maxReconnectAttempts: 5,
-  flushInterval: 100, // 100ms = 초당 10회 업데이트
+  flushInterval: 0, // 100ms = 초당 10회 업데이트
 };
 
 /**

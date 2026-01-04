@@ -16,8 +16,10 @@ import type { MinuteUnit, WebSocketCandleType } from './types';
 /** 빗썸 REST API 기본 URL (업비트 호환) */
 export const UPBIT_API_BASE_URL = process.env.NEXT_PUBLIC_BITHUMB_REST_API_URL || 'https://api.bithumb.com';
 
-/** 빗썸 WebSocket URL */
-export const UPBIT_WEBSOCKET_URL = `${process.env.NEXT_PUBLIC_BITHUMB_WEBSOCKET_API_URL}/websocket/v1` || 'wss://ws-api.bithumb.com/websocket/v1';
+/** 빗썸 WebSocket URL (업비트 호환) */
+export const UPBIT_WEBSOCKET_URL = process.env.NEXT_PUBLIC_BITHUMB_WEBSOCKET_URL
+  ? `${process.env.NEXT_PUBLIC_BITHUMB_WEBSOCKET_URL}/websocket/v1`
+  : 'wss://ws-api.bithumb.com/websocket/v1';
 
 // ============================================================
 // API 엔드포인트

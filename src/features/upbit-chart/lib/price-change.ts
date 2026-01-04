@@ -15,6 +15,8 @@ export interface PriceChange {
   formattedChange: string;
   /** 포맷된 변화율만 (예: "+2.46%") */
   formattedRate: string;
+  /** 포맷된 변화 금액만 (예: "+1,200") */
+  formattedPriceChange: string;
 }
 
 /**
@@ -47,6 +49,7 @@ export function calculatePriceChange(open: number, close: number, upColor = '#c8
 
   const formattedChange = `${sign}${formattedAmount} (${sign}${formattedRateNum}%)`;
   const formattedRate = `${sign}${formattedRateNum}%`;
+  const formattedPriceChange = `${sign}${formattedAmount}`;
 
   return {
     changeAmount,
@@ -55,6 +58,7 @@ export function calculatePriceChange(open: number, close: number, upColor = '#c8
     changeColor,
     formattedChange,
     formattedRate,
+    formattedPriceChange,
   };
 }
 
