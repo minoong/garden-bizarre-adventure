@@ -1,1 +1,1 @@
-export { sortMarketData, getChangeColor } from './utils';
+export { sortMarketData } from './utils';

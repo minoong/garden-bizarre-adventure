@@ -102,11 +102,15 @@ export {
   formatChangePrice,
   formatVolume,
   formatCoinVolume,
+  formatTradePrice,
   getChangeLabel,
   getChangeColor,
   formatTimestamp,
   formatCandleTime,
 } from './lib/format';
+
+export { calculatePriceChange, calculateDailyChange } from './lib/price-change';
+export type { PriceChange } from './lib/price-change';
 
 // ============================================================
 // WebSocket Types

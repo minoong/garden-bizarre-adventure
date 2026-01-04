@@ -16,10 +16,11 @@ import {
   type WeekCandle,
   type MonthCandle,
 } from '@/entities/upbit';
+import { calculatePriceChange } from '@/entities/upbit';
 
 import type { ChartOptions } from '../model/types';
 import { DEFAULT_CHART_OPTIONS } from '../model/types';
-import { toChartCandles, toVolumeDataArray, calculatePriceChange } from '../lib';
+import { toChartCandles, toVolumeDataArray } from '../lib';
 
 type CandleData = MinuteCandle | DayCandle | WeekCandle | MonthCandle;
 

@@ -25,17 +25,3 @@ export function sortMarketData(data: MarketRowData[], sortBy: SortField, sortOrd
     return 0;
   });
 }
-
-/**
- * 변동률 색상 가져오기
- */
-export function getChangeColor(change: 'RISE' | 'EVEN' | 'FALL'): string {
-  switch (change) {
-    case 'RISE':
-      return '#c84a31'; // 빨강
-    case 'FALL':
-      return '#1261c4'; // 파랑
-    default:
-      return '#000000'; // 검정
-  }
-}
