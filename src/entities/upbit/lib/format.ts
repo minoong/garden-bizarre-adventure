@@ -153,6 +153,29 @@ export function formatCoinVolume(volume: number, symbol?: string): string {
 }
 
 /**
+ * 거래대금을 백만원 단위로 포맷 (단위 제외, 숫자만 반환)
+ * @param price - 거래대금
+ * @returns 포맷팅된 거래대금 문자열 (백만원 단위)
+ * @example formatTradePrice(54201045000) // '54,201' (억 단위는 formatVolume 사용)
+ * @example formatTradePrice(1234567890) // '1,234'
+ * @example formatTradePrice(500000) // '0.5'
+ */
+export function formatTradePrice(price: number): string {
+  const million = price / 1000000; // 백만원 변환
+
+  if (million >= 1) {
+    // 1 백만 이상이면 정수로 표시
+    return Math.floor(million).toLocaleString('ko-KR');
+  } else {
+    // 1 백만 미만이면 소수점 2자리
+    return million.toLocaleString('ko-KR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+  }
+}
+
+/**
  * 변동 상태 라벨 반환
  * @param change - 변동 상태
  * @returns 한글 라벨

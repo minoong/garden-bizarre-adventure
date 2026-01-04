@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import type { OverlayScrollbarsComponentRef } from 'overlayscrollbars-react';
@@ -9,38 +9,11 @@ import { Star, StarBorder, ArrowDropDown as ArrowDropDownIcon } from '@mui/icons
 
 import 'overlayscrollbars/overlayscrollbars.css';
 
-import { useKrwMarkets, useTicker, useUpbitSocket, formatPrice, parseMarketCode } from '@/entities/upbit';
-import type { Ticker, WebSocketTicker } from '@/entities/upbit';
+import { formatPrice, parseMarketCode, calculatePriceChange, CHANGE_TYPE_COLORS, formatTradePrice } from '@/entities/upbit';
 import { D3Candle } from '@/features/upbit-chart/ui/d3-candle';
-import { calculatePriceChange } from '@/features/upbit-chart/lib';
 
-import type { MarketListTableProps, MarketRowData, SortField, SortOrder } from '../model/types';
-import { sortMarketData } from '../lib/utils';
-
-// 색상 상수 (업비트 스타일)
-const COLORS = {
-  rise: '#c84a47', // 상승 (빨간색)
-  fall: '#1261c4', // 하락 (파란색)
-  even: '#000000', // 보합 (검은색)
-};
-
-/**
- * 거래대금을 백만원 단위로 포맷 (단위 제외, 숫자만 반환)
- */
-function formatTradePrice(price: number): string {
-  const million = price / 1000000; // 백만원 변환
-
-  if (million >= 1) {
-    // 1 백만 이상이면 정수로 표시
-    return Math.floor(million).toLocaleString('ko-KR');
-  } else {
-    // 1 백만 미만이면 소수점 2자리
-    return million.toLocaleString('ko-KR', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    });
-  }
-}
+import type { MarketListTableProps } from '../model/types';
+import { useMarketListData, useMarketListSort, useMarketListFavorites, useMarketListHighlights } from '../hooks';
 
 /**
  * 암호화폐 마켓 리스트 테이블 (업비트 스타일)
@@ -48,15 +21,7 @@ function formatTradePrice(price: number): string {
  * - WebSocket으로 실시간 가격 업데이트
  */
 export function MarketListTable({ initialSortBy = 'acc_trade_price_24h', initialSortOrder = 'desc', onRowClick, className }: MarketListTableProps) {
-  const [sortBy, setSortBy] = useState<SortField>(initialSortBy);
-  const [sortOrder, setSortOrder] = useState<SortOrder>(initialSortOrder);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
-
-  // 가격 하이라이트 상태 (market -> { isHighlighted: boolean, isRise: boolean })
-  const [highlights, setHighlights] = useState<Map<string, { isHighlighted: boolean; isRise: boolean }>>(new Map());
-  const prevPricesRef = useRef<Map<string, number>>(new Map());
-  const timeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   // OverlayScrollbars ref
   const osRef = useRef<OverlayScrollbarsComponentRef>(null);
@@ -67,129 +32,23 @@ export function MarketListTable({ initialSortBy = 'acc_trade_price_24h', initial
     return osInstance?.elements().viewport || null;
   }, []);
 
-  // 즐겨찾기 토글
-  const toggleFavorite = (market: string) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(market)) {
-        newFavorites.delete(market);
-      } else {
-        newFavorites.add(market);
-      }
-      return newFavorites;
-    });
-  };
+  // 1. 데이터 fetching & WebSocket
+  const { data, realtimeTickers, isLoading, wsStatus } = useMarketListData();
 
-  // 1. KRW 마켓 목록 조회 (REST API)
-  const { data: markets, isLoading: isLoadingMarkets } = useKrwMarkets();
-
-  // 2. 초기 현재가 조회 (REST API)
-  const marketCodes = useMemo(() => markets?.map((m) => m.market) ?? [], [markets]);
-  const { data: tickers, isLoading: isLoadingTickers } = useTicker(marketCodes, {
-    enabled: marketCodes.length > 0,
+  // 2. 정렬
+  const { sortedData, sortBy, sortOrder, handleSort } = useMarketListSort({
+    data,
+    initialSortBy,
+    initialSortOrder,
   });
 
-  // 3. 실시간 ticker WebSocket 구독
-  const {
-    tickers: realtimeTickers,
-    connect,
-    status: wsStatus,
-  } = useUpbitSocket(marketCodes.length > 0 ? marketCodes : [], marketCodes.length > 0 ? ['ticker'] : []);
+  // 3. 즐겨찾기
+  const { toggleFavorite, isFavorite } = useMarketListFavorites();
 
-  useEffect(() => {
-    if (wsStatus === 'disconnected' && marketCodes.length > 0) {
-      connect();
-    }
-  }, [connect, marketCodes.length, wsStatus]);
+  // 4. 하이라이트
+  const { getHighlight } = useMarketListHighlights(realtimeTickers);
 
-  // 실시간 가격 변경 시 하이라이트 처리
-  useEffect(() => {
-    realtimeTickers.forEach((ticker, market) => {
-      const prevPrice = prevPricesRef.current.get(market);
-      const currentPrice = ticker.trade_price;
-
-      if (prevPrice !== undefined && prevPrice !== currentPrice && currentPrice > 0) {
-        const isRise = currentPrice > prevPrice;
-
-        // 기존 timeout 취소
-        const existingTimeout = timeoutsRef.current.get(market);
-        if (existingTimeout) {
-          clearTimeout(existingTimeout);
-        }
-
-        // 하이라이트 활성화
-        setHighlights((prev) => new Map(prev).set(market, { isHighlighted: true, isRise }));
-
-        // 0.3초 후 하이라이트 제거
-        const timeoutId = setTimeout(() => {
-          setHighlights((prev) => {
-            const newMap = new Map(prev);
-            newMap.delete(market);
-            return newMap;
-          });
-          timeoutsRef.current.delete(market);
-        }, 300);
-
-        timeoutsRef.current.set(market, timeoutId);
-      }
-
-      prevPricesRef.current.set(market, currentPrice);
-    });
-  }, [realtimeTickers]);
-
-  // 4. 테이블 데이터 생성 (REST + WebSocket 병합)
-  const tableData = useMemo<MarketRowData[]>(() => {
-    if (!markets || !tickers) return [];
-
-    return markets.map((market) => {
-      // WebSocket 데이터 우선 사용, 없으면 REST API 데이터 사용
-      const realtimeTicker = realtimeTickers.get(market.market);
-      const restTicker = tickers.find((t) => t.market === market.market);
-      const ticker: WebSocketTicker | Ticker | undefined = realtimeTicker || restTicker;
-
-      if (!ticker) {
-        return {
-          market: market.market,
-          korean_name: market.korean_name,
-          english_name: market.english_name,
-          trade_price: 0,
-          opening_price: 0,
-          high_price: 0,
-          low_price: 0,
-          change: 'EVEN' as const,
-          change_rate: 0,
-          change_price: 0,
-          acc_trade_price_24h: 0,
-          acc_trade_volume_24h: 0,
-        };
-      }
-
-      // WebSocketTicker 타입 가드
-      const isWebSocketTicker = (t: WebSocketTicker | Ticker): t is WebSocketTicker => 'opening_price' in t;
-
-      return {
-        market: market.market,
-        korean_name: market.korean_name,
-        english_name: market.english_name,
-        trade_price: ticker.trade_price,
-        opening_price: isWebSocketTicker(ticker) ? ticker.opening_price : ticker.prev_closing_price,
-        high_price: ticker.high_price,
-        low_price: ticker.low_price,
-        change: isWebSocketTicker(ticker) ? ticker.change : 'EVEN',
-        change_rate: isWebSocketTicker(ticker) ? ticker.change_rate : ticker.signed_change_rate,
-        change_price: isWebSocketTicker(ticker) ? ticker.signed_change_price : ticker.signed_change_price,
-        acc_trade_price_24h: ticker.acc_trade_price_24h,
-        acc_trade_volume_24h: ticker.acc_trade_volume_24h,
-      };
-    });
-  }, [markets, tickers, realtimeTickers]);
-
-  // 5. 정렬된 데이터
-  const sortedData = useMemo(() => {
-    return sortMarketData(tableData, sortBy, sortOrder);
-  }, [tableData, sortBy, sortOrder]);
-
-  // 6. 가상화 설정
+  // 5. 가상화 설정
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual은 React Compiler와 알려진 호환성 문제가 있음
   const virtualizer = useVirtualizer({
     count: sortedData.length,
@@ -200,18 +59,8 @@ export function MarketListTable({ initialSortBy = 'acc_trade_price_24h', initial
 
   const virtualItems = virtualizer.getVirtualItems();
 
-  // 정렬 변경 핸들러
-  const handleSort = (field: SortField) => {
-    if (sortBy === field) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
-    }
-  };
-
   // 로딩 상태
-  if (isLoadingMarkets || isLoadingTickers) {
+  if (isLoading) {
     return (
       <Box className={className} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
         <CircularProgress />
@@ -429,17 +278,17 @@ export function MarketListTable({ initialSortBy = 'acc_trade_price_24h', initial
             {/* 보이는 행만 렌더링 */}
             {virtualItems.map((virtualRow) => {
               const row = sortedData[virtualRow.index];
-              const isFavorite = favorites.has(row.market);
+              const isRowFavorite = isFavorite(row.market);
               const isSelected = selectedMarket === row.market;
 
               // 마켓 코드 파싱
               const { base, quote } = parseMarketCode(row.market);
 
               // 가격 변화 계산
-              const priceChange = calculatePriceChange(row.opening_price, row.trade_price, COLORS.rise, COLORS.fall);
+              const priceChange = calculatePriceChange(row.opening_price, row.trade_price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL);
 
               // 하이라이트 상태
-              const highlight = highlights.get(row.market);
+              const highlight = getHighlight(row.market);
               const highlightBgColor = highlight?.isHighlighted ? (highlight.isRise ? 'rgba(200, 74, 71, 0.15)' : 'rgba(18, 97, 196, 0.15)') : 'transparent';
 
               // 행 클릭 핸들러
@@ -495,7 +344,7 @@ export function MarketListTable({ initialSortBy = 'acc_trade_price_24h', initial
                       }}
                       sx={{ padding: '2px' }}
                     >
-                      {isFavorite ? <Star sx={{ fontSize: '1rem', color: '#fbbf24' }} /> : <StarBorder sx={{ fontSize: '1rem', color: '#d1d5db' }} />}
+                      {isRowFavorite ? <Star sx={{ fontSize: '1rem', color: '#fbbf24' }} /> : <StarBorder sx={{ fontSize: '1rem', color: '#d1d5db' }} />}
                     </IconButton>
                   </Box>
 

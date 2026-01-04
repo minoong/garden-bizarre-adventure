@@ -2,6 +2,8 @@
  * 가격 변화 계산 유틸리티
  */
 
+import { CHANGE_TYPE_COLORS } from '../model/constants';
+
 export interface PriceChange {
   /** 변화 금액 (절대값) */
   changeAmount: number;
@@ -24,8 +26,8 @@ export interface PriceChange {
  *
  * @param open - 시가
  * @param close - 종가
- * @param upColor - 상승 색상 (기본: '#c84a31')
- * @param downColor - 하락 색상 (기본: '#1261c4')
+ * @param upColor - 상승 색상 (기본: CHANGE_TYPE_COLORS.RISE)
+ * @param downColor - 하락 색상 (기본: CHANGE_TYPE_COLORS.FALL)
  * @returns PriceChange 객체
  *
  * @example
@@ -36,7 +38,12 @@ export interface PriceChange {
  * console.log(change.changeColor); // '#c84a31'
  * ```
  */
-export function calculatePriceChange(open: number, close: number, upColor = '#c84a31', downColor = '#1261c4'): PriceChange {
+export function calculatePriceChange(
+  open: number,
+  close: number,
+  upColor: string = CHANGE_TYPE_COLORS.RISE,
+  downColor: string = CHANGE_TYPE_COLORS.FALL,
+): PriceChange {
   const changeAmount = close - open;
   const changeRate = (changeAmount / open) * 100;
   const isRise = close >= open;
@@ -77,6 +84,11 @@ export function calculatePriceChange(open: number, close: number, upColor = '#c8
  * console.log(change.formattedRate); // "+3.00%"
  * ```
  */
-export function calculateDailyChange(prevClose: number, currentPrice: number, upColor = '#c84a31', downColor = '#1261c4'): PriceChange {
+export function calculateDailyChange(
+  prevClose: number,
+  currentPrice: number,
+  upColor = CHANGE_TYPE_COLORS.RISE,
+  downColor = CHANGE_TYPE_COLORS.FALL,
+): PriceChange {
   return calculatePriceChange(prevClose, currentPrice, upColor, downColor);
 }
