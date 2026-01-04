@@ -1,3 +1,9 @@
+## [1.28.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.27.0...v1.28.0) (2026-01-04)
+
+### ✨ 새로운 기능
+
+* 마켓 코인 시세 테이블 ([#62](https://github.com/minoong/garden-bizarre-adventure/issues/62)) ([0ff8295](https://github.com/minoong/garden-bizarre-adventure/commit/0ff829597da1acee488384abc244b7d4e9717086))
+
 ## [1.27.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.26.0...v1.27.0) (2026-01-03)
 
 ### ✨ 새로운 기능
