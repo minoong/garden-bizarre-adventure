@@ -1,3 +1,13 @@
+## [1.29.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.28.0...v1.29.0) (2026-01-06)
+
+### ✨ 새로운 기능
+
+* 코인 시세 테이블 컴파운드 디자인 패턴 ([#66](https://github.com/minoong/garden-bizarre-adventure/issues/66)) ([9214e7d](https://github.com/minoong/garden-bizarre-adventure/commit/9214e7dfc319e15c1ad2d41c26b86793c94f7d74))
+
+### 📦 리팩토링
+
+* **market-list:** 로직과 UI 분리 및 FSD 아키텍처 개선 ([#64](https://github.com/minoong/garden-bizarre-adventure/issues/64)) ([129c361](https://github.com/minoong/garden-bizarre-adventure/commit/129c3610a3f2a34bb91fed046b2a0ce8c100f866))
+
 ## [1.28.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.27.0...v1.28.0) (2026-01-04)
 
 ### ✨ 새로운 기능
