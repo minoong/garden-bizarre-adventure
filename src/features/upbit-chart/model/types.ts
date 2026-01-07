@@ -29,6 +29,8 @@ export interface ChartOptions {
   showMovingAverage?: boolean;
   /** 이동평균선 기간 (기본값: [5, 20, 60]) */
   movingAveragePeriods?: number[];
+  /** 최저/최고가 라인 표시 여부 */
+  showMinMaxPrice?: boolean;
 }
 
 /**
@@ -99,4 +101,5 @@ export const DEFAULT_CHART_OPTIONS: Required<ChartOptions> = {
   showVolume: true,
   showMovingAverage: true,
   movingAveragePeriods: [5, 20, 60],
+  showMinMaxPrice: true,
 };
