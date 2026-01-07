@@ -1,0 +1,1 @@
+import{w as r,x as p,h as m}from"./Box-Dv_4hs9u.js";const c=r();function u(n){const{theme:e,name:o,props:s}=n;return!e||!e.components||!e.components[o]||!e.components[o].defaultProps?s:p(e.components[o].defaultProps,s)}function f({props:n,name:e,defaultTheme:o,themeId:s}){let t=m(o);return s&&(t=t[s]||t),u({theme:t,name:e,props:n})}export{c as s,f as u};
