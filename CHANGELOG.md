@@ -1,3 +1,9 @@
+## [1.30.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.29.0...v1.30.0) (2026-01-07)
+
+### ✨ 새로운 기능
+
+* 업비트 차트 이동평균선(SMA) 추가 및 디자인 고도화 ([#68](https://github.com/minoong/garden-bizarre-adventure/issues/68)) ([a06fb87](https://github.com/minoong/garden-bizarre-adventure/commit/a06fb875d971868e006bedb7884c3d116c341341)), closes [#C84A31](https://github.com/minoong/garden-bizarre-adventure/issues/C84A31) [#1261C4](https://github.com/minoong/garden-bizarre-adventure/issues/1261C4)
+
 ## [1.29.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.28.0...v1.29.0) (2026-01-06)
 
 ### ✨ 새로운 기능
