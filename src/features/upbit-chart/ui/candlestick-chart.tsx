@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createChart, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode } from 'lightweight-charts';
-import type { IChartApi, ISeriesApi, DeepPartial, ChartOptions as LWChartOptions, LogicalRange, Time } from 'lightweight-charts';
+import { createChart, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, LineStyle } from 'lightweight-charts';
+import type { IChartApi, ISeriesApi, DeepPartial, ChartOptions as LWChartOptions, LogicalRange, Time, IPriceLine } from 'lightweight-charts';
 import { Box, CircularProgress, Typography, Popper } from '@mui/material';
 import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
 
@@ -93,6 +93,8 @@ export function CandlestickChart({
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const maSeriesRefs = useRef<ISeriesApi<'Line'>[]>([]);
+  const minPriceLineRef = useRef<IPriceLine | null>(null);
+  const maxPriceLineRef = useRef<IPriceLine | null>(null);
 
   // 모든 로드된 캔들 데이터 저장 (무한 스크롤용)
   const allCandlesRef = useRef<CandleData[]>([]);
@@ -119,7 +121,7 @@ export function CandlestickChart({
 
   // 옵션 병합
   const chartOptions = { ...DEFAULT_CHART_OPTIONS, ...options };
-  const { height, darkMode, upColor, downColor, showGrid, showVolume, showMovingAverage, movingAveragePeriods } = chartOptions;
+  const { height, darkMode, upColor, downColor, showGrid, showVolume, showMovingAverage, movingAveragePeriods, showMinMaxPrice } = chartOptions;
 
   // 색상 상수 (Upbit Dark Mode)
   const BG_COLOR = darkMode ? '#0B1219' : '#ffffff';
@@ -132,10 +134,72 @@ export function CandlestickChart({
   // REST API로 초기 데이터 로드
   const { data: candles, isLoading, error } = useCandles(market, timeframe, { count: initialCount });
 
-  // WebSocket ticker로 실시간 업데이트 (빗썸은 캔들 WebSocket 미지원)
+  // WebSocket ticker로 실시간 업데이트
   const { tickers, status: wsStatus } = useUpbitSocket(realtime ? [market] : [], realtime ? ['ticker'] : [], {
     autoConnect: realtime,
   });
+
+  // 최저/최고가 라인 업데이트 함수
+  const updateMinMaxPriceLines = useCallback(() => {
+    const chart = chartRef.current;
+    if (!chart || !candleSeriesRef.current || !showMinMaxPrice || allCandlesRef.current.length === 0) {
+      if (minPriceLineRef.current) {
+        candleSeriesRef.current?.removePriceLine(minPriceLineRef.current);
+        minPriceLineRef.current = null;
+      }
+      if (maxPriceLineRef.current) {
+        candleSeriesRef.current?.removePriceLine(maxPriceLineRef.current);
+        maxPriceLineRef.current = null;
+      }
+      return;
+    }
+
+    // 가시적 범위 가져오기
+    const visibleRange = chart.timeScale().getVisibleLogicalRange();
+    if (!visibleRange) return;
+
+    // 모든 캔들 데이터 (시간 순 정렬됨)
+    const allChartCandles = toChartCandles(allCandlesRef.current).sort((a, b) => (a.time as number) - (b.time as number));
+
+    // 가시적 범위에 해당하는 캔들 필터링
+    // Lightweight-charts의 logical range는 인덱스 기반
+    const visibleCandles = allChartCandles.filter((_, index) => {
+      return index >= visibleRange.from && index <= visibleRange.to;
+    });
+
+    if (visibleCandles.length === 0) return;
+
+    const maxPrice = Math.max(...visibleCandles.map((c) => c.high));
+    const minPrice = Math.min(...visibleCandles.map((c) => c.low));
+
+    // 최고가 라인
+    if (maxPriceLineRef.current) {
+      maxPriceLineRef.current.applyOptions({ price: maxPrice });
+    } else {
+      maxPriceLineRef.current = candleSeriesRef.current.createPriceLine({
+        price: maxPrice,
+        color: upColor,
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: '최고',
+      });
+    }
+
+    // 최저가 라인
+    if (minPriceLineRef.current) {
+      minPriceLineRef.current.applyOptions({ price: minPrice });
+    } else {
+      minPriceLineRef.current = candleSeriesRef.current.createPriceLine({
+        price: minPrice,
+        color: downColor,
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: '최저',
+      });
+    }
+  }, [showMinMaxPrice, upColor, downColor]);
 
   // 추가 과거 데이터 로드 함수
   const loadMoreCandles = useCallback(async () => {
@@ -175,7 +239,6 @@ export function CandlestickChart({
         return;
       }
 
-      // const newCandles = moreCandles.filter((candle) => !existingKeys.has(`${candle.candle_date_time_kst}|${candle.candle_date_time_utc}`));
       const newCandles = [...moreCandles];
 
       if (newCandles.length === 0) {
@@ -220,6 +283,9 @@ export function CandlestickChart({
           series.setData(smaData);
         });
       }
+
+      // 최저/최고가 라인 업데이트
+      updateMinMaxPriceLines();
     } catch (err) {
       // epoch가 변경되었으면 에러 무시
       if (currentEpoch !== epochRef.current) {
@@ -230,7 +296,7 @@ export function CandlestickChart({
       isLoadingMoreRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [market, timeframe, showVolume, upColor, downColor, showMovingAverage, movingAveragePeriods]);
+  }, [market, timeframe, showVolume, upColor, downColor, showMovingAverage, movingAveragePeriods, updateMinMaxPriceLines]);
 
   // 스크롤 범위 변경 감지 핸들러
   const handleVisibleRangeChange = useCallback(
@@ -241,8 +307,11 @@ export function CandlestickChart({
       if (logicalRange.from < INFINITE_SCROLL_THRESHOLD) {
         loadMoreCandles();
       }
+
+      // 가시적 범위 변경 시 가격선 업데이트
+      updateMinMaxPriceLines();
     },
-    [infiniteScroll, loadMoreCandles],
+    [infiniteScroll, loadMoreCandles, updateMinMaxPriceLines],
   );
 
   // 마켓/타임프레임 변경 시 refs 초기화
@@ -280,6 +349,10 @@ export function CandlestickChart({
       },
       rightPriceScale: {
         borderColor: BORDER_COLOR,
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.3,
+        },
       },
       timeScale: {
         borderColor: BORDER_COLOR,
@@ -324,6 +397,9 @@ export function CandlestickChart({
       const volumeData = toVolumeDataArray(candles, upColor + '80', downColor + '80');
       volumeSeries.setData(volumeData);
     }
+
+    // 최저/최고가 라인 설정
+    updateMinMaxPriceLines();
 
     // 이동평균선 시리즈 추가 및 데이터 설정
     maSeriesRefs.current = [];
@@ -420,6 +496,8 @@ export function CandlestickChart({
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
       maSeriesRefs.current = [];
+      minPriceLineRef.current = null;
+      maxPriceLineRef.current = null;
     };
   }, [
     candles,
@@ -437,6 +515,7 @@ export function CandlestickChart({
     TEXT_COLOR,
     GRID_COLOR,
     BORDER_COLOR,
+    updateMinMaxPriceLines,
   ]);
 
   // ticker WebSocket으로 실시간 가격 업데이트 + 새 캔들 생성
@@ -449,37 +528,58 @@ export function CandlestickChart({
     // ticker timestamp를 기준으로 캔들 시작 시간 계산
     const candleStartTime = getCandleStartTime(ticker.timestamp, timeframe);
     const candleTimestamp = Math.floor(candleStartTime.getTime() / 1000);
-
     // 최신 캔들 가져오기
     const latestCandle = allCandlesRef.current[0];
     const latestCandleTime = Math.floor(new Date(latestCandle.candle_date_time_kst + '+09:00').getTime() / 1000);
+
+    // 실시간 데이터 추출
+    const currentTradePrice = ticker.trade_price;
+
+    // Volume calculation using Ticker
+    // ticker.acc_trade_volume_24h is 24h volume, not minute volume.
+    // We accumulate trade_volume from ticker events for the current minute candle.
+
+    let currentVolume = latestCandle.candle_acc_trade_volume;
+
+    // If we are on a new candle (time change), reset volume for accumulation
+    // otherwise, add the trade volume.
+    // Note: ticker.trade_volume is the volume of the individual trade.
+
+    // However, if we missed packets, pure accumulation might be drifting.
+    // For Days, we can use ticker.acc_trade_volume.
+    if (timeframe.type === 'days') {
+      currentVolume = ticker.acc_trade_volume;
+    }
 
     // 새로운 캔들 시작 여부 확인
     if (candleTimestamp > latestCandleTime) {
       // 새 캔들 생성
       const newCandle = {
         time: candleTimestamp as Time,
-        open: ticker.trade_price,
-        high: ticker.trade_price,
-        low: ticker.trade_price,
-        close: ticker.trade_price,
+        open: currentTradePrice,
+        high: currentTradePrice, // Start fresh
+        low: currentTradePrice, // Start fresh
+        close: currentTradePrice,
       };
 
       candleSeriesRef.current.update(newCandle);
 
-      // allCandlesRef에도 추가 (새 캔들 데이터 생성)
+      // 새 캔들을 위한 초기 Volumes
+      const newVolume = ticker.trade_volume; // Start with current trade volume
+
+      // allCandlesRef에도 추가
       const candleStartKst = new Date(candleTimestamp * 1000 + 9 * 60 * 60 * 1000);
       const newCandleData: CandleData = {
         market,
         candle_date_time_utc: new Date(candleTimestamp * 1000).toISOString().slice(0, 19).replace('T', ' '),
         candle_date_time_kst: candleStartKst.toISOString().slice(0, 19).replace('T', ' '),
-        opening_price: ticker.trade_price,
-        high_price: ticker.trade_price,
-        low_price: ticker.trade_price,
-        trade_price: ticker.trade_price,
+        opening_price: currentTradePrice,
+        high_price: currentTradePrice,
+        low_price: currentTradePrice,
+        trade_price: currentTradePrice,
         timestamp: ticker.timestamp,
-        candle_acc_trade_price: ticker.acc_trade_price_24h,
-        candle_acc_trade_volume: ticker.acc_trade_volume_24h,
+        candle_acc_trade_price: ticker.trade_price * newVolume,
+        candle_acc_trade_volume: newVolume,
         ...(timeframe.type === 'minutes' && { unit: timeframe.unit }),
       } as CandleData;
 
@@ -489,19 +589,24 @@ export function CandlestickChart({
       if (showVolume) {
         const volumeData = {
           time: candleTimestamp as Time,
-          value: ticker.acc_trade_volume_24h,
-          color: upColor + '80', // 새 캔들은 일단 상승색
+          value: newVolume,
+          color: upColor + '80',
         };
         volumeSeriesRef.current.update(volumeData);
       }
     } else {
       // 기존 캔들 업데이트
+      // 1. Accumulate Volume (if not Day chart where we use absolute)
+      if (timeframe.type !== 'days') {
+        currentVolume += ticker.trade_volume;
+      }
+
       const updatedCandle = {
         time: latestCandleTime as Time,
         open: latestCandle.opening_price,
-        high: Math.max(latestCandle.high_price, ticker.trade_price),
-        low: Math.min(latestCandle.low_price, ticker.trade_price),
-        close: ticker.trade_price,
+        high: Math.max(latestCandle.high_price, currentTradePrice),
+        low: Math.min(latestCandle.low_price, currentTradePrice),
+        close: currentTradePrice,
       };
 
       candleSeriesRef.current.update(updatedCandle);
@@ -513,16 +618,15 @@ export function CandlestickChart({
         low_price: updatedCandle.low,
         trade_price: updatedCandle.close,
         timestamp: ticker.timestamp,
-        candle_acc_trade_price: ticker.acc_trade_price_24h,
-        candle_acc_trade_volume: ticker.acc_trade_volume_24h,
+        candle_acc_trade_volume: currentVolume,
       };
 
       // Volume 업데이트
       if (showVolume) {
-        const isUp = ticker.trade_price >= latestCandle.opening_price;
+        const isUp = currentTradePrice >= latestCandle.opening_price;
         const volumeData = {
           time: latestCandleTime as Time,
-          value: ticker.acc_trade_volume_24h,
+          value: currentVolume,
           color: isUp ? upColor + '80' : downColor + '80',
         };
         volumeSeriesRef.current.update(volumeData);
@@ -554,7 +658,10 @@ export function CandlestickChart({
         }
       });
     }
-  }, [tickers, market, realtime, timeframe, showVolume, showMovingAverage, movingAveragePeriods, upColor, downColor]);
+
+    // 실시간 가격 변화에 따른 최저/최고가 업데이트
+    updateMinMaxPriceLines();
+  }, [tickers, market, realtime, timeframe, showVolume, showMovingAverage, movingAveragePeriods, upColor, downColor, updateMinMaxPriceLines]);
 
   // 로딩 상태
   if (isLoading) {
@@ -593,7 +700,110 @@ export function CandlestickChart({
   }
 
   return (
-    <Box className={className} sx={{ position: 'relative' }}>
+    <Box className={className} sx={{ position: 'relative', bgcolor: BG_COLOR }}>
+      {/* 상단 OHLC 정보 표시 */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 8,
+          left: 12,
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0.5,
+          pointerEvents: 'none',
+        }}
+      >
+        {(() => {
+          const displayData =
+            tooltip ||
+            (allCandlesRef.current.length > 0
+              ? {
+                  open: allCandlesRef.current[0].opening_price,
+                  high: allCandlesRef.current[0].high_price,
+                  low: allCandlesRef.current[0].low_price,
+                  close: allCandlesRef.current[0].trade_price,
+                  volume: allCandlesRef.current[0].candle_acc_trade_volume,
+                }
+              : null);
+
+          if (!displayData) return null;
+          const priceChange = calculatePriceChange(displayData.open, displayData.close, upColor, downColor);
+
+          return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.2 }}>
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'baseline' }}>
+                <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'baseline' }}>
+                  <Typography sx={{ color: TEXT_COLOR, fontSize: '0.625rem', fontWeight: 700 }}>PRICE</Typography>
+                  <Typography sx={{ color: priceChange.changeColor, fontSize: '0.875rem', fontWeight: 700, lineHeight: 1 }}>
+                    {displayData.close.toLocaleString()}
+                  </Typography>
+                  <Typography sx={{ color: priceChange.changeColor, fontSize: '0.6875rem', fontWeight: 600 }}>{priceChange.formattedChange}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>
+                  <Typography sx={{ color: TEXT_COLOR, fontSize: '0.625rem' }}>
+                    시가:{' '}
+                    <Box component="span" sx={{ fontWeight: 600, color: TEXT_COLOR }}>
+                      {displayData.open.toLocaleString()}
+                    </Box>
+                  </Typography>
+                  <Typography sx={{ color: TEXT_COLOR, fontSize: '0.625rem' }}>
+                    종가:{' '}
+                    <Box component="span" sx={{ fontWeight: 600, color: TEXT_COLOR }}>
+                      {displayData.close.toLocaleString()}
+                    </Box>
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                {displayData.volume !== undefined && (
+                  <Typography sx={{ color: TEXT_COLOR, fontSize: '0.625rem' }}>
+                    VOL:{' '}
+                    <Box component="span" sx={{ fontWeight: 600, color: TEXT_COLOR }}>
+                      {displayData.volume.toLocaleString(undefined, { maximumFractionDigits: 3 })}
+                    </Box>
+                  </Typography>
+                )}
+                <Typography sx={{ color: TEXT_COLOR, fontSize: '0.625rem' }}>
+                  고가:{' '}
+                  <Box component="span" sx={{ fontWeight: 600, color: upColor }}>
+                    {displayData.high.toLocaleString()}
+                  </Box>
+                </Typography>
+                <Typography sx={{ color: TEXT_COLOR, fontSize: '0.625rem' }}>
+                  저가:{' '}
+                  <Box component="span" sx={{ fontWeight: 600, color: downColor }}>
+                    {displayData.low.toLocaleString()}
+                  </Box>
+                </Typography>
+              </Box>
+            </Box>
+          );
+        })()}
+      </Box>
+
+      {/* VOLUME 라벨 */}
+      {showVolume && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: height * 0.25 - 10,
+            left: 12,
+            zIndex: 5,
+            bgcolor: darkMode ? 'rgba(43, 43, 67, 0.4)' : 'rgba(240, 240, 240, 0.7)',
+            border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+            px: 0.6,
+            py: 0.2,
+            borderRadius: '2px',
+            pointerEvents: 'none',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: TEXT_COLOR, fontWeight: 700, fontSize: '0.625rem', letterSpacing: '0.05em' }}>
+            VOLUME
+          </Typography>
+        </Box>
+      )}
+
       <div ref={chartContainerRef} style={{ width: '100%' }} />
 
       {/* 무한 스크롤 로딩 인디케이터 */}
