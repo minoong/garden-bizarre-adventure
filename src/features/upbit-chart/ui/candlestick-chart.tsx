@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createChart, CandlestickSeries, HistogramSeries, CrosshairMode } from 'lightweight-charts';
+import { createChart, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi, DeepPartial, ChartOptions as LWChartOptions, LogicalRange, Time } from 'lightweight-charts';
 import { Box, CircularProgress, Typography, Popper } from '@mui/material';
 import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
@@ -20,7 +20,7 @@ import { calculatePriceChange } from '@/entities/upbit';
 
 import type { ChartOptions } from '../model/types';
 import { DEFAULT_CHART_OPTIONS } from '../model/types';
-import { toChartCandles, toVolumeDataArray } from '../lib';
+import { toChartCandles, toVolumeDataArray, calculateSMA } from '../lib';
 
 type CandleData = MinuteCandle | DayCandle | WeekCandle | MonthCandle;
 
@@ -28,6 +28,9 @@ type CandleData = MinuteCandle | DayCandle | WeekCandle | MonthCandle;
 const INFINITE_SCROLL_THRESHOLD = 10;
 /** 한 번에 로드할 추가 캔들 개수 */
 const LOAD_MORE_COUNT = 100;
+
+/** 이동평균선 색상 (5, 20, 60일선) */
+const MA_COLORS = ['#5EBA7D', '#D60000', '#F5D027'];
 
 /**
  * ticker timestamp를 기준으로 캔들 시작 시간 계산
@@ -89,6 +92,7 @@ export function CandlestickChart({
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const maSeriesRefs = useRef<ISeriesApi<'Line'>[]>([]);
 
   // 모든 로드된 캔들 데이터 저장 (무한 스크롤용)
   const allCandlesRef = useRef<CandleData[]>([]);
@@ -115,7 +119,15 @@ export function CandlestickChart({
 
   // 옵션 병합
   const chartOptions = { ...DEFAULT_CHART_OPTIONS, ...options };
-  const { height, darkMode, upColor, downColor, showGrid, showVolume } = chartOptions;
+  const { height, darkMode, upColor, downColor, showGrid, showVolume, showMovingAverage, movingAveragePeriods } = chartOptions;
+
+  // 색상 상수 (Upbit Dark Mode)
+  const BG_COLOR = darkMode ? '#0B1219' : '#ffffff';
+  const TEXT_COLOR = darkMode ? '#d1d4dc' : '#191919';
+  const GRID_COLOR = darkMode ? '#2B2B43' : '#e1e1e1';
+  const BORDER_COLOR = darkMode ? '#2B2B43' : '#e1e1e1';
+
+  // 이동평균선 색상
 
   // REST API로 초기 데이터 로드
   const { data: candles, isLoading, error } = useCandles(market, timeframe, { count: initialCount });
@@ -199,6 +211,15 @@ export function CandlestickChart({
         const sortedVolumeData = [...allVolumeData].sort((a, b) => (a.time as number) - (b.time as number));
         volumeSeriesRef.current.setData(sortedVolumeData);
       }
+
+      // SMA 데이터 업데이트 (과거 데이터 로드 시)
+      if (showMovingAverage && maSeriesRefs.current.length > 0 && movingAveragePeriods) {
+        maSeriesRefs.current.forEach((series, index) => {
+          const period = movingAveragePeriods[index];
+          const smaData = calculateSMA(sortedCandles, period);
+          series.setData(smaData);
+        });
+      }
     } catch (err) {
       // epoch가 변경되었으면 에러 무시
       if (currentEpoch !== epochRef.current) {
@@ -209,7 +230,7 @@ export function CandlestickChart({
       isLoadingMoreRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [market, timeframe, showVolume, upColor, downColor]);
+  }, [market, timeframe, showVolume, upColor, downColor, showMovingAverage, movingAveragePeriods]);
 
   // 스크롤 범위 변경 감지 핸들러
   const handleVisibleRangeChange = useCallback(
@@ -247,21 +268,21 @@ export function CandlestickChart({
       height,
       autoSize: true,
       layout: {
-        background: { color: darkMode ? '#1e1e1e' : '#ffffff' },
-        textColor: darkMode ? '#d1d4dc' : '#191919',
+        background: { color: BG_COLOR },
+        textColor: TEXT_COLOR,
       },
       grid: {
-        vertLines: { color: showGrid ? (darkMode ? '#2B2B43' : '#e1e1e1') : 'transparent' },
-        horzLines: { color: showGrid ? (darkMode ? '#2B2B43' : '#e1e1e1') : 'transparent' },
+        vertLines: { color: showGrid ? GRID_COLOR : 'transparent' },
+        horzLines: { color: showGrid ? GRID_COLOR : 'transparent' },
       },
       crosshair: {
         mode: CrosshairMode.Magnet,
       },
       rightPriceScale: {
-        borderColor: darkMode ? '#2B2B43' : '#e1e1e1',
+        borderColor: BORDER_COLOR,
       },
       timeScale: {
-        borderColor: darkMode ? '#2B2B43' : '#e1e1e1',
+        borderColor: BORDER_COLOR,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -302,6 +323,25 @@ export function CandlestickChart({
     if (showVolume && volumeSeries) {
       const volumeData = toVolumeDataArray(candles, upColor + '80', downColor + '80');
       volumeSeries.setData(volumeData);
+    }
+
+    // 이동평균선 시리즈 추가 및 데이터 설정
+    maSeriesRefs.current = [];
+    if (showMovingAverage && movingAveragePeriods && movingAveragePeriods.length > 0) {
+      movingAveragePeriods.forEach((period, index) => {
+        const color = MA_COLORS[index % MA_COLORS.length];
+        const maSeries = chart.addSeries(LineSeries, {
+          color,
+          lineWidth: 1,
+          crosshairMarkerVisible: false,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        });
+
+        const smaData = calculateSMA(chartCandles, period);
+        maSeries.setData(smaData);
+        maSeriesRefs.current.push(maSeries as ISeriesApi<'Line'>);
+      });
     }
 
     chart.timeScale().fitContent();
@@ -379,8 +419,25 @@ export function CandlestickChart({
       chartRef.current = null;
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
+      maSeriesRefs.current = [];
     };
-  }, [candles, height, darkMode, upColor, downColor, showGrid, showVolume, infiniteScroll, handleVisibleRangeChange]);
+  }, [
+    candles,
+    height,
+    darkMode,
+    upColor,
+    downColor,
+    showGrid,
+    showVolume,
+    showMovingAverage,
+    movingAveragePeriods,
+    infiniteScroll,
+    handleVisibleRangeChange,
+    BG_COLOR,
+    TEXT_COLOR,
+    GRID_COLOR,
+    BORDER_COLOR,
+  ]);
 
   // ticker WebSocket으로 실시간 가격 업데이트 + 새 캔들 생성
   useEffect(() => {
@@ -471,7 +528,33 @@ export function CandlestickChart({
         volumeSeriesRef.current.update(volumeData);
       }
     }
-  }, [tickers, market, realtime, timeframe, showVolume, upColor, downColor]);
+
+    // SMA 업데이트 (실시간 데이터로 재계산 필요 - 간단히 전체 다시 계산하거나 최적화 필요)
+    // 여기서는 최신 데이터 기준으로 간단히 업데이트
+    // 하지만 lightweight-charts의 update는 single point update이므로,
+    // SMA도 update() 호출이 가능하지만, SMA 계산을 위해서는 이전 N개의 데이터가 필요.
+    // 실시간으로 SMA 전체를 다시 그리는 것은 비효율적일 수 있으나,
+    // update()로 마지막 점만 추가하는 것이 가장 부드러움.
+
+    if (showMovingAverage && maSeriesRefs.current.length > 0 && movingAveragePeriods) {
+      // allCandlesRef가 업데이트 되었으므로 다시 계산 가능 (하지만 전체 set은 무거울 수 있음)
+      // 최적화: 마지막 캔들에 대한 SMA 값만 계산하여 update
+      const allChartCandles = toChartCandles(allCandlesRef.current);
+      // 역순 정렬되어 있으므로 chartCandles[0]이 가장 과거일 수 있음.
+      // toChartCandles는 reverse()를 하므로 [0]이 가장 과거, [last]가 최신.
+      // calculateSMA는 오름차순(과거->미래) 데이터 필요.
+      const sortedCandles = [...allChartCandles].sort((a, b) => (a.time as number) - (b.time as number));
+
+      maSeriesRefs.current.forEach((series, index) => {
+        const period = movingAveragePeriods[index];
+        const smaData = calculateSMA(sortedCandles, period);
+        if (smaData.length > 0) {
+          const lastSMA = smaData[smaData.length - 1];
+          series.update(lastSMA);
+        }
+      });
+    }
+  }, [tickers, market, realtime, timeframe, showVolume, showMovingAverage, movingAveragePeriods, upColor, downColor]);
 
   // 로딩 상태
   if (isLoading) {
