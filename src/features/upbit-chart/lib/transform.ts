@@ -1,6 +1,8 @@
-import type { CandlestickData, HistogramData, Time } from 'lightweight-charts';
+import type { HistogramData, LineData, Time } from 'lightweight-charts';
 
 import type { CandleTimeframe, DayCandle, MinuteCandle, MonthCandle, WeekCandle, WebSocketCandle } from '@/entities/upbit';
+
+import type { ChartCandleData } from '../model/types';
 
 /**
  * KST 시간 문자열을 Unix timestamp로 변환
@@ -35,7 +37,7 @@ export function getPreviousCandleTime(kstDateString: string, timeframe: CandleTi
 /**
  * 업비트 캔들을 차트 캔들로 변환
  */
-export function toChartCandle(candle: MinuteCandle | DayCandle | WeekCandle | MonthCandle): CandlestickData<Time> {
+export function toChartCandle(candle: MinuteCandle | DayCandle | WeekCandle | MonthCandle): ChartCandleData {
   // KST 시간을 Unix timestamp로 변환 (타임존 명시)
   const time = parseKstToTimestamp(candle.candle_date_time_kst) as Time;
 
@@ -52,7 +54,7 @@ export function toChartCandle(candle: MinuteCandle | DayCandle | WeekCandle | Mo
  * 업비트 캔들 배열을 차트 캔들 배열로 변환
  * (API 응답은 최신순이므로 reverse 필요)
  */
-export function toChartCandles(candles: (MinuteCandle | DayCandle | WeekCandle | MonthCandle)[]): CandlestickData<Time>[] {
+export function toChartCandles(candles: (MinuteCandle | DayCandle | WeekCandle | MonthCandle)[]): ChartCandleData[] {
   return candles.map(toChartCandle).reverse();
 }
 
@@ -80,7 +82,7 @@ export function toVolumeDataArray(candles: (MinuteCandle | DayCandle | WeekCandl
 /**
  * WebSocket 캔들을 차트 캔들로 변환
  */
-export function wsToChartCandle(candle: WebSocketCandle): CandlestickData<Time> {
+export function wsToChartCandle(candle: WebSocketCandle): ChartCandleData {
   const time = parseKstToTimestamp(candle.candle_date_time_kst) as Time;
 
   return {
@@ -104,4 +106,31 @@ export function wsToVolumeData(candle: WebSocketCandle, upColor: string, downCol
     value: candle.candle_acc_trade_volume,
     color: isUp ? upColor : downColor,
   };
+}
+
+/**
+ * 단순 이동평균(SMA) 계산
+ * @param candles 캔들 데이터 배열 (시간 오름차순 정렬 권장, 내림차순이면 내부에서 뒤집어서 계산 후 원래 순서 고려 필요)
+ * @param period 기간 (예: 5, 20, 60)
+ * @returns LineSeries용 데이터 배열
+ */
+export function calculateSMA(candles: ChartCandleData[], period: number): LineData<Time>[] {
+  if (candles.length < period) return [];
+
+  const smaData: LineData<Time>[] = [];
+
+  for (let i = period - 1; i < candles.length; i++) {
+    let sum = 0;
+    for (let j = 0; j < period; j++) {
+      sum += candles[i - j].close;
+    }
+    const avg = sum / period;
+
+    smaData.push({
+      time: candles[i].time,
+      value: avg,
+    });
+  }
+
+  return smaData;
 }

@@ -50,6 +50,25 @@ export const Default: Story = {
       height: 400,
       darkMode: true,
       showVolume: true,
+      showMovingAverage: true,
+      movingAveragePeriods: [5, 20, 60],
+    },
+  },
+};
+
+/**
+ * 이동평균선 포함 (5, 20, 60일선)
+ */
+export const WithMovingAverage: Story = {
+  args: {
+    market: 'KRW-BTC',
+    timeframe: { type: 'minutes', unit: 240 }, // 4시간봉
+    options: {
+      height: 400,
+      darkMode: true,
+      showVolume: true,
+      showMovingAverage: true,
+      movingAveragePeriods: [5, 20, 60],
     },
   },
 };
@@ -135,6 +154,7 @@ function PlaygroundExample() {
   const [showVolume, setShowVolume] = useState(true);
   const [realtime, setRealtime] = useState(true);
   const [infiniteScroll, setInfiniteScroll] = useState(true);
+  const [showMA, setShowMA] = useState(true);
 
   // KRW 마켓 목록 조회
   const { data: krwMarkets, isLoading: isLoadingMarkets } = useKrwMarkets();
@@ -183,7 +203,7 @@ function PlaygroundExample() {
       <Stack spacing={2} sx={{ mb: 2 }}>
         {/* 마켓 선택 */}
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1, color: darkMode ? 'white' : 'black' }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'white' }}>
             마켓
           </Typography>
           <Autocomplete
@@ -204,7 +224,7 @@ function PlaygroundExample() {
                 size="small"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    color: darkMode ? 'white' : 'black',
+                    color: 'white',
                     '& fieldset': {
                       borderColor: darkMode ? 'rgba(255,255,255,0.3)' : undefined,
                     },
@@ -221,7 +241,7 @@ function PlaygroundExample() {
 
         {/* 타임프레임 선택 */}
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1, color: darkMode ? 'white' : 'black' }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'white' }}>
             타임프레임
           </Typography>
           <ToggleButtonGroup
@@ -232,10 +252,10 @@ function PlaygroundExample() {
             sx={{
               flexWrap: 'wrap',
               '& .MuiToggleButton-root': {
-                color: darkMode ? 'rgba(255,255,255,0.7)' : undefined,
-                borderColor: darkMode ? 'rgba(255,255,255,0.3)' : undefined,
+                color: 'rgba(255,255,255,0.7)',
+                borderColor: 'rgba(255,255,255,0.3)',
                 '&.Mui-selected': {
-                  bgcolor: darkMode ? 'primary.dark' : 'primary.main',
+                  bgcolor: 'primary.dark',
                   color: 'white',
                 },
               },
@@ -254,25 +274,26 @@ function PlaygroundExample() {
 
         {/* 옵션 */}
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-          <FormControlLabel
-            control={<Switch checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} />}
-            label="다크 모드"
-            sx={{ color: darkMode ? 'white' : 'black' }}
-          />
+          <FormControlLabel control={<Switch checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} />} label="다크 모드" sx={{ color: 'white' }} />
           <FormControlLabel
             control={<Switch checked={showVolume} onChange={(e) => setShowVolume(e.target.checked)} />}
             label="볼륨 표시"
-            sx={{ color: darkMode ? 'white' : 'black' }}
+            sx={{ color: 'white' }}
           />
           <FormControlLabel
             control={<Switch checked={realtime} onChange={(e) => setRealtime(e.target.checked)} disabled={timeframe.type !== 'minutes'} />}
             label="실시간 업데이트"
-            sx={{ color: darkMode ? 'white' : 'black' }}
+            sx={{ color: 'white' }}
           />
           <FormControlLabel
             control={<Switch checked={infiniteScroll} onChange={(e) => setInfiniteScroll(e.target.checked)} />}
             label="무한 스크롤"
-            sx={{ color: darkMode ? 'white' : 'black' }}
+            sx={{ color: 'white' }}
+          />
+          <FormControlLabel
+            control={<Switch checked={showMA} onChange={(e) => setShowMA(e.target.checked)} />}
+            label="이동평균선 (5/20/60)"
+            sx={{ color: 'white' }}
           />
         </Stack>
       </Stack>
@@ -283,6 +304,7 @@ function PlaygroundExample() {
           {market} · {ALL_TIMEFRAME_OPTIONS.find((o) => JSON.stringify(o.value) === JSON.stringify(timeframe))?.label}
           {realtime && ' · 실시간'}
           {infiniteScroll && ' · 무한 스크롤'}
+          {showMA && ' · 이동평균선'}
         </Typography>
       </Box>
 
@@ -297,6 +319,8 @@ function PlaygroundExample() {
           height: 500,
           darkMode,
           showVolume,
+          showMovingAverage: showMA,
+          movingAveragePeriods: [5, 20, 60],
         }}
       />
     </Box>

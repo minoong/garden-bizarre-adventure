@@ -25,6 +25,10 @@ export interface ChartOptions {
   showGrid?: boolean;
   /** 볼륨 표시 여부 */
   showVolume?: boolean;
+  /** 이동평균선 표시 여부 */
+  showMovingAverage?: boolean;
+  /** 이동평균선 기간 (기본값: [5, 20, 60]) */
+  movingAveragePeriods?: number[];
 }
 
 /**
@@ -41,6 +45,8 @@ export interface CandlestickChartProps {
   realtime?: boolean;
   /** 초기 캔들 개수 */
   initialCount?: number;
+  /** 무한 스크롤 활성화 */
+  infiniteScroll?: boolean;
   /** 클래스명 */
   className?: string;
 }
@@ -87,8 +93,10 @@ export const DEFAULT_CHART_OPTIONS: Required<ChartOptions> = {
   height: 400,
   width: 0, // 0 = 100%
   darkMode: true,
-  upColor: '#26a69a',
-  downColor: '#ef5350',
+  upColor: '#C84A31', // Upbit Red
+  downColor: '#1261C4', // Upbit Blue
   showGrid: true,
   showVolume: true,
+  showMovingAverage: true,
+  movingAveragePeriods: [5, 20, 60],
 };
