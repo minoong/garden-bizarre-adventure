@@ -1,3 +1,9 @@
+## [1.31.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.30.0...v1.31.0) (2026-01-07)
+
+### ✨ 새로운 기능
+
+* 차트 실시간 업데이트 로직 개선 및 UI 정보 추가 ([#70](https://github.com/minoong/garden-bizarre-adventure/issues/70)) ([176097b](https://github.com/minoong/garden-bizarre-adventure/commit/176097b98767b37c2c24d0e91dae106296f44d71))
+
 ## [1.30.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.29.0...v1.30.0) (2026-01-07)
 
 ### ✨ 새로운 기능
