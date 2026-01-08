@@ -1,3 +1,9 @@
+## [1.32.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.31.0...v1.32.0) (2026-01-08)
+
+### ✨ 새로운 기능
+
+* 차트 레이아웃 개선 ([#72](https://github.com/minoong/garden-bizarre-adventure/issues/72)) ([f38525e](https://github.com/minoong/garden-bizarre-adventure/commit/f38525e0f5568639c9e24c6d00f3b2664ab98b79))
+
 ## [1.31.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.30.0...v1.31.0) (2026-01-07)
 
 ### ✨ 새로운 기능
