@@ -30,6 +30,6 @@ export const DEFAULT_HEADER_COLUMNS: HeaderColumnConfig[] = [
   { width: '26px', align: 'center', label: '' },
   { width: '120px', align: 'left', sortField: 'korean_name', label: '한글명' },
   { width: '88px', align: 'right', sortField: 'trade_price', label: '현재가' },
-  { width: '76px', align: 'right', sortField: 'change_rate', label: '전일대비' },
+  { width: '76px', align: 'right', sortField: 'signed_change_rate', label: '전일대비' },
   { width: '88px', align: 'right', sortField: 'acc_trade_price_24h', label: '거래대금' },
 ];
