@@ -1,3 +1,9 @@
+## [1.32.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.32.0...v1.32.1) (2026-01-13)
+
+### 🐛 버그 수정
+
+* 전일대비 sorting 수정 ([#74](https://github.com/minoong/garden-bizarre-adventure/issues/74)) ([c90c445](https://github.com/minoong/garden-bizarre-adventure/commit/c90c445f678c05644e2fe2e777418c34fb097731))
+
 ## [1.32.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.31.0...v1.32.0) (2026-01-08)
 
 ### ✨ 새로운 기능
