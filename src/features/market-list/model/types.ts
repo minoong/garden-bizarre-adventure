@@ -2,7 +2,7 @@
  * market-list 타입 정의
  */
 
-export type SortField = 'korean_name' | 'trade_price' | 'change_rate' | 'acc_trade_price_24h';
+export type SortField = 'korean_name' | 'trade_price' | 'signed_change_rate' | 'acc_trade_price_24h';
 export type SortOrder = 'asc' | 'desc';
 
 export interface MarketListTableProps {
@@ -27,14 +27,16 @@ export interface MarketRowData {
   trade_price: number;
   /** 시가 */
   opening_price: number;
+  /** 전일 종가 */
+  prev_closing_price: number;
   /** 고가 */
   high_price: number;
   /** 저가 */
   low_price: number;
   /** 전일 종가 대비 변화 */
   change: 'RISE' | 'EVEN' | 'FALL';
-  /** 변화율 (%) */
-  change_rate: number;
+  /** 부호가 있는 변화율 (%) */
+  signed_change_rate: number;
   /** 변화 금액 */
   change_price: number;
   /** 24시간 거래대금 */

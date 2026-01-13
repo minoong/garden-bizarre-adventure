@@ -69,7 +69,7 @@ export function MarketListBody({ maxHeight = 600, rowHeight = 56, overscan = 10,
   const getRowState = useCallback(
     (row: MarketRowData): RowRenderState => {
       const { base, quote } = parseMarketCode(row.market);
-      const priceChange = calculatePriceChange(row.opening_price, row.trade_price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL);
+      const priceChange = calculatePriceChange(row.prev_closing_price, row.trade_price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL);
 
       return {
         isFavorite: isFavorite(row.market),

@@ -66,7 +66,7 @@ export const CustomColumnWidths: Story = {
           <MarketList.HeaderCell field="trade_price" sortable align="right">
             현재가
           </MarketList.HeaderCell>
-          <MarketList.HeaderCell field="change_rate" sortable align="right">
+          <MarketList.HeaderCell field="signed_change_rate" sortable align="right">
             등락률
           </MarketList.HeaderCell>
           <MarketList.HeaderCell field="acc_trade_price_24h" sortable align="right">
@@ -219,7 +219,7 @@ export const CustomHeaderRenderProps: Story = {
           <MarketList.HeaderCell field="trade_price" sortable align="right">
             현재가
           </MarketList.HeaderCell>
-          <MarketList.HeaderCell field="change_rate" sortable align="right">
+          <MarketList.HeaderCell field="signed_change_rate" sortable align="right">
             전일대비
           </MarketList.HeaderCell>
           <MarketList.HeaderCell field="acc_trade_price_24h" sortable align="right">
@@ -277,7 +277,7 @@ export const CustomHeight: Story = {
 
 export const CustomInitialSort: Story = {
   render: () => (
-    <MarketList initialSortBy="change_rate" initialSortOrder="desc">
+    <MarketList initialSortBy="signed_change_rate" initialSortOrder="desc">
       <MarketList.Paper>
         <MarketList.Header />
         <MarketList.Body />
