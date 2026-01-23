@@ -1,3 +1,13 @@
+## [1.35.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.34.0...v1.35.0) (2026-01-23)
+
+### ✨ 새로운 기능
+
+* 북마크 및 폰트 변경 ([#82](https://github.com/minoong/garden-bizarre-adventure/issues/82)) ([35869df](https://github.com/minoong/garden-bizarre-adventure/commit/35869df2c351d8605018f9e2fcfe4a6ffd6c3482))
+
+### 📦 리팩토링
+
+* 트레이딩 차트 및 레이아웃 컴포넌트 네이밍 정리 ([#80](https://github.com/minoong/garden-bizarre-adventure/issues/80)) ([fd817b6](https://github.com/minoong/garden-bizarre-adventure/commit/fd817b6671fdb974536b21ab0c4bf913836d5fc3))
+
 ## [1.34.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.33.0...v1.34.0) (2026-01-23)
 
 ### ✨ 새로운 기능
