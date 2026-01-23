@@ -1,10 +1,21 @@
 import type { Preview } from '@storybook/nextjs-vite';
+import { Noto_Sans_KR } from 'next/font/google';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 
+import theme from '../src/app/theme';
 import '../src/app/globals.css';
 
-// Storybook용 QueryClient (각 스토리마다 새로운 클라이언트 생성 방지)
+// Noto Sans KR 폰트 설정
+const notoSansKr = Noto_Sans_KR({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-noto-sans-kr',
+});
+
+// Storybook용 QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,17 +38,20 @@ const preview: Preview = {
         order: ['트레이딩', ['Trade Layout'], '*', 'Widgets', 'Features', 'Shared'],
       },
     },
-
     a11y: {
-      // 'todo' - show a11y violations in the test UI only
-      // 'error' - fail CI on a11y violations
-      // 'off' - skip a11y checks entirely
       test: 'todo',
     },
   },
   decorators: [
-    // QueryClientProvider 데코레이터
-    (Story) => createElement(QueryClientProvider, { client: queryClient }, createElement(Story)),
+    (Story) =>
+      createElement(
+        'div',
+        {
+          className: `${notoSansKr.className} ${notoSansKr.variable} antialiased`,
+          style: { fontFamily: 'var(--font-noto-sans-kr)' },
+        },
+        createElement(QueryClientProvider, { client: queryClient }, createElement(ThemeProvider, { theme }, createElement(CssBaseline), createElement(Story))),
+      ),
   ],
 };
 

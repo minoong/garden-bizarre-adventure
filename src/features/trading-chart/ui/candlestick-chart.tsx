@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { createChart, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, LineStyle } from 'lightweight-charts';
 import type {
   IChartApi,
@@ -97,7 +97,7 @@ interface CandlestickChartProps {
 /**
  * 캔들스틱 차트
  */
-export function CandlestickChart({
+export const CandlestickChart = memo(function CandlestickChart({
   market,
   timeframe,
   options,
@@ -1345,4 +1345,4 @@ export function CandlestickChart({
       )}
     </Box>
   );
-}
+});

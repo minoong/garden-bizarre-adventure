@@ -1,5 +1,4 @@
-'use client';
-
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchTicker } from '../api/ticker';
@@ -59,13 +58,15 @@ export function useSingleTicker(market: string, options?: UseTickerOptions) {
 export function useTickerMap(markets: string[], options?: UseTickerOptions) {
   const { data: tickers, ...rest } = useTicker(markets, options);
 
-  const tickerMap = tickers?.reduce(
-    (acc, ticker) => {
-      acc[ticker.market] = ticker;
-      return acc;
-    },
-    {} as Record<string, Ticker>,
-  );
+  const tickerMap = useMemo(() => {
+    return tickers?.reduce(
+      (acc, ticker) => {
+        acc[ticker.market] = ticker;
+        return acc;
+      },
+      {} as Record<string, Ticker>,
+    );
+  }, [tickers]);
 
   return {
     ...rest,

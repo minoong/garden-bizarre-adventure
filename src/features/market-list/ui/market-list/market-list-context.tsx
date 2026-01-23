@@ -6,7 +6,11 @@ import type { Virtualizer } from '@tanstack/react-virtual';
 import type { WebSocketTicker } from '@/entities/bithumb';
 
 import type { MarketRowData, SortField, SortOrder } from '../../model/types';
-import type { HighlightState } from '../../hooks';
+
+export interface HighlightState {
+  isHighlighted: boolean;
+  isRise: boolean;
+}
 
 /**
  * Row 렌더링 시 전달되는 상태

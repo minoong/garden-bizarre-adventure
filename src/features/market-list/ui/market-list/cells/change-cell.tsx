@@ -1,7 +1,7 @@
-'use client';
-
-import type { ReactNode } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import { Box, Typography } from '@mui/material';
+
+import { useRealtimeTicker, calculatePriceChange, CHANGE_TYPE_COLORS } from '@/entities/bithumb';
 
 import type { BaseCellProps } from './types';
 
@@ -20,28 +20,40 @@ export interface ChangeCellProps extends BaseCellProps {
 
 /**
  * 변동률 셀
- * - CSS Grid 셀로 렌더링 (너비는 부모 Row의 Grid에서 결정)
+ * - 실시간 데이터를 직접 구독하여 성능 최적화
  */
-export function ChangeCell({ row, state, sx, render }: ChangeCellProps) {
-  const { priceChange } = state;
+export const ChangeCell = memo(function ChangeCell({ row, sx, render }: ChangeCellProps) {
+  const realtimeTicker = useRealtimeTicker(row.market);
 
-  const renderProps: ChangeCellRenderProps = {
-    changeRate: priceChange.changeRate,
-    changeAmount: priceChange.changeAmount,
-    formattedRate: priceChange.formattedRate,
-    formattedAmount: priceChange.formattedPriceChange,
-    color: priceChange.changeColor,
-    change: row.change,
-  };
+  const price = realtimeTicker?.trade_price ?? row.trade_price;
+  const prevClosingPrice = realtimeTicker?.prev_closing_price ?? row.prev_closing_price;
+  const change = realtimeTicker?.change ?? row.change;
 
-  const cellSx = {
-    padding: '6px 4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    minWidth: 0, // Grid 셀 overflow 방지
-    ...sx,
-  };
+  const priceChange = useMemo(() => calculatePriceChange(prevClosingPrice, price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL), [prevClosingPrice, price]);
+
+  const renderProps = useMemo<ChangeCellRenderProps>(
+    () => ({
+      changeRate: priceChange.changeRate,
+      changeAmount: priceChange.changeAmount,
+      formattedRate: priceChange.formattedRate,
+      formattedAmount: priceChange.formattedPriceChange,
+      color: priceChange.changeColor,
+      change: change,
+    }),
+    [priceChange, change],
+  );
+
+  const cellSx = useMemo(
+    () => ({
+      padding: '6px 4px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      minWidth: 0,
+      ...sx,
+    }),
+    [sx],
+  );
 
   if (render) {
     return <Box sx={cellSx}>{render(renderProps)}</Box>;
@@ -50,13 +62,13 @@ export function ChangeCell({ row, state, sx, render }: ChangeCellProps) {
   return (
     <Box sx={cellSx}>
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-        <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '0.75rem', color: priceChange.changeColor }}>
+        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: priceChange.changeColor }}>
           {priceChange.formattedRate}
         </Typography>
-        <Typography variant="caption" sx={{ fontSize: '0.65rem', color: priceChange.changeColor }}>
+        <Typography variant="caption" sx={{ Size: '0.65rem', color: priceChange.changeColor }}>
           {priceChange.formattedPriceChange}
         </Typography>
       </Box>
     </Box>
   );
-}
+});
