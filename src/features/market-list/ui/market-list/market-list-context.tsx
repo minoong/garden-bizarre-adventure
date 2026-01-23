@@ -3,7 +3,7 @@
 import { createContext, useContext } from 'react';
 import type { Virtualizer } from '@tanstack/react-virtual';
 
-import type { WebSocketTicker } from '@/entities/upbit/model/types';
+import type { WebSocketTicker } from '@/entities/bithumb';
 
 import type { MarketRowData, SortField, SortOrder } from '../../model/types';
 import type { HighlightState } from '../../hooks';

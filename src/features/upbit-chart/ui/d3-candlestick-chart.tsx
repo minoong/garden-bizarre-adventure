@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { scaleLinear } from 'd3-scale';
 
-import { useCandles, type CandleTimeframe } from '@/entities/upbit';
+import { useCandles, type CandleTimeframe } from '@/entities/bithumb';
 
 import { D3Candle } from './d3-candle';
 

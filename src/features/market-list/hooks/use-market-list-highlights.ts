@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-import type { WebSocketTicker } from '@/entities/upbit';
+import type { WebSocketTicker } from '@/entities/bithumb';
 
 export interface HighlightState {
   isHighlighted: boolean;

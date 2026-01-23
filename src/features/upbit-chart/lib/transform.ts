@@ -1,6 +1,6 @@
 import type { HistogramData, LineData, Time } from 'lightweight-charts';
 
-import type { CandleTimeframe, DayCandle, MinuteCandle, MonthCandle, WeekCandle, WebSocketCandle } from '@/entities/upbit';
+import type { CandleTimeframe, DayCandle, MinuteCandle, MonthCandle, WeekCandle } from '@/entities/bithumb';
 
 import type { ChartCandleData } from '../model/types';
 
@@ -9,8 +9,9 @@ import type { ChartCandleData } from '../model/types';
  * candle_date_time_kst는 타임존 정보가 없으므로 명시적으로 KST(+09:00)로 처리
  */
 function parseKstToTimestamp(kstDateString: string): number {
-  // KST 타임존을 명시적으로 추가
-  return Math.floor(new Date(kstDateString + '+09:00').getTime() / 1000);
+  // KST 타임존을 명시적으로 추가. 띄어쓰기가 있을 경우 T로 변환하여 ISO 형식을 맞춤
+  const isoString = kstDateString.includes(' ') ? kstDateString.replace(' ', 'T') : kstDateString;
+  return Math.floor(new Date(isoString + '+09:00').getTime() / 1000);
 }
 
 /**
@@ -34,19 +35,24 @@ export function getPreviousCandleTime(kstDateString: string, timeframe: CandleTi
   return date.toISOString().slice(0, 19);
 }
 
-/**
- * 업비트 캔들을 차트 캔들로 변환
- */
 export function toChartCandle(candle: MinuteCandle | DayCandle | WeekCandle | MonthCandle): ChartCandleData {
   // KST 시간을 Unix timestamp로 변환 (타임존 명시)
   const time = parseKstToTimestamp(candle.candle_date_time_kst) as Time;
 
+  // 필드명 호환성 처리 (Bithumb V2 vs Native 등)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const c = candle as any;
+  const open = candle.opening_price ?? c.open;
+  const high = candle.high_price ?? c.high;
+  const low = candle.low_price ?? c.low;
+  const close = candle.trade_price ?? c.close;
+
   return {
     time,
-    open: candle.opening_price,
-    high: candle.high_price,
-    low: candle.low_price,
-    close: candle.trade_price,
+    open,
+    high,
+    low,
+    close,
   };
 }
 
@@ -58,16 +64,19 @@ export function toChartCandles(candles: (MinuteCandle | DayCandle | WeekCandle |
   return candles.map(toChartCandle).reverse();
 }
 
-/**
- * 업비트 캔들을 볼륨 히스토그램 데이터로 변환
- */
 export function toVolumeData(candle: MinuteCandle | DayCandle | WeekCandle | MonthCandle, upColor: string, downColor: string): HistogramData<Time> {
   const time = parseKstToTimestamp(candle.candle_date_time_kst) as Time;
-  const isUp = candle.trade_price >= candle.opening_price;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const c = candle as any;
+  const open = candle.opening_price ?? c.open;
+  const close = candle.trade_price ?? c.close;
+  const isUp = close >= open;
+  const volume = candle.candle_acc_trade_volume ?? c.volume ?? c.trade_volume;
 
   return {
     time,
-    value: candle.candle_acc_trade_volume,
+    value: volume ?? 0,
     color: isUp ? upColor : downColor,
   };
 }
@@ -77,35 +86,6 @@ export function toVolumeData(candle: MinuteCandle | DayCandle | WeekCandle | Mon
  */
 export function toVolumeDataArray(candles: (MinuteCandle | DayCandle | WeekCandle | MonthCandle)[], upColor: string, downColor: string): HistogramData<Time>[] {
   return candles.map((c) => toVolumeData(c, upColor, downColor)).reverse();
-}
-
-/**
- * WebSocket 캔들을 차트 캔들로 변환
- */
-export function wsToChartCandle(candle: WebSocketCandle): ChartCandleData {
-  const time = parseKstToTimestamp(candle.candle_date_time_kst) as Time;
-
-  return {
-    time,
-    open: candle.opening_price,
-    high: candle.high_price,
-    low: candle.low_price,
-    close: candle.trade_price,
-  };
-}
-
-/**
- * WebSocket 캔들을 볼륨 데이터로 변환
- */
-export function wsToVolumeData(candle: WebSocketCandle, upColor: string, downColor: string): HistogramData<Time> {
-  const time = parseKstToTimestamp(candle.candle_date_time_kst) as Time;
-  const isUp = candle.trade_price >= candle.opening_price;
-
-  return {
-    time,
-    value: candle.candle_acc_trade_volume,
-    color: isUp ? upColor : downColor,
-  };
 }
 
 /**

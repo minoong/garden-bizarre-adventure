@@ -1,6 +1,6 @@
 import type { CandlestickData, Time } from 'lightweight-charts';
 
-import type { CandleTimeframe } from '@/entities/upbit';
+import type { CandleTimeframe } from '@/entities/bithumb';
 
 /**
  * 차트용 캔들 데이터

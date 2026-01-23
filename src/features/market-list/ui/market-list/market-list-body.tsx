@@ -9,7 +9,7 @@ import type { OverlayScrollbarsComponentRef } from 'overlayscrollbars-react';
 
 import 'overlayscrollbars/overlayscrollbars.css';
 
-import { parseMarketCode, calculatePriceChange, CHANGE_TYPE_COLORS } from '@/entities/upbit';
+import { parseMarketCode, calculatePriceChange, CHANGE_TYPE_COLORS } from '@/entities/bithumb';
 
 import type { MarketRowData } from '../../model/types';
 

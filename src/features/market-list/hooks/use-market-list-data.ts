@@ -1,7 +1,7 @@
 import { useMemo, useEffect } from 'react';
 
-import { useKrwMarkets, useTicker, useUpbitSocket } from '@/entities/upbit';
-import type { Ticker, WebSocketTicker } from '@/entities/upbit';
+import { useKrwMarkets, useTicker, useBithumbSocket } from '@/entities/bithumb';
+import type { Ticker, WebSocketTicker } from '@/entities/bithumb';
 
 import type { MarketRowData } from '../model/types';
 
@@ -25,7 +25,7 @@ export function useMarketListData() {
     tickers: realtimeTickers,
     connect,
     status: wsStatus,
-  } = useUpbitSocket(marketCodes.length > 0 ? marketCodes : [], marketCodes.length > 0 ? ['ticker'] : []);
+  } = useBithumbSocket(marketCodes.length > 0 ? marketCodes : [], marketCodes.length > 0 ? ['ticker'] : []);
 
   // WebSocket 자동 연결
   useEffect(() => {
