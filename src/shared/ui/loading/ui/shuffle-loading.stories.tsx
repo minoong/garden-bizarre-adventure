@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { ShuffleLoading } from '@/shared/ui/loading/ui/shuffle-loading';
 
 const meta: Meta<typeof ShuffleLoading> = {
-  title: 'shared/loading/ShuffleLoading',
+  title: 'Shared/Loading/ShuffleLoading',
   component: ShuffleLoading,
   parameters: {
     layout: 'centered',

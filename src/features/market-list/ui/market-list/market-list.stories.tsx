@@ -5,7 +5,7 @@ import { TrendingUp, TrendingDown, TrendingFlat } from '@mui/icons-material';
 import { MarketList, DEFAULT_COLUMNS } from './index';
 
 const meta: Meta<typeof MarketList> = {
-  title: 'Features/MarketList',
+  title: '트레이딩/Market List',
   component: MarketList,
   parameters: {
     layout: 'padded',

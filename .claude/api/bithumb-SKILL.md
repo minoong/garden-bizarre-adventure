@@ -2,17 +2,17 @@
 
 이 스킬은 **암호화폐 거래소 API** 엔티티 및 차트 컴포넌트 사용 방법을 정의합니다.
 
-**참고**: 빗썸 API 사용 (업비트 호환)
+**참고**: 빗썸 API 사용 (빗썸 호환)
 
-- 업비트 API의 rate limit (HTTP 429) 회피를 위해 빗썸 API 사용
-- 빗썸은 업비트와 동일한 REST/WebSocket API 스펙 제공
-- 코드베이스에서는 `upbit` 이름을 유지하지만 실제로는 빗썸 엔드포인트 사용
+- 빗썸 API의 rate limit (HTTP 429) 회피를 위해 빗썸 API 사용
+- 빗썸은 빗썸와 동일한 REST/WebSocket API 스펙 제공
+- 코드베이스에서는 `bithumb` 이름을 유지하지만 실제로는 빗썸 엔드포인트 사용
 
 ## 📁 디렉토리 구조
 
 ```
 src/
-├── entities/upbit/              # Upbit API 엔티티
+├── entities/bithumb/              # Bithumb API 엔티티
 │   ├── api/
 │   │   ├── client.ts            # Axios 클라이언트
 │   │   ├── markets.ts           # 마켓 목록 API
@@ -27,12 +27,12 @@ src/
 │   │   ├── use-markets.ts       # useKrwMarkets 등
 │   │   ├── use-ticker.ts        # useTicker 등
 │   │   ├── use-candles.ts       # useCandles 등
-│   │   └── use-upbit-socket.ts  # WebSocket 훅
+│   │   └── use-bithumb-socket.ts  # WebSocket 훅
 │   └── lib/
 │       ├── format.ts            # parseMarketCode, getMarketLabel 등
 │       └── websocket-manager.ts # WebSocket 매니저
 │
-└── features/upbit-chart/        # 차트 기능
+└── features/bithumb-chart/        # 차트 기능
     ├── ui/
     │   ├── candlestick-chart.tsx
     │   └── candlestick-chart.stories.tsx
@@ -46,7 +46,7 @@ src/
 
 ### 공통 사항
 
-- **REST Base URL**: `https://api.bithumb.com` (빗썸, 업비트 호환)
+- **REST Base URL**: `https://api.bithumb.com` (빗썸, 빗썸 호환)
 - **WebSocket URL**: `wss://ws-api.bithumb.com/websocket/v1` (빗썸 공개형)
 - **인증**: Public API는 인증 불필요
 - **응답 형식**: JSON
@@ -70,7 +70,7 @@ src/
 ### 분봉 조회
 
 ```typescript
-import { fetchMinuteCandles } from '@/entities/upbit';
+import { fetchMinuteCandles } from '@/entities/bithumb';
 
 const candles = await fetchMinuteCandles('KRW-BTC', 5, {
   count: 200,
@@ -88,8 +88,8 @@ const candles = await fetchMinuteCandles('KRW-BTC', 5, {
 ### 통합 캔들 조회 함수
 
 ```typescript
-import { fetchCandles } from '@/entities/upbit';
-import type { CandleTimeframe } from '@/entities/upbit';
+import { fetchCandles } from '@/entities/bithumb';
+import type { CandleTimeframe } from '@/entities/bithumb';
 
 // 분봉
 const timeframe: CandleTimeframe = { type: 'minutes', unit: 15 };
@@ -103,7 +103,7 @@ const candles2 = await fetchCandles('KRW-BTC', timeframe2, { count: 30 });
 ### TanStack Query 훅 사용
 
 ```typescript
-import { useCandles } from '@/entities/upbit';
+import { useCandles } from '@/entities/bithumb';
 
 function MyChart() {
   const { data: candles, isLoading, error } = useCandles(
@@ -124,7 +124,7 @@ function MyChart() {
 ### 전체 마켓 조회
 
 ```typescript
-import { useMarkets } from '@/entities/upbit';
+import { useMarkets } from '@/entities/bithumb';
 
 const { data: markets } = useMarkets();
 // Market[] 타입: { market: 'KRW-BTC', korean_name: '비트코인', english_name: 'Bitcoin' }
@@ -133,7 +133,7 @@ const { data: markets } = useMarkets();
 ### KRW 마켓만 조회
 
 ```typescript
-import { useKrwMarkets } from '@/entities/upbit';
+import { useKrwMarkets } from '@/entities/bithumb';
 
 const { data: krwMarkets, isLoading } = useKrwMarkets();
 // KRW로 시작하는 마켓만 필터링
@@ -142,8 +142,8 @@ const { data: krwMarkets, isLoading } = useKrwMarkets();
 ### 마켓 라벨 생성
 
 ```typescript
-import { getMarketLabel } from '@/entities/upbit';
-import type { Market } from '@/entities/upbit';
+import { getMarketLabel } from '@/entities/bithumb';
+import type { Market } from '@/entities/bithumb';
 
 const market: Market = {
   market: 'KRW-BTC',
@@ -160,7 +160,7 @@ const label = getMarketLabel(market);
 ### CandlestickChart 기본 사용
 
 ```typescript
-import { CandlestickChart } from '@/features/upbit-chart/ui';
+import { CandlestickChart } from '@/features/bithumb-chart/ui';
 
 <CandlestickChart
   market="KRW-BTC"
@@ -229,7 +229,7 @@ import { CandlestickChart } from '@/features/upbit-chart/ui';
 **해결**: KST 타임존 명시 (`+09:00` 추가)
 
 ```typescript
-// src/features/upbit-chart/lib/transform.ts
+// src/features/bithumb-chart/lib/transform.ts
 
 // ✅ DO: KST 타임존 명시
 function parseKstToTimestamp(kstDateString: string): number {
@@ -260,13 +260,13 @@ const moreCandles = await fetchCandles(market, timeframe, {
 
 ## 🔌 WebSocket 실시간 데이터
 
-### useUpbitSocket 훅
+### useBithumbSocket 훅
 
 ```typescript
-import { useUpbitSocket } from '@/entities/upbit';
+import { useBithumbSocket } from '@/entities/bithumb';
 
 function RealtimeTicker() {
-  const { candles, status } = useUpbitSocket(
+  const { candles, status } = useBithumbSocket(
     ['KRW-BTC', 'KRW-ETH'],  // 구독할 마켓
     ['candle'],              // 구독 타입 (ticker, orderbook, candle)
     {
@@ -301,7 +301,7 @@ function RealtimeTicker() {
 
 ### WebSocket 요청 형식 (Bithumb)
 
-빗썸 WebSocket은 업비트와 동일한 요청 형식을 사용합니다:
+빗썸 WebSocket은 빗썸와 동일한 요청 형식을 사용합니다:
 
 ```json
 [{ "ticket": "unique-ticket-id" }, { "type": "ticker", "codes": ["KRW-BTC"] }, { "format": "DEFAULT" }]
@@ -391,20 +391,20 @@ useQuery({
   // ...
 });
 
-// ✅ DO: UPBIT_QUERY_KEYS 사용
-import { UPBIT_QUERY_KEYS } from '@/entities/upbit';
+// ✅ DO: BITHUMB_QUERY_KEYS 사용
+import { BITHUMB_QUERY_KEYS } from '@/entities/bithumb';
 
 useQuery({
-  queryKey: UPBIT_QUERY_KEYS.candles(market, JSON.stringify(timeframe)),
+  queryKey: BITHUMB_QUERY_KEYS.candles(market, JSON.stringify(timeframe)),
   // ...
 });
 ```
 
 ## 📚 참고 문서
 
-- API 명세: `/upbit/*.md`
-- 차트 예제: `src/features/upbit-chart/ui/candlestick-chart.stories.tsx`
-- 엔티티 코드: `src/entities/upbit/`
+- API 명세: `/bithumb/*.md`
+- 차트 예제: `src/features/bithumb-chart/ui/candlestick-chart.stories.tsx`
+- 엔티티 코드: `src/entities/bithumb/`
 - lightweight-charts 문서: https://tradingview.github.io/lightweight-charts/
 
 ## 💡 Best Practices
@@ -412,6 +412,6 @@ useQuery({
 1. **항상 TanStack Query 훅 사용** - 캐싱, 리페칭, 에러 처리 자동화
 2. **타임존 명시** - KST 데이터는 `+09:00` 추가
 3. **타입 안전성** - `CandleTimeframe`, `Market` 등 타입 활용
-4. **상수 관리** - `UPBIT_QUERY_KEYS`, `DEFAULT_MARKET` 등 사용
+4. **상수 관리** - `BITHUMB_QUERY_KEYS`, `DEFAULT_MARKET` 등 사용
 5. **중복 제거** - `to` parameter 사용 시 `getPreviousCandleTime` 활용
 6. **에러 처리** - 사용자 친화적 메시지 + 콘솔 로그

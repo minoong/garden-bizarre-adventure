@@ -3,8 +3,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, ToggleButton, ToggleButtonGroup, FormControlLabel, Switch, Typography, Stack, Autocomplete, TextField } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import type { CandleTimeframe, Market } from '@/entities/upbit';
-import { DEFAULT_MARKET, getMarketLabel, useKrwMarkets } from '@/entities/upbit';
+import type { CandleTimeframe, Market } from '@/entities/bithumb';
+import { DEFAULT_MARKET, getMarketLabel, useKrwMarkets } from '@/entities/bithumb';
 
 import { ALL_TIMEFRAME_OPTIONS } from '../model/types';
 
@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
 });
 
 const meta: Meta<typeof CandlestickChart> = {
-  title: 'Features/UpbitChart/CandlestickChart',
+  title: '트레이딩/Charts/Candlestick Chart',
   component: CandlestickChart,
   parameters: {
     layout: 'padded',

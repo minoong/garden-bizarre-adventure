@@ -15,7 +15,7 @@ const queryClient = new QueryClient({
 });
 
 const meta: Meta<typeof D3CandlestickChart> = {
-  title: 'Features/UpbitChart/D3CandlestickChart',
+  title: '트레이딩/Charts/D3 Chart',
   component: D3CandlestickChart,
   parameters: {
     layout: 'padded',

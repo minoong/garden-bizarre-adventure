@@ -1,11 +1,11 @@
 import { Box } from '@mui/material';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
-import { UpbitTradeLayout } from './upbit-trade-layout';
+import { TradeLayout } from './trade-layout';
 
-const meta: Meta<typeof UpbitTradeLayout> = {
-  title: 'Widgets/UpbitTradeLayout',
-  component: UpbitTradeLayout,
+const meta: Meta<typeof TradeLayout> = {
+  title: '트레이딩/Trade Layout',
+  component: TradeLayout,
   parameters: {
     layout: 'fullscreen',
   },
