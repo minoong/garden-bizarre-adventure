@@ -51,6 +51,7 @@ export interface MarketListContextValue {
   // 즐겨찾기
   toggleFavorite: (market: string) => void;
   isFavorite: (market: string) => boolean;
+  favorites: string[]; // Set에서 string[]로 변경
 
   // 선택
   selectedMarket: string | null;

@@ -7,3 +7,4 @@ export * from './model/types';
 export * from './model/websocket-types';
 export * from './lib/format';
 export * from './lib/price-change';
+export * from './model/favorite-store';

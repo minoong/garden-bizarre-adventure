@@ -38,7 +38,7 @@ export interface MarketListBodyProps {
  * - Render props 지원
  */
 export function MarketListBody({ maxHeight = 600, rowHeight = 56, overscan = 10, sx, children }: MarketListBodyProps) {
-  const { sortedData, isFavorite, selectedMarket, getHighlight, setVirtualizer } = useMarketListContext();
+  const { sortedData, isFavorite, favorites, selectedMarket, getHighlight, setVirtualizer } = useMarketListContext();
 
   // OverlayScrollbars ref
   const osRef = useRef<OverlayScrollbarsComponentRef>(null);
@@ -69,6 +69,8 @@ export function MarketListBody({ maxHeight = 600, rowHeight = 56, overscan = 10,
   const getRowState = useCallback(
     (row: MarketRowData): RowRenderState => {
       const { base, quote } = parseMarketCode(row.market);
+      // favorites 변화에 따라 state 객체를 새로 생성하기 위해 사용
+      const _ = favorites;
       const priceChange = calculatePriceChange(row.prev_closing_price, row.trade_price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL);
 
       return {
@@ -79,7 +81,7 @@ export function MarketListBody({ maxHeight = 600, rowHeight = 56, overscan = 10,
         marketCode: { base, quote },
       };
     },
-    [isFavorite, selectedMarket, getHighlight],
+    [isFavorite, favorites, selectedMarket, getHighlight],
   );
 
   // children이 함수인지 확인 (render props)

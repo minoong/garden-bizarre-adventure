@@ -3,7 +3,7 @@ import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
   typography: {
-    fontFamily: 'var(--font-geist-sans)',
+    fontFamily: 'var(--font-noto-sans-kr)',
     fontWeightLight: 300,
     fontWeightRegular: 400,
     fontWeightMedium: 500,
@@ -16,7 +16,7 @@ const theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          fontFamily: 'var(--font-geist-sans)',
+          fontFamily: 'var(--font-noto-sans-kr)',
         },
       },
     },
