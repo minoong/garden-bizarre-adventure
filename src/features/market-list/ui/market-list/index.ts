@@ -52,6 +52,7 @@ import { MarketListRoot, type MarketListRootProps } from './market-list-root';
 import { MarketListHeader, MarketListHeaderCell, type MarketListHeaderProps, type MarketListHeaderCellProps } from './market-list-header';
 import { MarketListBody, type MarketListBodyProps } from './market-list-body';
 import { MarketListRow, type MarketListRowProps } from './market-list-row';
+import { MarketSearch, type MarketSearchProps } from './market-search';
 import {
   FavoriteCell,
   NameCell,
@@ -82,6 +83,7 @@ export const MarketList = Object.assign(MarketListRoot, {
   Body: MarketListBody,
   Row: MarketListRow,
   Paper: MarketListPaper,
+  Search: MarketSearch,
   FavoriteCell,
   NameCell,
   PriceCell,
@@ -109,6 +111,8 @@ export type {
   MarketListRowProps,
   // Paper
   MarketListPaperProps,
+  // Search
+  MarketSearchProps,
   // Cells
   FavoriteCellProps,
   NameCellProps,
