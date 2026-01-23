@@ -1,3 +1,9 @@
+## [1.35.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.35.0...v1.35.1) (2026-01-23)
+
+### ⚡ 성능 개선
+
+* 트레이딩 관련 컴포넌트 및 차트 레이아웃 렌더링 성능 최적화 ([#84](https://github.com/minoong/garden-bizarre-adventure/issues/84)) ([097ad34](https://github.com/minoong/garden-bizarre-adventure/commit/097ad34af081fbc25456d2883203feeaf50f050b))
+
 ## [1.35.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.34.0...v1.35.0) (2026-01-23)
 
 ### ✨ 새로운 기능
