@@ -26,6 +26,7 @@ export function FavoriteCell({ row, state, sx, render }: FavoriteCellProps) {
   const { isFavorite } = state;
 
   const handleToggle = (e: React.MouseEvent) => {
+    console.log('[FavoriteCell] Clicked for market:', row.market);
     e.stopPropagation();
     toggleFavorite(row.market);
   };

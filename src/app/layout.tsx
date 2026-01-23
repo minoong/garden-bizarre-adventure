@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Noto_Sans_KR } from 'next/font/google';
 import { ThemeProvider } from '@mui/material/styles';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -10,14 +10,10 @@ import { AuthProvider, QueryClientProvider } from './providers';
 
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const notoSansKr = Noto_Sans_KR({
+  variable: '--font-noto-sans-kr',
   subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+  weight: ['400', '500', '700'],
 });
 
 export const metadata: Metadata = {
@@ -57,8 +53,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="ko">
+      <body className={`${notoSansKr.variable} antialiased`}>
         <QueryClientProvider>
           <AppRouterCacheProvider options={{ enableCssLayer: true }}>
             <ThemeProvider theme={theme}>

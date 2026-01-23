@@ -100,7 +100,7 @@ export function MarketListRoot({
   });
 
   // 3. 즐겨찾기
-  const { toggleFavorite, isFavorite } = useMarketListFavorites();
+  const { favorites, toggleFavorite, isFavorite } = useMarketListFavorites();
 
   // 4. 하이라이트
   const { getHighlight } = useMarketListHighlights(realtimeTickers);
@@ -135,6 +135,7 @@ export function MarketListRoot({
       handleSort,
       toggleFavorite,
       isFavorite,
+      favorites, // 추가
       selectedMarket,
       selectMarket,
       getHighlight,
@@ -154,6 +155,7 @@ export function MarketListRoot({
       handleSort,
       toggleFavorite,
       isFavorite,
+      favorites, // 추가
       selectedMarket,
       selectMarket,
       getHighlight,

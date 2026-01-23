@@ -20,7 +20,6 @@ import { bithumbClient } from './client';
  * @returns 분봉 캔들 목록
  */
 export async function fetchMinuteCandles(unit: MinuteUnit, params: MinuteCandlesParams): Promise<MinuteCandle[]> {
-  console.log('[API Debug] Fetching minute candles', { unit, market: params.market });
   try {
     const { data } = await bithumbClient.get<MinuteCandle[]>(`${BITHUMB_ENDPOINTS.CANDLES_MINUTES}/${unit}`, {
       params: {
