@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useCallback, useMemo, type ReactNode } from 'react';
+import { useState, useCallback, useMemo, useDeferredValue, type ReactNode } from 'react';
 import { Box, CircularProgress, Chip, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import type { Virtualizer } from '@tanstack/react-virtual';
+import { getChoseong } from 'es-hangul';
+
+import { parseMarketCode } from '@/entities/bithumb';
 
 import type { SortField, SortOrder } from '../../model/types';
 import { useMarketListData, useMarketListSort, useMarketListFavorites, useMarketListHighlights } from '../../hooks';
@@ -38,6 +41,8 @@ export interface MarketListRootProps {
    * @example ['26px', '120px', '88px', '76px', '88px']
    */
   columns?: readonly string[];
+  /** 검색어 */
+  searchQuery?: string;
 }
 
 /**
@@ -57,9 +62,12 @@ export function MarketListRoot({
   title = '암호화폐 시세',
   showStatusChip = true,
   columns = DEFAULT_COLUMNS,
+  searchQuery = '',
 }: MarketListRootProps) {
   const [selectedMarket, setSelectedMarket] = useState<string | null>(initialSelectedMarket);
   const [virtualizer, setVirtualizerState] = useState<Virtualizer<HTMLElement, Element> | null>(null);
+
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   // CSS Grid 템플릿 컬럼 생성
   const gridTemplateColumns = useMemo(() => columns.join(' '), [columns]);
@@ -67,9 +75,26 @@ export function MarketListRoot({
   // 1. 데이터 fetching & WebSocket
   const { data, realtimeTickers, isLoading, wsStatus } = useMarketListData();
 
+  const filteredData = useMemo(() => {
+    if (!deferredSearchQuery) return data;
+    const lowerQuery = deferredSearchQuery.toLowerCase();
+    return data.filter((m) => {
+      const { base } = parseMarketCode(m.market);
+      const choseong = getChoseong(m.korean_name);
+
+      return (
+        m.korean_name.includes(deferredSearchQuery) ||
+        choseong.includes(deferredSearchQuery) || // 초성 검색 지원
+        m.english_name.toLowerCase().includes(lowerQuery) ||
+        base.toLowerCase().includes(lowerQuery) ||
+        m.market.toLowerCase().includes(lowerQuery)
+      );
+    });
+  }, [data, deferredSearchQuery]);
+
   // 2. 정렬
   const { sortedData, sortBy, sortOrder, handleSort } = useMarketListSort({
-    data,
+    data: filteredData,
     initialSortBy,
     initialSortOrder,
   });

@@ -39,6 +39,7 @@ const CHART_OPTIONS = { height: 600, darkMode: false };
 export function UpbitTradeLayout({ initialMarket = 'KRW-BTC' }: UpbitTradeLayoutProps) {
   const [selectedMarket, setSelectedMarket] = useState(initialMarket);
   const [chartTimeframe, setChartTimeframe] = useState<CandleTimeframe>(DEFAULT_TIMEFRAME);
+  const [searchQuery, setSearchQuery] = useState('');
   const theme = useTheme();
 
   // 마켓 정보 (한글명 등)
@@ -289,7 +290,9 @@ export function UpbitTradeLayout({ initialMarket = 'KRW-BTC' }: UpbitTradeLayout
             initialSelectedMarket={selectedMarket}
             onRowClick={(market) => setSelectedMarket(market)}
             sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+            searchQuery={searchQuery}
           >
+            <MarketList.Search onSearch={setSearchQuery} value={searchQuery} />
             <MarketList.Header />
             <MarketList.Body maxHeight="100%" sx={{ flex: 1 }} />
           </MarketList>
