@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { Box, Typography } from '@mui/material';
 
-import { D3Candle } from '@/features/upbit-chart/ui/d3-candle';
+import { D3Candle } from '@/features/trading-chart/ui/d3-candle';
 
 import type { BaseCellProps } from './types';
 

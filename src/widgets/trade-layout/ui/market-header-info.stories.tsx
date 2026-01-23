@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 
 import { AnimatedPrice, MarketHeaderInfo } from './market-header-info';
 
-const meta: Meta<typeof AnimatedPrice> = {
-  title: 'Widgets/UpbitTradeLayout/MarketHeader',
-  component: AnimatedPrice,
+const meta: Meta<typeof MarketHeaderInfo> = {
+  title: '트레이딩/Layout Components/Market Header',
+  component: MarketHeaderInfo,
   parameters: {
     layout: 'centered',
   },
@@ -20,13 +20,12 @@ const meta: Meta<typeof AnimatedPrice> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof meta>;
 
 export const HeaderInfo: StoryObj<typeof MarketHeaderInfo> = {
   render: () => <MarketHeaderInfo base="BTC" quote="KRW" koreanName="비트코인" />,
 };
 
-export const PriceRolling: Story = {
+export const PriceRolling: StoryObj<typeof AnimatedPrice> = {
   args: {
     price: '95,420,000',
     quote: 'KRW',
@@ -54,7 +53,7 @@ export const PriceRolling: Story = {
   },
 };
 
-export const ManualControl: Story = {
+export const ManualControl: StoryObj<typeof AnimatedPrice> = {
   args: {
     price: '95,420,000',
     quote: 'KRW',

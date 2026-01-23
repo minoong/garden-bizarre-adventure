@@ -39,7 +39,7 @@ export function toChartCandle(candle: MinuteCandle | DayCandle | WeekCandle | Mo
   // KST 시간을 Unix timestamp로 변환 (타임존 명시)
   const time = parseKstToTimestamp(candle.candle_date_time_kst) as Time;
 
-  // 필드명 호환성 처리 (Bithumb V2 vs Native 등)
+  // 필드명 호환성 처리
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = candle as any;
   const open = candle.opening_price ?? c.open;
@@ -57,7 +57,7 @@ export function toChartCandle(candle: MinuteCandle | DayCandle | WeekCandle | Mo
 }
 
 /**
- * 업비트 캔들 배열을 차트 캔들 배열로 변환
+ * 캔들 배열을 차트 캔들 배열로 변환
  * (API 응답은 최신순이므로 reverse 필요)
  */
 export function toChartCandles(candles: (MinuteCandle | DayCandle | WeekCandle | MonthCandle)[]): ChartCandleData[] {
@@ -82,7 +82,7 @@ export function toVolumeData(candle: MinuteCandle | DayCandle | WeekCandle | Mon
 }
 
 /**
- * 업비트 캔들 배열을 볼륨 데이터 배열로 변환
+ * 캔들 배열을 볼륨 데이터 배열로 변환
  */
 export function toVolumeDataArray(candles: (MinuteCandle | DayCandle | WeekCandle | MonthCandle)[], upColor: string, downColor: string): HistogramData<Time>[] {
   return candles.map((c) => toVolumeData(c, upColor, downColor)).reverse();

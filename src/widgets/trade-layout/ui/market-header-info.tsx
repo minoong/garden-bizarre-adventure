@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useEffect, useRef } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Avatar } from '@mui/material';
 import gsap from 'gsap';
 
 export interface MarketHeaderInfoProps {
@@ -19,15 +19,12 @@ export interface MarketHeaderInfoProps {
 export const MarketHeaderInfo = memo(function MarketHeaderInfo({ base, quote, koreanName }: MarketHeaderInfoProps) {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <Box
-        component="img"
-        src={`https://static.upbit.com/logos/${base}.png`}
-        sx={{ width: 36, height: 36, borderRadius: '50%' }}
-        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-          const target = e.target as HTMLImageElement;
-          target.src = 'https://static.upbit.com/logos/BTC.png';
-        }}
-      />
+      <Avatar
+        src={`https://coinicons-api.vercel.app/api/icon/${base.toLowerCase()}`}
+        sx={{ width: 36, height: 36, fontSize: '0.8rem', fontWeight: 'bold', bgcolor: 'primary.main' }}
+      >
+        {base.substring(0, 1)}
+      </Avatar>
       <Box>
         <Typography variant="h5" fontWeight="900" sx={{ lineHeight: 1.2 }}>
           {koreanName || base}

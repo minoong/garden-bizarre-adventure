@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Box, Paper, Grid, Typography, useTheme } from '@mui/material';
 
-import { MiniBaselineChart } from '@/features/upbit-chart/ui/mini-baseline-chart';
+import { MiniBaselineChart } from '@/features/trading-chart/ui/mini-baseline-chart';
 import {
   useRealtimeTickerMap,
   useSingleTicker,
@@ -17,26 +17,26 @@ import {
   useBithumbSocket,
   type CandleTimeframe,
 } from '@/entities/bithumb';
-import { CandlestickChart } from '@/features/upbit-chart';
+import { CandlestickChart } from '@/features/trading-chart';
 import { MarketList } from '@/features/market-list';
 
 import { MarketHeaderInfo, AnimatedPrice } from './market-header-info';
 
-export interface UpbitTradeLayoutProps {
+export interface TradeLayoutProps {
   /** 초기 선택된 마켓 */
   initialMarket?: string;
 }
 
 /**
- * 업비트 트레이딩 레이아웃 위젯
+ * 트레이딩 레이아웃 위젯
  */
 const DEFAULT_TIMEFRAME: CandleTimeframe = { type: 'minutes', unit: 1 };
 const CHART_OPTIONS = { height: 600, darkMode: false };
 
 /**
- * 업비트 트레이딩 레이아웃 위젯
+ * 트레이딩 레이아웃 위젯
  */
-export function UpbitTradeLayout({ initialMarket = 'KRW-BTC' }: UpbitTradeLayoutProps) {
+export function TradeLayout({ initialMarket = 'KRW-BTC' }: TradeLayoutProps) {
   const [selectedMarket, setSelectedMarket] = useState(initialMarket);
   const [chartTimeframe, setChartTimeframe] = useState<CandleTimeframe>(DEFAULT_TIMEFRAME);
   const [searchQuery, setSearchQuery] = useState('');
@@ -241,7 +241,7 @@ export function UpbitTradeLayout({ initialMarket = 'KRW-BTC' }: UpbitTradeLayout
               </Typography>
               <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Typography color="text.secondary" variant="body2">
-                  업비트 호가 위젯 연동 예정
+                  빗썸 호가 위젯 연동 예정
                 </Typography>
               </Box>
             </Paper>

@@ -46,7 +46,7 @@ fix: 마켓 선택 시 타입 에러 수정
 docs: API 사용 가이드 작성
 
 # ✅ DO: 영어 커밋 메시지
-feat: add realtime update to upbit chart
+feat: add realtime update to bithumb chart
 fix: resolve market selection type error
 docs: write API usage guide
 
@@ -104,7 +104,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
 ```bash
 # ✅ DO: 기능 브랜치 생성
-git checkout -b feature/upbit-chart-infinite-scroll
+git checkout -b feature/bithumb-chart-infinite-scroll
 
 # ✅ DO: 버그 수정 브랜치
 git checkout -b fix/timezone-conversion-error
@@ -121,13 +121,13 @@ git checkout -b fix-bug  # ❌ 어떤 버그?
 
 ```bash
 # ✅ DO: 작은 단위 커밋
-git add src/entities/upbit/model/types.ts
+git add src/entities/bithumb/model/types.ts
 git commit -m "feat: CandleTimeframe 타입 추가"
 
-git add src/entities/upbit/api/candles.ts
+git add src/entities/bithumb/api/candles.ts
 git commit -m "feat: fetchCandles 통합 API 함수 추가"
 
-git add src/entities/upbit/hooks/use-candles.ts
+git add src/entities/bithumb/hooks/use-candles.ts
 git commit -m "feat: useCandles 훅 추가"
 
 # ❌ DON'T: 한 번에 모든 변경사항
@@ -143,14 +143,14 @@ git add .
 git commit -m "feat: 차트 무한 스크롤 구현"
 
 # 2. 원격 저장소에 푸시
-git push -u origin feature/upbit-chart-infinite-scroll
+git push -u origin feature/bithumb-chart-infinite-scroll
 
 # 3. PR 생성 (gh CLI 사용 시)
 gh pr create --title "feat: 차트 무한 스크롤 기능 추가" --body "$(cat <<'EOF'
 ## Summary
 - 차트를 왼쪽으로 드래그하면 과거 데이터 자동 로드
 - lightweight-charts subscribeVisibleLogicalRangeChange 활용
-- Upbit API의 to parameter로 페이지네이션 구현
+- Bithumb API의 to parameter로 페이지네이션 구현
 
 ## Test plan
 - [ ] 분봉에서 무한 스크롤 동작 확인
@@ -220,10 +220,10 @@ git add .
 git commit -m "feat: 모든 기능 추가"
 
 # ✅ DO: 논리적 단위로 나누기
-git add src/entities/upbit/
-git commit -m "feat: Upbit API 엔티티 추가"
+git add src/entities/bithumb/
+git commit -m "feat: Bithumb API 엔티티 추가"
 
-git add src/features/upbit-chart/
+git add src/features/bithumb-chart/
 git commit -m "feat: 차트 컴포넌트 추가"
 ```
 
@@ -272,7 +272,7 @@ module.exports = {
 ```bash
 # ✅ 통과
 feat: 새 기능 추가
-fix(upbit): 타입 에러 수정
+fix(bithumb): 타입 에러 수정
 docs: README 업데이트
 
 # ❌ 실패

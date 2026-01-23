@@ -83,7 +83,7 @@ export function MiniBaselineChart({ market, basePrice, currentPrice }: MiniBasel
 
   // 첫 렌더링 때 0시까지 반복 호출하여 캔들 수집
   const { data: candleData } = useQuery({
-    queryKey: ['miniChart', 'bithumb-v1-all', market],
+    queryKey: ['miniChart', 'trading-v1-all', market],
     queryFn: () => fetchCandlesUntilMidnight(market),
     staleTime: 60 * 1000,
     refetchInterval: 60 * 1000,

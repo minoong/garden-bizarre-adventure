@@ -137,7 +137,7 @@ src/
 │       ├── ui/       # 기능별 UI 컴포넌트
 │       ├── model/    # 상태 관리 (zustand, hooks)
 │       └── lib/      # 기능별 유틸리티
-├── entities/         # 비즈니스 엔티티 (upbit, post, user 등)
+├── entities/         # 비즈니스 엔티티 (bithumb, post, user 등)
 │   └── [entity]/
 │       ├── api/      # API 클라이언트
 │       ├── model/    # 타입, 상수
@@ -155,7 +155,7 @@ src/
 
 ```bash
 # ✅ DO: features/[feature-name] 구조 생성
-src/features/upbit-chart/
+src/features/trading-chart/
 ├── ui/
 │   ├── index.ts                    # Public API
 │   ├── candlestick-chart.tsx       # 메인 컴포넌트
@@ -168,7 +168,7 @@ src/features/upbit-chart/
     └── transform.ts                # 데이터 변환 로직
 
 # ❌ DON'T: 평평한 구조
-src/components/upbit-chart.tsx  // ❌ FSD 구조 무시
+src/components/trading-chart.tsx  // ❌ FSD 구조 무시
 ```
 
 ### 공유 유틸리티 배치 규칙
@@ -181,7 +181,7 @@ src/shared/lib/image/
 └── exif-utils.ts
 
 // ✅ DO: 엔티티 관련 → entities/[entity]/lib
-src/entities/upbit/lib/
+src/entities/bithumb/lib/
 └── format.ts          // parseMarketCode, formatPrice 등
 
 // ❌ DON'T: features 내부에 공유 유틸리티
@@ -193,15 +193,15 @@ src/features/upload/lib/image-utils.ts  // ❌ 다른 feature 재사용 불가
 각 모듈은 `index.ts`에서 public API만 export해야 합니다.
 
 ```typescript
-// ✅ DO: features/upbit-chart/ui/index.ts
+// ✅ DO: features/trading-chart/ui/index.ts
 export { CandlestickChart } from './candlestick-chart';
 export type { CandlestickChartProps } from './candlestick-chart';
 
 // ✅ DO: 외부에서 사용
-import { CandlestickChart } from '@/features/upbit-chart/ui';
+import { CandlestickChart } from '@/features/trading-chart/ui';
 
 // ❌ DON'T: 내부 파일 직접 import
-import { CandlestickChart } from '@/features/upbit-chart/ui/candlestick-chart';
+import { CandlestickChart } from '@/features/trading-chart/ui/candlestick-chart';
 ```
 
 ## Firebase Storage 사용 패턴
@@ -285,17 +285,17 @@ const { data: posts, error } = await supabase.from('posts').select('*, author:pr
 
 ```typescript
 // ✅ DO: entities/[entity]/hooks/ 에 배치
-// src/entities/upbit/hooks/use-candles.ts
+// src/entities/bithumb/hooks/use-candles.ts
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchCandles } from '../api/candles';
-import { UPBIT_QUERY_KEYS, UPBIT_STALE_TIME } from '../model/constants';
+import { BITHUMB_QUERY_KEYS, BITHUMB_STALE_TIME } from '../model/constants';
 
 export function useCandles(market: string, timeframe: CandleTimeframe, options) {
   return useQuery({
-    queryKey: UPBIT_QUERY_KEYS.candles(market, JSON.stringify(timeframe)),
+    queryKey: BITHUMB_QUERY_KEYS.candles(market, JSON.stringify(timeframe)),
     queryFn: () => fetchCandles(market, timeframe, options),
-    staleTime: UPBIT_STALE_TIME.CANDLES,
+    staleTime: BITHUMB_STALE_TIME.CANDLES,
     enabled: !!market,
   });
 }
@@ -305,10 +305,10 @@ export function useCandles(market: string, timeframe: CandleTimeframe, options) 
 
 ```typescript
 // ✅ DO: 상수로 관리 (entities/[entity]/model/constants.ts)
-export const UPBIT_QUERY_KEYS = {
-  markets: ['upbit', 'markets'] as const,
-  ticker: (markets: string[]) => ['upbit', 'ticker', markets] as const,
-  candles: (market: string, timeframe: string) => ['upbit', 'candles', timeframe, market] as const,
+export const BITHUMB_QUERY_KEYS = {
+  markets: ['bithumb', 'markets'] as const,
+  ticker: (markets: string[]) => ['bithumb', 'ticker', markets] as const,
+  candles: (market: string, timeframe: string) => ['bithumb', 'candles', timeframe, market] as const,
 } as const;
 
 // ❌ DON'T: 하드코딩된 query keys
@@ -373,7 +373,7 @@ try {
 ### 🚫 하드코딩된 Query Keys
 
 - **이유**: 타입 안정성 없음, invalidation 어려움
-- **해결**: 상수로 관리 (`UPBIT_QUERY_KEYS` 등)
+- **해결**: 상수로 관리 (`BITHUMB_QUERY_KEYS` 등)
 
 ### 🚫 Inline Styles 남용
 
@@ -386,13 +386,13 @@ try {
 
 ```typescript
 // ✅ DO: [ComponentName].stories.tsx 파일 생성
-// src/features/upbit-chart/ui/candlestick-chart.stories.tsx
+// src/features/trading-chart/ui/candlestick-chart.stories.tsx
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { CandlestickChart } from './candlestick-chart';
 
 const meta: Meta<typeof CandlestickChart> = {
-  title: 'Features/UpbitChart/CandlestickChart',
+  title: 'Features/TradingChart/CandlestickChart',
   component: CandlestickChart,
   tags: ['autodocs'],
 };
@@ -413,5 +413,5 @@ export const Default: Story = {
 - **파일 업로드**: `src/app/upload/playground/page.tsx`
 - **FSD 구조**: `src/features/auth`, `src/shared/ui/dropzone`
 - **MUI Grid**: `src/app/page.tsx`
-- **Upbit 차트**: `src/features/upbit-chart/ui/candlestick-chart.tsx`
-- **TanStack Query**: `src/entities/upbit/hooks/use-candles.ts`
+- **Bithumb 차트**: `src/features/trading-chart/ui/candlestick-chart.tsx`
+- **TanStack Query**: `src/entities/bithumb/hooks/use-candles.ts`

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **This file (CLAUDE.md)**: Project overview, technology stack, and development commands
 - **`.claude/` directory**: Detailed coding conventions, API guides, and workflows
   - `conventions/SKILL.md`: Code standards and anti-patterns
-  - `api/upbit-SKILL.md`: Cryptocurrency API usage guide (Bithumb, Upbit-compatible)
+  - `api/bithumb-SKILL.md`: Cryptocurrency API usage guide (Bithumb)
   - `workflows/SKILL.md`: Git workflow and commit rules
   - `examples/`: Code examples
 
@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Garden Bizarre Adventure** is a Next.js 15 social media platform using the App Router with TypeScript, React 19, MUI v7, and Tailwind CSS v4. The project follows Feature-Sliced Design (FSD) architecture and uses Supabase for backend services, Firebase Storage for file uploads, and Bithumb API (Upbit-compatible) for cryptocurrency data.
+**Garden Bizarre Adventure** is a Next.js 15 social media platform using the App Router with TypeScript, React 19, MUI v7, and Tailwind CSS v4. The project follows Feature-Sliced Design (FSD) architecture and uses Supabase for backend services, Firebase Storage for file uploads, and Bithumb API for cryptocurrency data.
 
 ## Development Commands
 
@@ -61,7 +61,7 @@ src/
 ├── widgets/          # Large UI compositions (header, footer, hero sections)
 ├── features/         # Business logic features
 │   ├── auth/         # Authentication features
-│   ├── upbit-chart/  # Upbit candlestick chart
+│   ├── trading-chart/ # Trading candlestick chart
 │   │   ├── ui/       # Chart components & stories
 │   │   ├── model/    # Chart types & options
 │   │   └── lib/      # Data transformation (toChartCandles, etc.)
@@ -70,7 +70,7 @@ src/
 │       ├── model/    # State management
 │       └── lib/      # Feature utilities
 ├── entities/         # Business entities
-│   ├── upbit/        # Upbit API entity
+│   ├── bithumb/      # Bithumb API entity
 │   │   ├── api/      # REST API clients (markets, tickers, candles)
 │   │   ├── model/    # Types, constants, WebSocket store
 │   │   ├── hooks/    # TanStack Query hooks (useCandles, useKrwMarkets)
@@ -119,13 +119,13 @@ src/
   - Client: `src/shared/lib/firbase/client.ts` (note: typo "firbase" is intentional in folder name)
   - Upload utility: `src/shared/lib/firbase/upload.ts`
   - Supports parallel uploads with progress tracking
-- **Bithumb API (Upbit-compatible)** - Cryptocurrency market data (Public API)
-  - **Note**: Using Bithumb to avoid Upbit API rate limits (HTTP 429)
-  - Entity: `src/entities/upbit/` (name kept for backwards compatibility)
+- **Bithumb API** - Cryptocurrency market data (Public API)
+  - **Note**: Using Bithumb API for better rate limit management (HTTP 429 avoidance)
+  - Entity: `src/entities/bithumb/`
   - REST API: Markets, Tickers, Candles (minutes/days/weeks/months)
   - WebSocket: Real-time ticker, orderbook, candle updates
-  - Features: `src/features/upbit-chart/` (Candlestick chart with D3 and lightweight-charts)
-  - API Docs: `.claude/api/upbit-SKILL.md`, `/upbit/*.md`
+  - Features: `src/features/trading-chart/` (Candlestick chart with D3 and lightweight-charts)
+  - API Docs: `.claude/api/bithumb-SKILL.md`, `/bithumb/*.md`
 
 ### Development Tools
 
@@ -312,8 +312,8 @@ const { data, error } = await supabase.from('posts').select('*').order('created_
 ### Cryptocurrency Chart Component
 
 ```typescript
-import { CandlestickChart } from '@/features/upbit-chart/ui';
-import { useKrwMarkets } from '@/entities/upbit';
+import { CandlestickChart } from '@/features/trading-chart/ui';
+import { useKrwMarkets } from '@/entities/bithumb';
 
 // Basic usage
 <CandlestickChart
@@ -340,12 +340,12 @@ import { useKrwMarkets } from '@/entities/upbit';
 />
 ```
 
-**See `.claude/examples/upbit-chart-component.tsx` for more examples.**
+**See `.claude/examples/trading-chart-component.tsx` for more examples.**
 
 ### Cryptocurrency API Usage (Bithumb)
 
 ```typescript
-import { useCandles, useKrwMarkets, getMarketLabel } from '@/entities/upbit';
+import { useCandles, useKrwMarkets, getMarketLabel } from '@/entities/bithumb';
 
 // Fetch candle data with TanStack Query
 const { data: candles, isLoading } = useCandles('KRW-BTC', { type: 'minutes', unit: 5 }, { count: 200 });
@@ -357,7 +357,7 @@ const { data: krwMarkets } = useKrwMarkets();
 const label = getMarketLabel(krwMarkets[0]);
 ```
 
-**See `.claude/api/upbit-SKILL.md` for complete API documentation (Bithumb, Upbit-compatible).**
+**See `.claude/api/bithumb-SKILL.md` for complete API documentation (Bithumb).**
 
 ## Important Notes
 
@@ -367,7 +367,7 @@ const label = getMarketLabel(krwMarkets[0]);
 4. **Import style**: Always use type imports for TypeScript types
 5. **Korean commits**: Commit messages in Korean are supported and encouraged
 6. **Turbopack**: Both dev and build use Turbopack for faster builds
-7. **Bithumb API**: Using Bithumb (Upbit-compatible) to avoid rate limits
+7. **Bithumb API**: Optimized for high-frequency data access with reliable rate limits
 8. **KST timezone**: `candle_date_time_kst` requires explicit `+09:00` timezone when converting
 9. **Infinite scroll**: Use `getPreviousCandleTime` to avoid duplicate data when paginating
 
@@ -378,7 +378,7 @@ This project uses the `.claude/` directory to store detailed coding conventions 
 ### Quick Reference
 
 - **Coding standards**: `.claude/conventions/SKILL.md`
-- **Cryptocurrency API patterns**: `.claude/api/upbit-SKILL.md` (Bithumb, Upbit-compatible)
+- **Cryptocurrency API patterns**: `.claude/api/bithumb-SKILL.md` (Bithumb)
 - **Git workflow**: `.claude/workflows/SKILL.md`
 - **Code examples**: `.claude/examples/`
 
@@ -386,7 +386,7 @@ This project uses the `.claude/` directory to store detailed coding conventions 
 
 - Before implementing a new feature
 - When unsure about coding patterns
-- When working with cryptocurrency API (Bithumb/Upbit-compatible)
+- When working with cryptocurrency API (Bithumb)
 - When creating git commits or PRs
 
 The Skills system ensures consistent code quality across the team and provides Claude Code with project-specific best practices.

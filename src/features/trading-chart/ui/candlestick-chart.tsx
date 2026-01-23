@@ -20,15 +20,15 @@ import { Group, Panel, Separator } from 'react-resizable-panels';
 
 import {
   useCandles,
-  useUpbitSocket,
+  useBithumbSocket,
   fetchCandles,
   type CandleTimeframe,
   type MinuteCandle,
   type DayCandle,
   type WeekCandle,
   type MonthCandle,
-} from '@/entities/upbit';
-import { calculatePriceChange } from '@/entities/upbit';
+} from '@/entities/bithumb';
+import { calculatePriceChange } from '@/entities/bithumb';
 
 import type { ChartOptions } from '../model/types';
 import { DEFAULT_CHART_OPTIONS } from '../model/types';
@@ -95,7 +95,7 @@ interface CandlestickChartProps {
 }
 
 /**
- * 업비트 캔들스틱 차트
+ * 캔들스틱 차트
  */
 export function CandlestickChart({
   market,
@@ -168,7 +168,7 @@ export function CandlestickChart({
   const { data: candles, isLoading, error } = useCandles(market, timeframe, { count: initialCount });
 
   // WebSocket ticker로 실시간 업데이트
-  const { tickers, status: wsStatus } = useUpbitSocket(realtime ? [market] : [], realtime ? ['ticker'] : [], {
+  const { tickers, status: wsStatus } = useBithumbSocket(realtime ? [market] : [], realtime ? ['ticker'] : [], {
     autoConnect: realtime,
   });
 
@@ -605,7 +605,7 @@ export function CandlestickChart({
 
           // 3. 글로벌 이벤트 전송 (다른 마켓 차트용)
           window.dispatchEvent(
-            new CustomEvent('upbit-chart-sync', {
+            new CustomEvent('chart-sync', {
               detail: { time: param.time, sourceMarket: market },
             }),
           );
@@ -642,7 +642,7 @@ export function CandlestickChart({
           }
 
           window.dispatchEvent(
-            new CustomEvent('upbit-chart-sync', {
+            new CustomEvent('chart-sync', {
               detail: { time: param.time, sourceMarket: market },
             }),
           );
@@ -678,7 +678,7 @@ export function CandlestickChart({
       // setCrosshairPosition(0, time, series)를 호출하면 Y=0 위치로 강제 이동됨
     };
 
-    window.addEventListener('upbit-chart-sync', handleGlobalSync);
+    window.addEventListener('chart-sync', handleGlobalSync);
 
     // Initial Data Load (if candles have already arrived)
     // 이 시점에 데이터가 있으면 즉시 채워넣어 초기 렌더링 지연 방지
@@ -736,7 +736,7 @@ export function CandlestickChart({
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
       }
-      window.removeEventListener('upbit-chart-sync', handleGlobalSync);
+      window.removeEventListener('chart-sync', handleGlobalSync);
       container.removeEventListener('mouseenter', handleMainEnter);
       container.removeEventListener('mouseleave', handleMouseLeave);
       if (volContainer) {

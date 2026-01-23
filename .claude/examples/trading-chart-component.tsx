@@ -1,5 +1,5 @@
 /**
- * Upbit 차트 컴포넌트 사용 예제
+ * Bithumb 차트 컴포넌트 사용 예제
  *
  * 이 파일은 CandlestickChart 컴포넌트를 사용하는 다양한 방법을 보여줍니다.
  * 실제 프로젝트에서 참고용으로 활용하세요.
@@ -11,9 +11,9 @@ import { useState } from 'react';
 import type { FC } from 'react';
 import { Box, Grid, Stack, Typography, ToggleButton, ToggleButtonGroup, Autocomplete, TextField, Switch, FormControlLabel } from '@mui/material';
 
-import type { CandleTimeframe, Market } from '@/entities/upbit';
-import { DEFAULT_MARKET, useKrwMarkets, getMarketLabel } from '@/entities/upbit';
-import { CandlestickChart } from '@/features/upbit-chart/ui';
+import type { CandleTimeframe, Market } from '@/entities/bithumb';
+import { DEFAULT_MARKET, useKrwMarkets, getMarketLabel } from '@/entities/bithumb';
+import { CandlestickChart } from '@/features/bithumb-chart/ui';
 
 /**
  * 예제 1: 기본 사용
