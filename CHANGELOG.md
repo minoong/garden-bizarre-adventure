@@ -1,3 +1,9 @@
+## [1.34.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.33.0...v1.34.0) (2026-01-23)
+
+### ✨ 새로운 기능
+
+* 마켓 검색 컴포넌트 ([#78](https://github.com/minoong/garden-bizarre-adventure/issues/78)) ([259ac82](https://github.com/minoong/garden-bizarre-adventure/commit/259ac82bc1c060b062befc2ef659986e94ccfc04))
+
 ## [1.33.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.32.1...v1.33.0) (2026-01-23)
 
 ### ✨ 새로운 기능
