@@ -14,8 +14,8 @@ import type {
   CandlestickData,
   HistogramData,
 } from 'lightweight-charts';
-import { Box, CircularProgress, Typography, Popper } from '@mui/material';
-import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
+import { Box, CircularProgress, Typography, Button, IconButton, Menu, MenuItem, Divider } from '@mui/material';
+import { CandlestickChart as CandlestickChartIcon, ShowChart, Functions, Refresh, RestartAlt, Undo, Redo, KeyboardArrowDown } from '@mui/icons-material';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 
 import {
@@ -86,6 +86,12 @@ interface CandlestickChartProps {
   infiniteScroll?: boolean;
   /** 클래스명 */
   className?: string;
+  /** 타임프레임 변경 콜백 */
+  onTimeframeChange?: (timeframe: CandleTimeframe) => void;
+  /** 새로고침 콜백 */
+  onRefresh?: () => void;
+  /** 툴바 표시 여부 */
+  showToolbar?: boolean;
 }
 
 /**
@@ -99,7 +105,12 @@ export function CandlestickChart({
   initialCount = 200,
   infiniteScroll = true,
   className,
+  onTimeframeChange,
+  onRefresh,
+  showToolbar = true,
 }: CandlestickChartProps) {
+  // 드롭다운 메뉴 상태
+  const [dayMenuAnchor, setDayMenuAnchor] = useState<HTMLElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const volumeContainerRef = useRef<HTMLDivElement>(null);
 
@@ -122,7 +133,6 @@ export function CandlestickChart({
   const [isChartReady, setIsChartReady] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // 툴팁 상태
   const [tooltip, setTooltip] = useState<{
     time: string;
     open: number;
@@ -130,18 +140,19 @@ export function CandlestickChart({
     low: number;
     close: number;
     volume?: number;
-  } | null>(null);
-
-  // 툴팁 anchor element
-  const [tooltipAnchor, setTooltipAnchor] = useState<{
-    getBoundingClientRect: () => DOMRect;
+    cursorPrice?: number;
   } | null>(null);
 
   // 실시간 업데이트 중임을 표시하여 툴팁이 사라지는 것을 방지
   const isRealtimeUpdatingRef = useRef(false);
   // 현재 호버 중인 시간과 소스 저장
   const hoveredTimeRef = useRef<Time | null>(null);
+  const hoveredPriceRef = useRef<number | null>(null);
+  const hoveredYRef = useRef<number | null>(null);
   const hoveredSourceRef = useRef<'main' | 'volume' | null>(null);
+  const latestProcessedTickerTimeRef = useRef<number | null>(null);
+  const marketFittedRef = useRef<string | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   // 옵션 병합
   const chartOptions = { ...DEFAULT_CHART_OPTIONS, ...options };
@@ -366,15 +377,16 @@ export function CandlestickChart({
 
   // Tooltip Helper
   const updateTooltip = useCallback(
-    (param: MouseEventParams, source: 'main' | 'volume') => {
-      if (isRealtimeUpdatingRef.current) return;
+    (param: MouseEventParams, source: 'main' | 'volume', cursorPrice?: number) => {
       if (param.time && !param.point) return;
 
       if (!param.time || !param.point || param.point.x < 0 || param.point.y < 0) {
-        setTooltip(null);
-        setTooltipAnchor(null);
-        hoveredTimeRef.current = null;
-        hoveredSourceRef.current = null;
+        // 실시간 업데이트 중에는 툴팁을 지우지 않음 (데이터 갱신 시 잠깐 time이 사라지는 현상 방지)
+        if (!isRealtimeUpdatingRef.current) {
+          setTooltip(null);
+          hoveredTimeRef.current = null;
+          hoveredSourceRef.current = null;
+        }
         return;
       }
 
@@ -398,27 +410,6 @@ export function CandlestickChart({
           minute: '2-digit',
         });
 
-        const activeContainer = source === 'main' ? chartContainerRef.current : volumeContainerRef.current;
-        if (!activeContainer) return;
-
-        const containerRect = activeContainer.getBoundingClientRect();
-        const x = containerRect.left + param.point.x;
-        const y = containerRect.top + param.point.y;
-
-        setTooltipAnchor({
-          getBoundingClientRect: () =>
-            ({
-              width: 0,
-              height: 0,
-              top: y,
-              left: x,
-              right: x,
-              bottom: y,
-              x,
-              y,
-            }) as DOMRect,
-        });
-
         setTooltip({
           time: timeStr,
           open: candleData.open,
@@ -426,6 +417,7 @@ export function CandlestickChart({
           low: candleData.low,
           close: candleData.close,
           volume: volumeData?.value,
+          cursorPrice: cursorPrice,
         });
       }
     },
@@ -439,6 +431,8 @@ export function CandlestickChart({
     hasMoreDataRef.current = true;
     isLoadingMoreRef.current = false;
     chartInitializedRef.current = false; // 차트 초기화 대기
+    minPriceLineRef.current = null;
+    maxPriceLineRef.current = null;
   }, [market, timeframe]);
 
   // 차트 생성 및 동기화
@@ -559,21 +553,74 @@ export function CandlestickChart({
 
       // Unified Crosshair Move
       const onCrosshairMove = (param: MouseEventParams, src: 'main' | 'volume') => {
+        // 실시간 업데이트 중에는 크로스헤어 동기화 건너뛰기
+        // update() 호출 시 이벤트가 다시 발생하면서 setCrosshairPosition이 호출되어
+        // 마우스 위치가 아닌 데이터 위치로 크로스헤어가 튀는 현상 방지
+        if (isRealtimeUpdatingRef.current) {
+          return;
+        }
+
+        let cursorPrice: number | undefined;
+
+        // 1. 호버 상태 추적
         if (param.time) {
+          hoveredTimeRef.current = param.time;
+          hoveredSourceRef.current = src;
+
+          // Main Chart에서만 커서 가격 계산
+          if (param.point) {
+            if (src === 'main') {
+              const price = candleSeries.coordinateToPrice(param.point.y);
+              if (price !== null) {
+                hoveredPriceRef.current = price;
+                hoveredYRef.current = param.point.y;
+                cursorPrice = price;
+              }
+            } else {
+              // Volume Chart에서는 가격 표시 안함 (Close로 폴백)
+              hoveredPriceRef.current = null;
+              hoveredYRef.current = null;
+            }
+          }
+
+          // 2. 다른 차트에 크로스헤어 동기화 (시간축 연결)
+          // 마우스가 있는 차트는 라이브러리가 자동 처리, 다른 차트만 동기화
           const targetChart = src === 'main' ? volumeChart : mainChart;
           const targetSeries = src === 'main' ? volumeSeries : candleSeries;
-          targetChart?.setCrosshairPosition(0, param.time, targetSeries);
 
+          if (targetChart && targetSeries) {
+            // 다른 차트의 Y값은 해당 시간의 데이터 값으로 설정
+            let syncPrice = 0;
+            if (src === 'main') {
+              // 메인→볼륨: 해당 시간의 볼륨 값
+              const volData = getVolumeDataByTime(param.time);
+              if (volData) syncPrice = volData.value as number;
+            } else {
+              // 볼륨→메인: 해당 시간의 종가
+              const candleData = getCandleDataByTime(param.time);
+              if (candleData) syncPrice = candleData.close;
+            }
+            targetChart.setCrosshairPosition(syncPrice, param.time, targetSeries);
+          }
+
+          // 3. 글로벌 이벤트 전송 (다른 마켓 차트용)
           window.dispatchEvent(
             new CustomEvent('upbit-chart-sync', {
               detail: { time: param.time, sourceMarket: market },
             }),
           );
         } else {
-          volumeChart?.clearCrosshairPosition();
+          // 마우스가 차트 밖으로 나갔을 때만 클리어
+          hoveredTimeRef.current = null;
+          hoveredPriceRef.current = null;
+          hoveredSourceRef.current = null;
+          hoveredYRef.current = null;
           mainChart.clearCrosshairPosition();
+          volumeChart?.clearCrosshairPosition();
         }
-        updateTooltip(param, src);
+
+        // 4. 툴팁 업데이트
+        updateTooltip(param, src, cursorPrice);
       };
 
       mainChart.subscribeCrosshairMove((p) => onCrosshairMove(p, 'main'));
@@ -581,29 +628,60 @@ export function CandlestickChart({
     } else {
       mainChart.timeScale().subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
       mainChart.subscribeCrosshairMove((param) => {
+        let cursorPrice: number | undefined;
         if (param.time) {
+          hoveredTimeRef.current = param.time;
+          hoveredSourceRef.current = 'main';
+          if (param.point) {
+            const price = candleSeries.coordinateToPrice(param.point.y);
+            if (price !== null) {
+              hoveredPriceRef.current = price;
+              hoveredYRef.current = param.point.y;
+              cursorPrice = price;
+            }
+          }
+
           window.dispatchEvent(
             new CustomEvent('upbit-chart-sync', {
               detail: { time: param.time, sourceMarket: market },
             }),
           );
+        } else {
+          if (!isRealtimeUpdatingRef.current) {
+            hoveredTimeRef.current = null;
+            hoveredPriceRef.current = null;
+            hoveredSourceRef.current = null;
+            hoveredYRef.current = null;
+            mainChart.clearCrosshairPosition();
+          }
         }
-        updateTooltip(param, 'main');
+        updateTooltip(param, 'main', cursorPrice);
       });
     }
 
+    // Resize Observer setup
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      if (entries.length === 0 || !entries[0].contentRect) return;
+      const { width, height: containerHeight } = entries[0].contentRect;
+      mainChart.resize(width, showVolume ? containerHeight * 0.75 : containerHeight);
+      if (volumeChart) {
+        volumeChart.resize(width, containerHeight * 0.25);
+      }
+    });
+    resizeObserverRef.current.observe(container);
+
     const handleGlobalSync = (e: Event) => {
       const customEvent = e as CustomEvent<{ time: Time; sourceMarket: string }>;
-      const { time, sourceMarket } = customEvent.detail;
+      const { time: _time, sourceMarket } = customEvent.detail;
       if (sourceMarket === market) return;
-
-      mainChartRef.current?.setCrosshairPosition(0, time, candleSeriesRef.current!);
-      volumeChartRef.current?.setCrosshairPosition(0, time, volumeSeriesRef.current!);
+      // 다른 마켓 차트와 크로스헤어 Y축 동기화하지 않음
+      // setCrosshairPosition(0, time, series)를 호출하면 Y=0 위치로 강제 이동됨
     };
 
     window.addEventListener('upbit-chart-sync', handleGlobalSync);
 
     // Initial Data Load (if candles have already arrived)
+    // 이 시점에 데이터가 있으면 즉시 채워넣어 초기 렌더링 지연 방지
     if (candles && candles.length > 0) {
       allCandlesRef.current = [...candles];
       const chartCandles = toChartCandles(candles);
@@ -621,7 +699,32 @@ export function CandlestickChart({
       }
 
       mainChart.timeScale().fitContent();
+      marketFittedRef.current = market;
       updateMinMaxPriceLines();
+    }
+
+    // 마우스 enter/leave 이벤트로 가로선 표시 제어
+    // 마우스가 있는 차트만 가로선 표시, 다른 차트는 숨김
+    const handleMainEnter = () => {
+      mainChart.applyOptions({ crosshair: { horzLine: { visible: true } } });
+      volumeChart?.applyOptions({ crosshair: { horzLine: { visible: false } } });
+    };
+    const handleVolumeEnter = () => {
+      mainChart.applyOptions({ crosshair: { horzLine: { visible: false } } });
+      volumeChart?.applyOptions({ crosshair: { horzLine: { visible: true } } });
+    };
+    const handleMouseLeave = () => {
+      // 차트 영역을 완전히 벗어나면 둘 다 가로선 복원
+      mainChart.applyOptions({ crosshair: { horzLine: { visible: true } } });
+      volumeChart?.applyOptions({ crosshair: { horzLine: { visible: true } } });
+    };
+
+    container.addEventListener('mouseenter', handleMainEnter);
+    container.addEventListener('mouseleave', handleMouseLeave);
+    const volContainer = volumeContainerRef.current;
+    if (volContainer) {
+      volContainer.addEventListener('mouseenter', handleVolumeEnter);
+      volContainer.addEventListener('mouseleave', handleMouseLeave);
     }
 
     chartInitializedRef.current = true;
@@ -630,10 +733,20 @@ export function CandlestickChart({
     return () => {
       setIsChartReady(false);
       chartInitializedRef.current = false;
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
       window.removeEventListener('upbit-chart-sync', handleGlobalSync);
+      container.removeEventListener('mouseenter', handleMainEnter);
+      container.removeEventListener('mouseleave', handleMouseLeave);
+      if (volContainer) {
+        volContainer.removeEventListener('mouseenter', handleVolumeEnter);
+        volContainer.removeEventListener('mouseleave', handleMouseLeave);
+      }
       mainChart.remove();
       if (volumeChart) volumeChart.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     market,
     timeframe,
@@ -649,8 +762,6 @@ export function CandlestickChart({
     TEXT_COLOR,
     GRID_COLOR,
     BORDER_COLOR,
-    candles,
-    handleVisibleRangeChange,
     updateMinMaxPriceLines,
     updateTooltip,
   ]);
@@ -674,8 +785,14 @@ export function CandlestickChart({
       });
     }
 
+    // 마켓이 변경되었거나 처음 렌더링될 때만 fitContent 호출
+    if (marketFittedRef.current !== market) {
+      mainChartRef.current?.timeScale().fitContent();
+      marketFittedRef.current = market;
+    }
+
     updateMinMaxPriceLines();
-  }, [isChartReady, candles, showVolume, showMovingAverage, movingAveragePeriods, upColor, downColor, updateMinMaxPriceLines]);
+  }, [isChartReady, market, candles, showVolume, showMovingAverage, movingAveragePeriods, upColor, downColor, updateMinMaxPriceLines]);
 
   // 실시간 업데이트 (Main & Volume 분리)
   useEffect(() => {
@@ -687,6 +804,10 @@ export function CandlestickChart({
     try {
       const ticker = tickers.get(market);
       if (!ticker || !allCandlesRef.current.length) return;
+
+      // 같은 타임스탬프면 중복 처리 방지 (이미 처리된 틱인 경우)
+      if (ticker.timestamp <= (latestProcessedTickerTimeRef.current || 0)) return;
+      latestProcessedTickerTimeRef.current = ticker.timestamp;
 
       const candleStartTime = getCandleStartTime(ticker.timestamp, timeframe);
       const candleTimestamp = Math.floor(candleStartTime.getTime() / 1000);
@@ -800,69 +921,245 @@ export function CandlestickChart({
         }
       }
 
-      // SMA Update
+      // SMA Update (최적화: 전체 데이터를 다시 계산하지 않고 마지막 값만 계산)
       if (showMovingAverage && maSeriesRefs.current.length > 0 && movingAveragePeriods) {
-        const allChartCandles = toChartCandles(allCandlesRef.current);
-        const sortedCandles = [...allChartCandles].sort((a, b) => (a.time as number) - (b.time as number));
-
         maSeriesRefs.current.forEach((series, index) => {
           const period = movingAveragePeriods[index];
-          const smaData = calculateSMA(sortedCandles, period);
-          if (smaData.length > 0) {
-            const lastSMA = smaData[smaData.length - 1];
-            series.update(lastSMA);
+          // 필요한 만큼만 데이터 추출 (계산에 필요한 최소 개수)
+          if (allCandlesRef.current.length >= period) {
+            const latestItems = allCandlesRef.current.slice(0, period);
+            const chartItems = toChartCandles(latestItems);
+            const smaData = calculateSMA(chartItems, period);
+            if (smaData.length > 0) {
+              series.update(smaData[0]);
+            }
           }
         });
       }
 
       updateMinMaxPriceLines();
+
+      // 크로스헤어는 강제로 복구하지 않음
+      // 마우스가 차트 위에 있으면 lightweight-charts가 자동으로 크로스헤어를 유지함
+      // setCrosshairPosition을 호출하면 오히려 마우스 위치와 다른 곳으로 튀어버림
     } catch (e) {
       console.error('Realtime update error:', e);
     } finally {
-      isRealtimeUpdatingRef.current = false;
+      setTimeout(() => {
+        isRealtimeUpdatingRef.current = false;
+      }, 0);
     }
-  }, [tickers, market, realtime, timeframe, showVolume, showMovingAverage, movingAveragePeriods, upColor, downColor, updateMinMaxPriceLines]);
-
-  // 로딩 상태
-  if (isLoading) {
-    return (
-      <Box
-        className={className}
-        sx={{
-          height,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: darkMode ? '#1e1e1e' : '#ffffff',
-        }}
-      >
-        <CircularProgress size={40} />
-      </Box>
-    );
-  }
-
-  // 에러 상태
-  if (error) {
-    return (
-      <Box
-        className={className}
-        sx={{
-          height,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: darkMode ? '#1e1e1e' : '#ffffff',
-        }}
-      >
-        <Typography color="error">차트를 불러올 수 없습니다</Typography>
-      </Box>
-    );
-  }
+  }, [
+    tickers,
+    market,
+    realtime,
+    timeframe,
+    showVolume,
+    showMovingAverage,
+    movingAveragePeriods,
+    upColor,
+    downColor,
+    updateMinMaxPriceLines,
+    getCandleDataByTime,
+    getVolumeDataByTime,
+  ]);
 
   return (
     <Box className={className} sx={{ position: 'relative', bgcolor: BG_COLOR, display: 'flex', flexDirection: 'column', height }}>
+      {/* Chart Toolbar */}
+      {showToolbar && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            px: 1,
+            py: 0.5,
+            borderBottom: `1px solid ${BORDER_COLOR}`,
+            bgcolor: darkMode ? '#0d1520' : '#f5f5f5',
+            flexShrink: 0,
+          }}
+        >
+          {/* 시간 프레임 버튼 그룹 */}
+          <Box sx={{ display: 'flex', gap: 0.25 }}>
+            {[
+              { label: '1분', tf: { type: 'minutes' as const, unit: 1 as const } },
+              { label: '3분', tf: { type: 'minutes' as const, unit: 3 as const } },
+              { label: '5분', tf: { type: 'minutes' as const, unit: 5 as const } },
+              { label: '10분', tf: { type: 'minutes' as const, unit: 10 as const } },
+              { label: '15분', tf: { type: 'minutes' as const, unit: 15 as const } },
+              { label: '30분', tf: { type: 'minutes' as const, unit: 30 as const } },
+              { label: '1시간', tf: { type: 'minutes' as const, unit: 60 as const } },
+              { label: '4시간', tf: { type: 'minutes' as const, unit: 240 as const } },
+            ].map(({ label, tf }) => (
+              <Button
+                key={label}
+                size="small"
+                variant={timeframe.type === tf.type && timeframe.unit === tf.unit ? 'contained' : 'text'}
+                onClick={() => onTimeframeChange?.(tf)}
+                sx={{
+                  minWidth: 'auto',
+                  px: 0.75,
+                  py: 0.25,
+                  fontSize: '0.7rem',
+                  color: timeframe.type === tf.type && timeframe.unit === tf.unit ? '#fff' : TEXT_COLOR,
+                  bgcolor: timeframe.type === tf.type && timeframe.unit === tf.unit ? '#1976d2' : 'transparent',
+                  '&:hover': {
+                    bgcolor:
+                      timeframe.type === tf.type && timeframe.unit === tf.unit
+                        ? darkMode
+                          ? '#1565c0'
+                          : '#115293'
+                        : darkMode
+                          ? 'rgba(255,255,255,0.1)'
+                          : 'rgba(0,0,0,0.08)',
+                  },
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+
+            {/* 일/주/월 드롭다운 */}
+            <Button
+              size="small"
+              variant={timeframe.type === 'days' || timeframe.type === 'weeks' || timeframe.type === 'months' ? 'contained' : 'text'}
+              onClick={(e) => setDayMenuAnchor(e.currentTarget)}
+              endIcon={<KeyboardArrowDown sx={{ fontSize: '1rem !important' }} />}
+              sx={{
+                minWidth: 'auto',
+                px: 1,
+                py: 0.25,
+                fontSize: '0.75rem',
+                color: timeframe.type !== 'minutes' ? '#fff' : TEXT_COLOR,
+                bgcolor: timeframe.type !== 'minutes' ? '#1976d2' : 'transparent',
+                '&:hover': {
+                  bgcolor: timeframe.type !== 'minutes' ? (darkMode ? '#1565c0' : '#115293') : darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                },
+              }}
+            >
+              {timeframe.type === 'days' ? '일' : timeframe.type === 'weeks' ? '주' : timeframe.type === 'months' ? '월' : '일'}
+            </Button>
+            <Menu
+              anchorEl={dayMenuAnchor}
+              open={Boolean(dayMenuAnchor)}
+              onClose={() => setDayMenuAnchor(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            >
+              <MenuItem
+                onClick={() => {
+                  onTimeframeChange?.({ type: 'days' });
+                  setDayMenuAnchor(null);
+                }}
+              >
+                일
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  onTimeframeChange?.({ type: 'weeks' });
+                  setDayMenuAnchor(null);
+                }}
+              >
+                주
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  onTimeframeChange?.({ type: 'months' });
+                  setDayMenuAnchor(null);
+                }}
+              >
+                월
+              </MenuItem>
+            </Menu>
+          </Box>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: BORDER_COLOR }} />
+
+          {/* 차트 타입 아이콘 */}
+          <IconButton size="small" sx={{ color: TEXT_COLOR }}>
+            <CandlestickChartIcon sx={{ fontSize: '1.1rem' }} />
+          </IconButton>
+          <IconButton size="small" sx={{ color: TEXT_COLOR, opacity: 0.5 }}>
+            <ShowChart sx={{ fontSize: '1.1rem' }} />
+          </IconButton>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: BORDER_COLOR }} />
+
+          {/* 지표 */}
+          <IconButton size="small" sx={{ color: TEXT_COLOR }}>
+            <Functions sx={{ fontSize: '1.1rem' }} />
+          </IconButton>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: BORDER_COLOR }} />
+
+          {/* 토글 옵션들 */}
+          <Button size="small" variant="text" sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.7rem', color: TEXT_COLOR }}>
+            예측차트
+          </Button>
+          <Button size="small" variant="text" sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.7rem', color: TEXT_COLOR }}>
+            미체결
+          </Button>
+          <Button size="small" variant="text" sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.7rem', color: TEXT_COLOR }}>
+            평균매수가
+          </Button>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: BORDER_COLOR }} />
+
+          {/* 새로고침 / 초기화 */}
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<Refresh sx={{ fontSize: '0.9rem !important' }} />}
+            onClick={onRefresh}
+            sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.7rem', color: TEXT_COLOR }}
+          >
+            새로고침
+          </Button>
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<RestartAlt sx={{ fontSize: '0.9rem !important' }} />}
+            onClick={() => mainChartRef.current?.timeScale().fitContent()}
+            sx={{ minWidth: 'auto', px: 1, py: 0.25, fontSize: '0.7rem', color: TEXT_COLOR }}
+          >
+            초기화
+          </Button>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: BORDER_COLOR }} />
+
+          {/* Undo / Redo */}
+          <IconButton size="small" sx={{ color: TEXT_COLOR, opacity: 0.5 }}>
+            <Undo sx={{ fontSize: '1rem' }} />
+          </IconButton>
+          <IconButton size="small" sx={{ color: TEXT_COLOR, opacity: 0.5 }}>
+            <Redo sx={{ fontSize: '1rem' }} />
+          </IconButton>
+        </Box>
+      )}
+
+      {/* Loading Overlay */}
+      {(isLoading || error) && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: showToolbar ? 40 : 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: darkMode ? 'rgba(30, 30, 30, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          {isLoading ? <CircularProgress size={40} /> : <Typography color="error">차트를 불러올 수 없습니다</Typography>}
+        </Box>
+      )}
+
       {/* HEADER INFO (OHLC) - Positioned Absolute over Main Chart */}
-      <Box sx={{ position: 'absolute', top: 8, left: 12, zIndex: 10, pointerEvents: 'none' }}>
+      <Box sx={{ position: 'absolute', top: showToolbar ? 48 : 8, left: 12, zIndex: 10, pointerEvents: 'none' }}>
         {/* ... (Keep existing text rendering logic using 'tooltip' state) ... */}
         {/* Re-use existing JSX for OHLC display */}
         {(() => {
@@ -879,7 +1176,9 @@ export function CandlestickChart({
               : null);
 
           if (!displayData) return null;
-          const priceChange = calculatePriceChange(displayData.open, displayData.close, upColor, downColor);
+          // 커서 가격이 있으면 그것을 사용, 없으면 종가 사용 (초기 로드 등)
+          const mainPrice = 'cursorPrice' in displayData ? (displayData.cursorPrice ?? displayData.close) : displayData.close;
+          const priceChange = calculatePriceChange(displayData.open, mainPrice, upColor, downColor);
 
           return (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.2 }}>
@@ -888,7 +1187,7 @@ export function CandlestickChart({
                 <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'baseline' }}>
                   <Typography sx={{ color: TEXT_COLOR, fontSize: '0.625rem', fontWeight: 700 }}>PRICE</Typography>
                   <Typography sx={{ color: priceChange.changeColor, fontSize: '0.875rem', fontWeight: 700, lineHeight: 1 }}>
-                    {displayData.close.toLocaleString()}
+                    {mainPrice.toLocaleString()}
                   </Typography>
                   <Typography sx={{ color: priceChange.changeColor, fontSize: '0.6875rem', fontWeight: 600 }}>{priceChange.formattedChange}</Typography>
                 </Box>
@@ -1044,115 +1343,6 @@ export function CandlestickChart({
           </Typography>
         </Box>
       )}
-
-      {/* 마우스 호버 툴팁 (Popper로 자동 위치 조정) */}
-      <Popper
-        open={Boolean(tooltip && tooltipAnchor)}
-        anchorEl={tooltipAnchor}
-        placement="right-start"
-        modifiers={[
-          {
-            name: 'flip',
-            enabled: true,
-            options: {
-              fallbackPlacements: ['left-start', 'top-start', 'bottom-start'],
-            },
-          },
-          {
-            name: 'preventOverflow',
-            enabled: true,
-            options: {
-              boundary: chartContainerRef.current,
-              padding: 8,
-            },
-          },
-          {
-            name: 'offset',
-            options: {
-              offset: [0, 10],
-            },
-          },
-        ]}
-        style={{ zIndex: 1000, pointerEvents: 'none' }}
-      >
-        <Box
-          sx={{
-            bgcolor: darkMode ? 'rgba(15, 23, 30, 0.85)' : 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-            borderRadius: 2, // Slightly more rounded
-            px: 1.75,
-            py: 1.25,
-            minWidth: 190,
-            boxShadow: darkMode ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(0,0,0,0.1)',
-          }}
-        >
-          {tooltip &&
-            (() => {
-              // 시가 대비 종가 변화율 계산 (유틸리티 함수 사용)
-              const priceChange = calculatePriceChange(tooltip.open, tooltip.close, upColor, downColor);
-
-              return (
-                <>
-                  {/* 종가 + 변화율 (강조) */}
-                  <Box sx={{ mb: 1, pb: 0.75, borderBottom: `1px solid ${darkMode ? '#3c3c3c' : '#e1e1e1'}` }}>
-                    <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 700, mb: 0.5, color: priceChange.changeColor }}>
-                      종가: {tooltip.close.toLocaleString()}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      {priceChange.isRise ? (
-                        <ArrowDropUp sx={{ fontSize: '1.25rem', color: priceChange.changeColor }} />
-                      ) : (
-                        <ArrowDropDown sx={{ fontSize: '1.25rem', color: priceChange.changeColor }} />
-                      )}
-                      <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600, color: priceChange.changeColor }}>
-                        {priceChange.formattedChange}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* OHLC 상세 정보 */}
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                    <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
-                      <Box component="span" sx={{ color: darkMode ? '#999' : '#666', minWidth: 40, display: 'inline-block' }}>
-                        시가:
-                      </Box>
-                      <Box component="span" sx={{ fontWeight: 600 }}>
-                        {tooltip.open.toLocaleString()}
-                      </Box>
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
-                      <Box component="span" sx={{ color: darkMode ? '#999' : '#666', minWidth: 40, display: 'inline-block' }}>
-                        고가:
-                      </Box>
-                      <Box component="span" sx={{ fontWeight: 600, color: upColor }}>
-                        {tooltip.high.toLocaleString()}
-                      </Box>
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
-                      <Box component="span" sx={{ color: darkMode ? '#999' : '#666', minWidth: 40, display: 'inline-block' }}>
-                        저가:
-                      </Box>
-                      <Box component="span" sx={{ fontWeight: 600, color: downColor }}>
-                        {tooltip.low.toLocaleString()}
-                      </Box>
-                    </Typography>
-                    {tooltip.volume !== undefined && (
-                      <Typography variant="body2" sx={{ fontSize: '0.75rem', mt: 0.5, pt: 0.5, borderTop: `1px solid ${darkMode ? '#3c3c3c' : '#e1e1e1'}` }}>
-                        <Box component="span" sx={{ color: darkMode ? '#999' : '#666', minWidth: 40, display: 'inline-block' }}>
-                          거래량:
-                        </Box>
-                        <Box component="span" sx={{ fontWeight: 600 }}>
-                          {tooltip.volume.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                        </Box>
-                      </Typography>
-                    )}
-                  </Box>
-                </>
-              );
-            })()}
-        </Box>
-      </Popper>
     </Box>
   );
 }

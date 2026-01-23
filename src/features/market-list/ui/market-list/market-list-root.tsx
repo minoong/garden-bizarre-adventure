@@ -16,6 +16,8 @@ export interface MarketListRootProps {
   initialSortBy?: SortField;
   /** 초기 정렬 순서 */
   initialSortOrder?: SortOrder;
+  /** 초기 선택된 마켓 */
+  initialSelectedMarket?: string | null;
   /** 행 클릭 핸들러 */
   onRowClick?: (market: string) => void;
   /** 자식 요소 */
@@ -46,6 +48,7 @@ export interface MarketListRootProps {
 export function MarketListRoot({
   initialSortBy = 'acc_trade_price_24h',
   initialSortOrder = 'desc',
+  initialSelectedMarket = null,
   onRowClick,
   children,
   sx,
@@ -55,7 +58,7 @@ export function MarketListRoot({
   showStatusChip = true,
   columns = DEFAULT_COLUMNS,
 }: MarketListRootProps) {
-  const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
+  const [selectedMarket, setSelectedMarket] = useState<string | null>(initialSelectedMarket);
   const [virtualizer, setVirtualizerState] = useState<Virtualizer<HTMLElement, Element> | null>(null);
 
   // CSS Grid 템플릿 컬럼 생성

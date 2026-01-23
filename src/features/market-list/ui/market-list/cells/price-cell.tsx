@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { Box, Typography } from '@mui/material';
 
-import { formatPrice } from '@/entities/upbit';
+import { formatPrice } from '@/entities/bithumb';
 
 import type { BaseCellProps } from './types';
 
