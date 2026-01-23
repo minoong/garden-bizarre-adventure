@@ -1,8 +1,7 @@
-'use client';
-
-import type { ReactNode } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import { Box, Typography } from '@mui/material';
 
+import { useRealtimeTicker, parseMarketCode } from '@/entities/bithumb';
 import { D3Candle } from '@/features/trading-chart/ui/d3-candle';
 
 import type { BaseCellProps } from './types';
@@ -26,30 +25,43 @@ export interface NameCellProps extends BaseCellProps {
 
 /**
  * 이름 셀
- * - CSS Grid 셀로 렌더링 (너비는 부모 Row의 Grid에서 결정)
+ * - 실시간 데이터를 직접 구독하여 캔들 차트 업데이트 성능 최적화
  */
-export function NameCell({ row, state, sx, showCandle = true, render }: NameCellProps) {
-  const { base, quote } = state.marketCode;
+export const NameCell = memo(function NameCell({ row, sx, showCandle = true, render }: NameCellProps) {
+  const realtimeTicker = useRealtimeTicker(row.market);
+  const { base, quote } = useMemo(() => parseMarketCode(row.market), [row.market]);
 
-  const renderProps: NameCellRenderProps = {
-    koreanName: row.korean_name,
-    englishName: row.english_name,
-    base,
-    quote,
-    openPrice: row.opening_price,
-    closePrice: row.trade_price,
-    highPrice: row.high_price,
-    lowPrice: row.low_price,
-  };
+  // 실시간 또는 초기 데이터 사용
+  const openPrice = realtimeTicker?.opening_price ?? row.opening_price;
+  const candleClosePrice = realtimeTicker?.trade_price ?? row.trade_price;
+  const highPrice = realtimeTicker?.high_price ?? row.high_price;
+  const lowPrice = realtimeTicker?.low_price ?? row.low_price;
 
-  const cellSx = {
-    padding: '6px 4px',
-    display: 'flex',
-    alignItems: 'center',
-    overflow: 'hidden',
-    minWidth: 0, // Grid 셀 overflow 방지
-    ...sx,
-  };
+  const renderProps = useMemo<NameCellRenderProps>(
+    () => ({
+      koreanName: row.korean_name,
+      englishName: row.english_name,
+      base,
+      quote,
+      openPrice,
+      closePrice: candleClosePrice,
+      highPrice,
+      lowPrice,
+    }),
+    [row.korean_name, row.english_name, base, quote, openPrice, candleClosePrice, highPrice, lowPrice],
+  );
+
+  const cellSx = useMemo(
+    () => ({
+      padding: '6px 4px',
+      display: 'flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      minWidth: 0,
+      ...sx,
+    }),
+    [sx],
+  );
 
   if (render) {
     return <Box sx={cellSx}>{render(renderProps)}</Box>;
@@ -69,28 +81,28 @@ export function NameCell({ row, state, sx, showCandle = true, render }: NameCell
           >
             <svg width={16} height={20} style={{ display: 'block' }}>
               <D3Candle
-                open={row.opening_price}
-                close={row.trade_price}
-                high={row.high_price}
-                low={row.low_price}
+                open={openPrice}
+                close={candleClosePrice}
+                high={highPrice}
+                low={lowPrice}
                 x={8}
                 width={5}
                 height={20}
-                minPrice={row.low_price}
-                maxPrice={row.high_price}
+                minPrice={lowPrice}
+                maxPrice={highPrice}
               />
             </svg>
           </Box>
         )}
         <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="body2" sx={{ fontWeight: 400, fontSize: '0.75rem', wordBreak: 'break-word' }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem', wordBreak: 'break-word' }}>
             {row.korean_name}
           </Typography>
-          <Typography variant="caption" sx={{ fontSize: '0.65rem', color: '#999' }}>
+          <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.65rem', color: '#999' }}>
             {base}/{quote}
           </Typography>
         </Box>
       </Box>
     </Box>
   );
-}
+});

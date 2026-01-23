@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { Box } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -34,105 +34,114 @@ export interface MarketListBodyProps {
 
 /**
  * MarketList Body 컴포넌트
- * - 가상화 스크롤 처리
- * - Render props 지원
+ * - 가상화 스크롤 처리 (TanStack Virtual)
+ * - 프리미엄 스크롤바 (OverlayScrollbars)
+ * - 고성능 렌더링 최적화
  */
-export function MarketListBody({ maxHeight = 600, rowHeight = 56, overscan = 10, sx, children }: MarketListBodyProps) {
-  const { sortedData, isFavorite, favorites, selectedMarket, getHighlight, setVirtualizer } = useMarketListContext();
+export const MarketListBody = memo(function MarketListBody({
+  maxHeight = 600,
+  rowHeight = 56,
+  overscan = 20, // 넉넉한 오버스캔으로 빠른 스크롤 대응
+  sx,
+  children,
+}: MarketListBodyProps) {
+  const { sortedData, isFavorite, selectedMarket, setVirtualizer } = useMarketListContext();
 
-  // OverlayScrollbars ref
   const osRef = useRef<OverlayScrollbarsComponentRef>(null);
 
-  // 스크롤 요소 가져오기
   const getScrollElement = useCallback(() => {
     const osInstance = osRef.current?.osInstance();
     return osInstance?.elements().viewport || null;
   }, []);
 
-  // 가상화 설정
-  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual은 React Compiler와 알려진 호환성 문제가 있음
   const virtualizer = useVirtualizer({
     count: sortedData.length,
     getScrollElement,
-    estimateSize: () => rowHeight,
+    estimateSize: useCallback(() => rowHeight, [rowHeight]),
     overscan,
   });
 
-  // Context에 virtualizer 등록
   useEffect(() => {
     setVirtualizer(virtualizer);
   }, [virtualizer, setVirtualizer]);
 
   const virtualItems = virtualizer.getVirtualItems();
+  const totalSize = virtualizer.getTotalSize();
 
-  // 행 상태 계산 함수
-  const getRowState = useCallback(
-    (row: MarketRowData): RowRenderState => {
-      const { base, quote } = parseMarketCode(row.market);
-      // favorites 변화에 따라 state 객체를 새로 생성하기 위해 사용
-      const _ = favorites;
-      const priceChange = calculatePriceChange(row.prev_closing_price, row.trade_price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL);
-
-      return {
-        isFavorite: isFavorite(row.market),
-        isSelected: selectedMarket === row.market,
-        highlight: getHighlight(row.market),
-        priceChange,
-        marketCode: { base, quote },
-      };
-    },
-    [isFavorite, favorites, selectedMarket, getHighlight],
-  );
-
-  // children이 함수인지 확인 (render props)
   const isRenderProps = typeof children === 'function';
 
+  const osOptions = useMemo(
+    () => ({
+      scrollbars: {
+        autoHide: 'move' as const,
+        autoHideDelay: 500,
+      },
+      overflow: {
+        x: 'hidden' as const,
+        y: 'scroll' as const,
+      },
+    }),
+    [],
+  );
+
+  const osStyle = useMemo(
+    () => ({
+      maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+    }),
+    [maxHeight],
+  );
+
+  // 컨테이너 스타일 (will-change 추가로 GPU 가속 유도)
+  const containerSx = useMemo<SxProps<Theme>>(
+    () => [{ height: totalSize, position: 'relative', willChange: 'transform' }, ...(Array.isArray(sx) ? sx : [sx])],
+    [totalSize, sx],
+  );
+
   return (
-    <OverlayScrollbarsComponent
-      ref={osRef}
-      element="div"
-      options={{
-        scrollbars: {
-          autoHide: 'never',
-          autoHideDelay: 0,
-        },
-        overflow: {
-          x: 'hidden',
-          y: 'scroll',
-        },
-      }}
-      defer
-      style={{ maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight }}
-    >
-      <Box sx={{ height: virtualizer.getTotalSize(), position: 'relative', ...sx }}>
+    <OverlayScrollbarsComponent ref={osRef} element="div" options={osOptions} defer style={osStyle}>
+      <Box sx={containerSx}>
         {virtualItems.map((virtualRow) => {
           const row = sortedData[virtualRow.index];
-          const state = getRowState(row);
+          if (!row) return null;
 
-          // Render props 사용
+          const { base, quote } = parseMarketCode(row.market);
+          const state: RowRenderState = {
+            isFavorite: isFavorite(row.market),
+            isSelected: selectedMarket === row.market,
+            highlight: undefined,
+            priceChange: calculatePriceChange(row.prev_closing_price, row.trade_price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL),
+            marketCode: { base, quote },
+          };
+
+          const itemStyle = {
+            position: 'absolute' as const,
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: `translateY(${virtualRow.start}px)`,
+            willChange: 'transform', // 개별 아이템에도 GPU 가속 힌트
+          };
+
           if (isRenderProps) {
             return (
-              <Box
-                key={row.market}
-                data-index={virtualRow.index}
-                ref={virtualizer.measureElement}
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
+              <Box key={row.market} data-index={virtualRow.index} ref={virtualizer.measureElement} sx={itemStyle}>
                 {children(row, state, virtualRow.index)}
               </Box>
             );
           }
 
-          // 기본 렌더링
-          return <MarketListRow key={row.market} row={row} state={state} virtualRow={virtualRow} measureElement={virtualizer.measureElement} />;
+          return (
+            <MarketListRow
+              key={row.market}
+              row={row}
+              state={state}
+              virtualRow={virtualRow}
+              measureElement={virtualizer.measureElement}
+              sx={{ willChange: 'transform' }}
+            />
+          );
         })}
       </Box>
     </OverlayScrollbarsComponent>
   );
-}
+});

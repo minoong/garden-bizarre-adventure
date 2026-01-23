@@ -1,7 +1,6 @@
 import { useMemo, useEffect } from 'react';
 
 import { useKrwMarkets, useTicker, useBithumbSocket } from '@/entities/bithumb';
-import type { Ticker, WebSocketTicker } from '@/entities/bithumb';
 
 import type { MarketRowData } from '../model/types';
 
@@ -34,54 +33,31 @@ export function useMarketListData() {
     }
   }, [connect, marketCodes.length, wsStatus]);
 
-  // 4. 테이블 데이터 생성 (REST + WebSocket 병합)
+  // 4. 테이블 데이터 생성 (안정적인 데이터 구조 유지)
   const data = useMemo<MarketRowData[]>(() => {
     if (!markets || !tickers) return [];
 
     return markets.map((market) => {
-      // WebSocket 데이터 우선 사용, 없으면 REST API 데이터 사용
-      const realtimeTicker = realtimeTickers.get(market.market);
+      // 초기 데이터는 REST API 결과를 사용
       const restTicker = tickers.find((t) => t.market === market.market);
-      const ticker: WebSocketTicker | Ticker | undefined = realtimeTicker || restTicker;
-
-      if (!ticker) {
-        return {
-          market: market.market,
-          korean_name: market.korean_name,
-          english_name: market.english_name,
-          trade_price: 0,
-          opening_price: 0,
-          prev_closing_price: 0,
-          high_price: 0,
-          low_price: 0,
-          change: 'EVEN' as const,
-          signed_change_rate: 0,
-          change_price: 0,
-          acc_trade_price_24h: 0,
-          acc_trade_volume_24h: 0,
-        };
-      }
-
-      // WebSocketTicker 타입 가드
-      const isWebSocketTicker = (t: WebSocketTicker | Ticker): t is WebSocketTicker => 'opening_price' in t;
 
       return {
         market: market.market,
         korean_name: market.korean_name,
         english_name: market.english_name,
-        trade_price: ticker.trade_price,
-        opening_price: ticker.opening_price,
-        prev_closing_price: ticker.prev_closing_price,
-        high_price: ticker.high_price,
-        low_price: ticker.low_price,
-        change: isWebSocketTicker(ticker) ? ticker.change : 'EVEN',
-        signed_change_rate: ticker.signed_change_rate,
-        change_price: isWebSocketTicker(ticker) ? ticker.signed_change_price : ticker.signed_change_price,
-        acc_trade_price_24h: ticker.acc_trade_price_24h,
-        acc_trade_volume_24h: ticker.acc_trade_volume_24h,
+        trade_price: restTicker?.trade_price ?? 0,
+        opening_price: restTicker?.opening_price ?? 0,
+        prev_closing_price: restTicker?.prev_closing_price ?? 0,
+        high_price: restTicker?.high_price ?? 0,
+        low_price: restTicker?.low_price ?? 0,
+        change: restTicker?.change ?? ('EVEN' as const),
+        signed_change_rate: restTicker?.signed_change_rate ?? 0,
+        change_price: restTicker?.signed_change_price ?? 0,
+        acc_trade_price_24h: restTicker?.acc_trade_price_24h ?? 0,
+        acc_trade_volume_24h: restTicker?.acc_trade_volume_24h ?? 0,
       };
     });
-  }, [markets, tickers, realtimeTickers]);
+  }, [markets, tickers]); // realtimeTickers 제거
 
   return {
     data,

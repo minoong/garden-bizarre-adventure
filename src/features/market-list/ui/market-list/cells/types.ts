@@ -8,6 +8,6 @@ import type { RowRenderState } from '../market-list-context';
  */
 export interface BaseCellProps {
   row: MarketRowData;
-  state: RowRenderState;
+  state?: RowRenderState;
   sx?: SxProps<Theme>;
 }

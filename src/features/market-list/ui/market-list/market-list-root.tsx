@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useDeferredValue, type ReactNode } from 'react';
+import { useState, useCallback, useMemo, useDeferredValue, useEffect, type ReactNode } from 'react';
 import { Box, CircularProgress, Chip, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import type { Virtualizer } from '@tanstack/react-virtual';
@@ -9,7 +9,7 @@ import { getChoseong } from 'es-hangul';
 import { parseMarketCode } from '@/entities/bithumb';
 
 import type { SortField, SortOrder } from '../../model/types';
-import { useMarketListData, useMarketListSort, useMarketListFavorites, useMarketListHighlights } from '../../hooks';
+import { useMarketListData, useMarketListSort, useMarketListFavorites } from '../../hooks';
 
 import { MarketListProvider, type MarketListContextValue } from './market-list-context';
 import { DEFAULT_COLUMNS } from './column-config';
@@ -75,22 +75,50 @@ export function MarketListRoot({
   // 1. 데이터 fetching & WebSocket
   const { data, realtimeTickers, isLoading, wsStatus } = useMarketListData();
 
+  // 검색 인덱스 데이터 (초성 사전 계산 유지)
+  const [searchIndex, setSearchIndex] = useState<Map<string, string>>(new Map());
+
+  // 데이터 로드 시 브라우저 유휴 시간에 초성 인덱싱 수행
+  useEffect(() => {
+    if (!data.length) return;
+
+    const computeIndex = () => {
+      const newIndex = new Map<string, string>();
+      data.forEach((m) => {
+        newIndex.set(m.market, getChoseong(m.korean_name));
+      });
+      setSearchIndex(newIndex);
+    };
+
+    if ('requestIdleCallback' in window) {
+      const handle = (
+        window as unknown as { requestIdleCallback: (cb: (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void) => number }
+      ).requestIdleCallback(computeIndex);
+      return () => (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(handle);
+    } else {
+      // 폴백: 메인 스레드 부하 분산을 위해 다음 틱에 실행
+      const timer = setTimeout(computeIndex, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [data]);
+
   const filteredData = useMemo(() => {
     if (!deferredSearchQuery) return data;
     const lowerQuery = deferredSearchQuery.toLowerCase();
+
     return data.filter((m) => {
       const { base } = parseMarketCode(m.market);
-      const choseong = getChoseong(m.korean_name);
+      const choseong = searchIndex.get(m.market) || '';
 
       return (
         m.korean_name.includes(deferredSearchQuery) ||
-        choseong.includes(deferredSearchQuery) || // 초성 검색 지원
+        choseong.includes(deferredSearchQuery) || // 미리 계산된 초성 사용
         m.english_name.toLowerCase().includes(lowerQuery) ||
         base.toLowerCase().includes(lowerQuery) ||
         m.market.toLowerCase().includes(lowerQuery)
       );
     });
-  }, [data, deferredSearchQuery]);
+  }, [data, deferredSearchQuery, searchIndex]);
 
   // 2. 정렬
   const { sortedData, sortBy, sortOrder, handleSort } = useMarketListSort({
@@ -102,8 +130,7 @@ export function MarketListRoot({
   // 3. 즐겨찾기
   const { favorites, toggleFavorite, isFavorite } = useMarketListFavorites();
 
-  // 4. 하이라이트
-  const { getHighlight } = useMarketListHighlights(realtimeTickers);
+  // 4. 하이라이트 (이제 개별 셀에서 처리하므로 제거)
 
   // 선택 핸들러
   const selectMarket = useCallback(
@@ -128,17 +155,17 @@ export function MarketListRoot({
     () => ({
       data,
       sortedData,
-      realtimeTickers,
+      realtimeTickers, // Map 자체는 전유물이므로 일단 유지하되, 내부 값 변경이 컨텍스트 참조 변경을 일으키지 않도록 함 (이미 useMarketListData에서 분리됨)
       isLoading,
       sortBy,
       sortOrder,
       handleSort,
       toggleFavorite,
       isFavorite,
-      favorites, // 추가
+      favorites,
       selectedMarket,
       selectMarket,
-      getHighlight,
+      getHighlight: () => undefined, // 하이라이트는 셀 내부에서 처리
       virtualizer,
       setVirtualizer,
       wsStatus,
@@ -155,10 +182,9 @@ export function MarketListRoot({
       handleSort,
       toggleFavorite,
       isFavorite,
-      favorites, // 추가
+      favorites,
       selectedMarket,
       selectMarket,
-      getHighlight,
       virtualizer,
       setVirtualizer,
       wsStatus,

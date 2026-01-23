@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { memo, useCallback, useMemo, type ReactNode } from 'react';
 import { Box, IconButton } from '@mui/material';
 import { Star, StarBorder } from '@mui/icons-material';
 
@@ -20,25 +20,30 @@ export interface FavoriteCellProps extends BaseCellProps {
 /**
  * 즐겨찾기 셀
  * - CSS Grid 셀로 렌더링 (너비는 부모 Row의 Grid에서 결정)
+ * - React.memo로 최적화
  */
-export function FavoriteCell({ row, state, sx, render }: FavoriteCellProps) {
-  const { toggleFavorite } = useMarketListContext();
-  const { isFavorite } = state;
+export const FavoriteCell = memo(function FavoriteCell({ row, state, sx, render }: FavoriteCellProps) {
+  const { toggleFavorite, isFavorite: checkFavorite } = useMarketListContext();
+  const isFavorite = state?.isFavorite ?? checkFavorite(row.market);
+  const handleToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      toggleFavorite(row.market);
+    },
+    [toggleFavorite, row.market],
+  );
 
-  const handleToggle = (e: React.MouseEvent) => {
-    console.log('[FavoriteCell] Clicked for market:', row.market);
-    e.stopPropagation();
-    toggleFavorite(row.market);
-  };
-
-  const cellSx = {
-    padding: '6px 2px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 0, // Grid 셀 overflow 방지
-    ...sx,
-  };
+  const cellSx = useMemo(
+    () => ({
+      padding: '6px 2px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: 0,
+      ...sx,
+    }),
+    [sx],
+  );
 
   if (render) {
     return <Box sx={cellSx}>{render({ isFavorite, toggleFavorite: () => toggleFavorite(row.market) })}</Box>;
@@ -51,4 +56,4 @@ export function FavoriteCell({ row, state, sx, render }: FavoriteCellProps) {
       </IconButton>
     </Box>
   );
-}
+});
