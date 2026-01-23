@@ -1,3 +1,9 @@
+## [1.33.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.32.1...v1.33.0) (2026-01-23)
+
+### ✨ 새로운 기능
+
+* 빗썸 API 연동 및 트레이딩 레이아웃 구현 ([#76](https://github.com/minoong/garden-bizarre-adventure/issues/76)) ([bbfe05f](https://github.com/minoong/garden-bizarre-adventure/commit/bbfe05fa19cb5298b4f726968ec43607784c582c))
+
 ## [1.32.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.32.0...v1.32.1) (2026-01-13)
 
 ### 🐛 버그 수정
