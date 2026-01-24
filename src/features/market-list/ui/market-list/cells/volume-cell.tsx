@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 
 import { formatTradePrice, useRealtimeTicker } from '@/entities/bithumb';
 
@@ -21,6 +21,7 @@ export interface VolumeCellProps extends BaseCellProps {
  * - 실시간 데이터를 직접 구독하여 성능 최적화
  */
 export const VolumeCell = memo(function VolumeCell({ row, sx, render }: VolumeCellProps) {
+  const theme = useTheme();
   const realtimeTicker = useRealtimeTicker(row.market);
 
   const accTradePrice = realtimeTicker?.acc_trade_price_24h ?? row.acc_trade_price_24h;
@@ -57,10 +58,10 @@ export const VolumeCell = memo(function VolumeCell({ row, sx, render }: VolumeCe
 
   return (
     <Box sx={cellSx}>
-      <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: '#333' }}>
+      <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: theme.palette.text.primary }}>
         {formattedTradePrice}
       </Typography>
-      <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.65rem', color: '#999' }}>
+      <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.65rem', color: theme.palette.text.secondary }}>
         백만
       </Typography>
     </Box>

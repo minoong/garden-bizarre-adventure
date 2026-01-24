@@ -1,7 +1,7 @@
 import { memo, useMemo, type ReactNode } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 
-import { useRealtimeTicker, calculatePriceChange, CHANGE_TYPE_COLORS } from '@/entities/bithumb';
+import { useRealtimeTicker, calculatePriceChange } from '@/entities/bithumb';
 
 import type { BaseCellProps } from './types';
 
@@ -23,13 +23,16 @@ export interface ChangeCellProps extends BaseCellProps {
  * - 실시간 데이터를 직접 구독하여 성능 최적화
  */
 export const ChangeCell = memo(function ChangeCell({ row, sx, render }: ChangeCellProps) {
+  const theme = useTheme();
   const realtimeTicker = useRealtimeTicker(row.market);
 
   const price = realtimeTicker?.trade_price ?? row.trade_price;
   const prevClosingPrice = realtimeTicker?.prev_closing_price ?? row.prev_closing_price;
   const change = realtimeTicker?.change ?? row.change;
 
-  const priceChange = useMemo(() => calculatePriceChange(prevClosingPrice, price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL), [prevClosingPrice, price]);
+  const trading = theme.palette.trading;
+
+  const priceChange = useMemo(() => calculatePriceChange(prevClosingPrice, price, trading.rise.main, trading.fall.main), [prevClosingPrice, price, trading]);
 
   const renderProps = useMemo<ChangeCellRenderProps>(
     () => ({
@@ -65,7 +68,7 @@ export const ChangeCell = memo(function ChangeCell({ row, sx, render }: ChangeCe
         <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: priceChange.changeColor }}>
           {priceChange.formattedRate}
         </Typography>
-        <Typography variant="caption" sx={{ Size: '0.65rem', color: priceChange.changeColor }}>
+        <Typography variant="caption" sx={{ fontSize: '0.65rem', color: priceChange.changeColor }}>
           {priceChange.formattedPriceChange}
         </Typography>
       </Box>

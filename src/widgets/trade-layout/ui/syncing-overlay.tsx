@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Box, useTheme } from '@mui/material';
+import { Box, useTheme, alpha } from '@mui/material';
 
 interface SyncingOverlayProps {
   /** 표시할 메시지 */
@@ -14,9 +14,6 @@ interface SyncingOverlayProps {
   zIndex?: number;
 }
 
-/**
- * 실시간 데이터 동기화 중임을 알리는 프리미엄 블러 오버레이
- */
 export const SyncingOverlay = memo(function SyncingOverlay({ message = 'SYNCING DATA', blur = 6, top = 0, zIndex = 30 }: SyncingOverlayProps) {
   const theme = useTheme();
 
@@ -30,12 +27,12 @@ export const SyncingOverlay = memo(function SyncingOverlay({ message = 'SYNCING 
         bottom: 0,
         zIndex,
         backdropFilter: `blur(${blur}px)`,
-        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)',
+        backgroundColor: theme.palette.mode === 'dark' ? alpha('#000', 0.2) : alpha('#fff', 0.3),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'all 0.3s ease',
-        pointerEvents: 'none', // 이 부분을 추가하여 아래의 스크롤이 가능하게 함
+        pointerEvents: 'none',
       }}
     >
       <Box
@@ -43,7 +40,7 @@ export const SyncingOverlay = memo(function SyncingOverlay({ message = 'SYNCING 
           px: 2,
           py: 0.8,
           borderRadius: 10,
-          bgcolor: 'rgba(0,0,0,0.7)',
+          bgcolor: alpha('#000', 0.7),
           color: '#fff',
           fontSize: '0.7rem',
           fontWeight: 700,

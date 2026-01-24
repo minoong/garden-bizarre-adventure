@@ -1,7 +1,7 @@
 import { memo, useMemo, useState, useEffect, useRef, type ReactNode } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme, alpha } from '@mui/material';
 
-import { formatPrice, useRealtimeTicker, calculatePriceChange, CHANGE_TYPE_COLORS } from '@/entities/bithumb';
+import { formatPrice, useRealtimeTicker, calculatePriceChange } from '@/entities/bithumb';
 
 import type { BaseCellProps } from './types';
 
@@ -22,6 +22,7 @@ export interface PriceCellProps extends BaseCellProps {
  * - 자체 하이라이트 로직 포함
  */
 export const PriceCell = memo(function PriceCell({ row, sx, render }: PriceCellProps) {
+  const theme = useTheme();
   const realtimeTicker = useRealtimeTicker(row.market);
 
   // 초기값은 props(REST 데이터) 사용, 이후 실시간 데이터 사용
@@ -66,13 +67,15 @@ export const PriceCell = memo(function PriceCell({ row, sx, render }: PriceCellP
     };
   }, [price]);
 
+  const trading = theme.palette.trading;
+
   // 가격 색상 계산
-  const priceChange = useMemo(() => calculatePriceChange(prevClosingPrice, price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL), [prevClosingPrice, price]);
+  const priceChange = useMemo(() => calculatePriceChange(prevClosingPrice, price, trading.rise.main, trading.fall.main), [prevClosingPrice, price, trading]);
 
   const finalHighlightBgColor = useMemo(() => {
     if (!highlight.isHighlighted) return 'transparent';
-    return highlight.isRise ? 'rgba(200, 74, 49, 0.15)' : 'rgba(18, 97, 196, 0.15)';
-  }, [highlight]);
+    return highlight.isRise ? alpha(trading.rise.main, 0.15) : alpha(trading.fall.main, 0.15);
+  }, [highlight, trading]);
 
   const cellSx = useMemo(
     () => ({

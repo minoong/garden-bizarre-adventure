@@ -2,7 +2,9 @@
 
 import { useState, useTransition, useCallback, type ChangeEvent } from 'react';
 import { Box, InputBase, IconButton, Divider } from '@mui/material';
-import { Search as SearchIcon, Settings as SettingsIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Settings as SettingsIcon, Close as CloseIcon, DarkMode as DarkModeIcon, LightMode as LightModeIcon } from '@mui/icons-material';
+
+import { useThemeMode } from '@/app/providers/mui-provider';
 
 export interface MarketSearchProps {
   /** 검색어 변경 핸들러 */
@@ -17,6 +19,7 @@ export interface MarketSearchProps {
  * 마켓 검색 UI 컴포넌트
  */
 export function MarketSearch({ onSearch, value, placeholder = '코인명(초성) 또는 심볼명 검색' }: MarketSearchProps) {
+  const { mode, toggleTheme } = useThemeMode();
   const [internalValue, setInternalValue] = useState(value);
   const [, startTransition] = useTransition();
 
@@ -65,6 +68,9 @@ export function MarketSearch({ onSearch, value, placeholder = '코인명(초성)
         )}
       </Box>
       <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+      <IconButton sx={{ p: '10px' }} onClick={toggleTheme} aria-label="toggle-theme" size="small">
+        {mode === 'dark' ? <LightModeIcon sx={{ fontSize: 20, color: '#ffb74d' }} /> : <DarkModeIcon sx={{ fontSize: 20, color: 'text.secondary' }} />}
+      </IconButton>
       <IconButton sx={{ p: '10px' }} aria-label="settings" size="small">
         <SettingsIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
       </IconButton>

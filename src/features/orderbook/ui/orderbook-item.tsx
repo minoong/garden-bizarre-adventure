@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 
 import { formatPrice, formatChangeRate } from '@/entities/bithumb';
 
@@ -14,10 +14,16 @@ interface OrderbookItemProps {
 }
 
 export const OrderbookItem = memo(function OrderbookItem({ type, price, size, changeRate, maxSize, isCurrentPrice }: OrderbookItemProps) {
+  const theme = useTheme();
   const isAsk = type === 'ASK';
-  const color = isAsk ? '#1261c4' : '#c84a31';
-  const bgColor = isAsk ? 'rgba(18, 97, 196, 0.04)' : 'rgba(200, 74, 49, 0.04)';
-  const barColor = isAsk ? 'rgba(18, 97, 196, 0.12)' : 'rgba(200, 74, 49, 0.12)';
+
+  // 테마에서 중앙화된 트레이딩 색상 가져오기
+  const trading = theme.palette.trading;
+  const colors = isAsk ? trading.fall : trading.rise; // ASK는 매도(보통 파랑/하락색), BID는 매수(보통 빨강/상승색)
+
+  const color = colors.main;
+  const bgColor = colors.bg;
+  const barColor = colors.bar;
 
   // Bar scale (0 to 1)
   const barScale = maxSize > 0 ? size / maxSize : 0;

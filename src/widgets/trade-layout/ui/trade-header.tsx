@@ -28,7 +28,21 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
   const theme = useTheme();
 
   const ticker = realtimeTicker || initialTicker;
-  const changeColor = ticker ? (ticker.change === 'RISE' ? '#c84a31' : ticker.change === 'FALL' ? '#1261c4' : '#333') : '#333';
+
+  // 테마에서 중앙화된 트레이딩 색상 가져오기
+  const trading = theme.palette.trading;
+  const changeColor = ticker
+    ? ticker.change === 'RISE'
+      ? trading.rise.main
+      : ticker.change === 'FALL'
+        ? trading.fall.main
+        : trading.neutral.main
+    : trading.neutral.main;
+
+  const riseColor = trading.rise.main;
+  const fallColor = trading.fall.main;
+  const riseBg = trading.rise.light;
+  const fallBg = trading.fall.light;
 
   return (
     <Paper
@@ -54,7 +68,7 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
             <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', mt: 0.5 }}>
               <Box
                 sx={{
-                  bgcolor: changeColor === '#c84a31' ? 'rgba(200, 74, 49, 0.1)' : changeColor === '#1261c4' ? 'rgba(18, 97, 196, 0.1)' : 'transparent',
+                  bgcolor: ticker?.change === 'RISE' ? riseBg : ticker?.change === 'FALL' ? fallBg : 'transparent',
                   color: changeColor,
                   px: 0.8,
                   py: 0.2,
@@ -109,7 +123,7 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
                 <Typography variant="caption" color="text.secondary">
                   고가
                 </Typography>
-                <Typography variant="body2" fontWeight={700} color="#c84a31">
+                <Typography variant="body2" fontWeight={700} color={riseColor}>
                   {ticker ? formatPrice(ticker.high_price) : '---'}
                 </Typography>
               </Box>
@@ -117,7 +131,7 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
                 <Typography variant="caption" color="text.secondary">
                   저가
                 </Typography>
-                <Typography variant="body2" fontWeight={700} color="#1261c4">
+                <Typography variant="body2" fontWeight={700} color={fallColor}>
                   {ticker ? formatPrice(ticker.low_price) : '---'}
                 </Typography>
               </Box>

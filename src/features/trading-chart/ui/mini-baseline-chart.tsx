@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef, memo, useEffect, useState } from 'react';
 import type { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
 import { createChart, ColorType, BaselineSeries } from 'lightweight-charts';
-import { Box } from '@mui/material';
+import { Box, useTheme, alpha } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 
@@ -76,10 +76,12 @@ async function fetchCandlesUntilMidnight(market: string): Promise<CandleData[]> 
   });
 }
 
-export function MiniBaselineChart({ market, basePrice, currentPrice }: MiniBaselineChartProps) {
+export const MiniBaselineChart = memo(function MiniBaselineChart({ market, basePrice, currentPrice }: MiniBaselineChartProps) {
+  const theme = useTheme();
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Baseline'> | null>(null);
+  const [isChartReady, setIsChartReady] = useState(false);
 
   // 첫 렌더링 때 0시까지 반복 호출하여 캔들 수집
   const { data: candleData } = useQuery({
@@ -96,7 +98,10 @@ export function MiniBaselineChart({ market, basePrice, currentPrice }: MiniBasel
     if (!chartRef.current) {
       const chart = createChart(chartContainerRef.current, {
         layout: {
-          background: { type: ColorType.Solid, color: '#f5f5f5' },
+          background: {
+            type: ColorType.Solid,
+            color: theme.palette.mode === 'dark' ? 'transparent' : '#f8f9fa',
+          },
           textColor: 'transparent',
           attributionLogo: false,
         },
@@ -125,24 +130,26 @@ export function MiniBaselineChart({ market, basePrice, currentPrice }: MiniBasel
         },
       });
 
+      const trading = theme.palette.trading;
       const series = chart.addSeries(BaselineSeries, {
         baseValue: { type: 'price', price: basePrice },
-        topLineColor: 'rgba(200, 74, 49, 1)',
-        topFillColor1: 'rgba(200, 74, 49, 0.28)',
-        topFillColor2: 'rgba(200, 74, 49, 0.05)',
-        bottomLineColor: 'rgba(18, 97, 196, 1)',
-        bottomFillColor1: 'rgba(18, 97, 196, 0.05)',
-        bottomFillColor2: 'rgba(18, 97, 196, 0.28)',
+        topLineColor: trading.rise.main,
+        topFillColor1: alpha(trading.rise.main, 0.28),
+        topFillColor2: alpha(trading.rise.main, 0.05),
+        bottomLineColor: trading.fall.main,
+        bottomFillColor1: alpha(trading.fall.main, 0.05),
+        bottomFillColor2: alpha(trading.fall.main, 0.28),
         lineWidth: 2,
       });
 
       chartRef.current = chart;
       seriesRef.current = series;
+      setIsChartReady(true);
     }
 
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+        chartRef.current.resize(chartContainerRef.current.clientWidth, 80);
         const { start, end } = getKST24HourRange();
         chartRef.current.timeScale().setVisibleRange({ from: start, to: end });
       }
@@ -154,10 +161,14 @@ export function MiniBaselineChart({ market, basePrice, currentPrice }: MiniBasel
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
+        seriesRef.current = null;
+        setIsChartReady(false);
       }
     };
-  }, [basePrice]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme.palette.mode]); // 테마 모드 변경 시 재초기화
 
+  // 기준가 변경 시 차트 옵션 업데이트
   useEffect(() => {
     if (seriesRef.current) {
       seriesRef.current.applyOptions({
@@ -168,7 +179,7 @@ export function MiniBaselineChart({ market, basePrice, currentPrice }: MiniBasel
 
   // 데이터 렌더링
   useEffect(() => {
-    if (!seriesRef.current || !chartRef.current) return;
+    if (!isChartReady || !seriesRef.current || !chartRef.current) return;
 
     const { start: startTimestamp, end: endTimestamp } = getKST24HourRange();
 
@@ -224,7 +235,7 @@ export function MiniBaselineChart({ market, basePrice, currentPrice }: MiniBasel
       from: startTimestamp,
       to: endTimestamp,
     });
-  }, [candleData, basePrice, currentPrice]);
+  }, [isChartReady, candleData, basePrice, currentPrice, theme.palette.mode]);
 
   return <Box ref={chartContainerRef} sx={{ width: '100%', height: '100%', minHeight: 60 }} />;
-}
+});
