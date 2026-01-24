@@ -1,3 +1,9 @@
+## [1.37.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.36.0...v1.37.0) (2026-01-24)
+
+### ✨ 새로운 기능
+
+* 로딩 오버레이 컴포넌트 구현 ([#88](https://github.com/minoong/garden-bizarre-adventure/issues/88)) ([3fc3082](https://github.com/minoong/garden-bizarre-adventure/commit/3fc308281e4c95238ffe95f40fdab6e9c86878be))
+
 ## [1.36.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.35.1...v1.36.0) (2026-01-24)
 
 ### ✨ 새로운 기능
