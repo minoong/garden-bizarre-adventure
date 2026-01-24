@@ -1,3 +1,9 @@
+## [1.36.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.35.1...v1.36.0) (2026-01-24)
+
+### ✨ 새로운 기능
+
+* 호가 모니터링 컴포넌트 ([#86](https://github.com/minoong/garden-bizarre-adventure/issues/86)) ([79c7413](https://github.com/minoong/garden-bizarre-adventure/commit/79c7413896c9e2373c3bee7aae972d9d27845e5c))
+
 ## [1.35.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.35.0...v1.35.1) (2026-01-23)
 
 ### ⚡ 성능 개선
