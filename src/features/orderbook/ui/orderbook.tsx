@@ -129,7 +129,16 @@ export const Orderbook = memo(function Orderbook({ market, isLoading = false }: 
       </Box>
 
       {/* Content Area with filter */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', filter: isSyncing ? 'blur(1px)' : 'none', transition: 'filter 0.3s' }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0, // Flexbox에서 자식이 꽉 차고 내부 스크롤이 작동하도록 보장
+          filter: isSyncing ? 'blur(1px)' : 'none',
+          transition: 'filter 0.4s ease',
+        }}
+      >
         {/* Virtualized Scroll Area */}
         <Box
           ref={scrollElementRef}
@@ -137,6 +146,7 @@ export const Orderbook = memo(function Orderbook({ market, isLoading = false }: 
             flex: 1,
             overflowY: 'auto',
             overflowX: 'hidden',
+            minHeight: 0, // 중요: 내부 스크롤 활성화
             '&::-webkit-scrollbar': { width: 4 },
             '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(0,0,0,0.1)', borderRadius: 2 },
           }}
