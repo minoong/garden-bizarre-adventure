@@ -1,3 +1,9 @@
+## [1.37.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.37.0...v1.37.1) (2026-01-24)
+
+### 🐛 버그 수정
+
+* 호가 스크롤 버그 픽스 ([#90](https://github.com/minoong/garden-bizarre-adventure/issues/90)) ([d40e829](https://github.com/minoong/garden-bizarre-adventure/commit/d40e829c8a8ef3833d6cd9da9a537ab2fbd9d1dc))
+
 ## [1.37.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.36.0...v1.37.0) (2026-01-24)
 
 ### ✨ 새로운 기능
