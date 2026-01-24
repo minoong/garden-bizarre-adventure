@@ -35,6 +35,7 @@ export const SyncingOverlay = memo(function SyncingOverlay({ message = 'SYNCING 
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'all 0.3s ease',
+        pointerEvents: 'none', // 이 부분을 추가하여 아래의 스크롤이 가능하게 함
       }}
     >
       <Box
