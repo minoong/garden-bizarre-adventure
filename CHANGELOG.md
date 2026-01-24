@@ -1,3 +1,9 @@
+## [1.38.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.37.1...v1.38.0) (2026-01-24)
+
+### ✨ 새로운 기능
+
+* 트레이딩 컬러 시스템 구축 및 다크모드 지원 ([#92](https://github.com/minoong/garden-bizarre-adventure/issues/92)) ([a0f0c90](https://github.com/minoong/garden-bizarre-adventure/commit/a0f0c90a69b7df3690fcc8884d6592ed448e6749))
+
 ## [1.37.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.37.0...v1.37.1) (2026-01-24)
 
 ### 🐛 버그 수정
