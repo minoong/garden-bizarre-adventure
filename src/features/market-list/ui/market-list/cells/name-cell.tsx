@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 
 import { useRealtimeTicker, parseMarketCode } from '@/entities/bithumb';
 import { D3Candle } from '@/features/trading-chart/ui/d3-candle';
@@ -28,6 +28,7 @@ export interface NameCellProps extends BaseCellProps {
  * - 실시간 데이터를 직접 구독하여 캔들 차트 업데이트 성능 최적화
  */
 export const NameCell = memo(function NameCell({ row, sx, showCandle = true, render }: NameCellProps) {
+  const theme = useTheme();
   const realtimeTicker = useRealtimeTicker(row.market);
   const { base, quote } = useMemo(() => parseMarketCode(row.market), [row.market]);
 
@@ -36,6 +37,8 @@ export const NameCell = memo(function NameCell({ row, sx, showCandle = true, ren
   const candleClosePrice = realtimeTicker?.trade_price ?? row.trade_price;
   const highPrice = realtimeTicker?.high_price ?? row.high_price;
   const lowPrice = realtimeTicker?.low_price ?? row.low_price;
+
+  const trading = theme.palette.trading;
 
   const renderProps = useMemo<NameCellRenderProps>(
     () => ({
@@ -74,7 +77,7 @@ export const NameCell = memo(function NameCell({ row, sx, showCandle = true, ren
           <Box
             sx={{
               flexShrink: 0,
-              backgroundColor: '#f5f5f5',
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
               padding: '2px',
               borderRadius: '4px',
             }}
@@ -90,6 +93,8 @@ export const NameCell = memo(function NameCell({ row, sx, showCandle = true, ren
                 height={20}
                 minPrice={lowPrice}
                 maxPrice={highPrice}
+                upColor={trading.rise.main}
+                downColor={trading.fall.main}
               />
             </svg>
           </Box>
@@ -98,7 +103,7 @@ export const NameCell = memo(function NameCell({ row, sx, showCandle = true, ren
           <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem', wordBreak: 'break-word' }}>
             {row.korean_name}
           </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.65rem', color: '#999' }}>
+          <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.65rem', color: theme.palette.text.secondary }}>
             {base}/{quote}
           </Typography>
         </Box>

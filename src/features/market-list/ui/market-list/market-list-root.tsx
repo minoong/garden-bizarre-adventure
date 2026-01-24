@@ -214,9 +214,10 @@ export function MarketListRoot({
                 label="실시간"
                 size="small"
                 sx={{
-                  bgcolor: '#26a69a',
-                  color: 'white',
+                  bgcolor: 'success.main',
+                  color: 'success.contrastText',
                   fontSize: '0.75rem',
+                  fontWeight: 600,
                 }}
               />
             )}

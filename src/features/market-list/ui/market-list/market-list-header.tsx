@@ -43,8 +43,8 @@ export function MarketListHeader({ children, sx }: MarketListHeaderProps) {
         display: 'grid',
         gridTemplateColumns,
         alignItems: 'center',
-        bgcolor: '#fafafa',
-        borderBottom: '1px solid #e0e0e0',
+        bgcolor: (theme: Theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'),
+        borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
         position: 'sticky',
         top: 0,
         zIndex: 10,
@@ -106,7 +106,10 @@ export function MarketListHeaderCell({ field, sortable = false, align = 'left', 
           sx={{
             fontSize: '0.65rem',
             fontWeight: 500,
-            color: '#666',
+            color: 'text.secondary',
+            '&.Mui-active': {
+              color: 'text.primary',
+            },
             '& .MuiTableSortLabel-icon': {
               fontSize: '1rem',
               marginLeft: '2px',

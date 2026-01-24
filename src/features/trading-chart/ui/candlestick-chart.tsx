@@ -14,7 +14,7 @@ import type {
   CandlestickData,
   HistogramData,
 } from 'lightweight-charts';
-import { Box, CircularProgress, Typography, Button, IconButton, Menu, MenuItem, Divider } from '@mui/material';
+import { Box, CircularProgress, Typography, Button, IconButton, Menu, MenuItem, Divider, useTheme } from '@mui/material';
 import { CandlestickChart as CandlestickChartIcon, ShowChart, Functions, Refresh, RestartAlt, Undo, Redo, KeyboardArrowDown } from '@mui/icons-material';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 
@@ -155,14 +155,25 @@ export const CandlestickChart = memo(function CandlestickChart({
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   // 옵션 병합
-  const chartOptions = { ...DEFAULT_CHART_OPTIONS, ...options };
+  const theme = useTheme();
+  const themeMode = theme.palette.mode;
+  const trading = theme.palette.trading;
+
+  const chartOptions = {
+    ...DEFAULT_CHART_OPTIONS,
+    upColor: trading.rise.main,
+    downColor: trading.fall.main,
+    ...options,
+    darkMode: themeMode === 'dark',
+  };
+
   const { height, darkMode, upColor, downColor, showGrid, showVolume, showMovingAverage, movingAveragePeriods, showMinMaxPrice } = chartOptions;
 
-  // 색상 상수
-  const BG_COLOR = darkMode ? '#0B1219' : '#ffffff';
-  const TEXT_COLOR = darkMode ? '#d1d4dc' : '#191919';
-  const GRID_COLOR = darkMode ? '#2B2B43' : '#e1e1e1';
-  const BORDER_COLOR = darkMode ? '#2B2B43' : '#e1e1e1';
+  // 색상 상수 (테마 기반으로 통일)
+  const BG_COLOR = theme.palette.background.paper;
+  const TEXT_COLOR = theme.palette.text.primary;
+  const GRID_COLOR = theme.palette.divider;
+  const BORDER_COLOR = theme.palette.divider;
 
   // REST API로 초기 데이터 로드
   const { data: candles, isLoading, error } = useCandles(market, timeframe, { count: initialCount });

@@ -17,13 +17,14 @@ export function MarketListPaper({ children, sx }: MarketListPaperProps) {
   return (
     <Paper
       sx={{
-        border: '1px solid #e0e0e0',
+        border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
         boxShadow: 'none',
         width: 'fit-content',
+        bgcolor: 'background.paper',
         '& .os-scrollbar-handle': {
-          backgroundColor: 'rgba(0, 0, 0, 0.15)',
+          backgroundColor: (theme: Theme) => (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'),
           '&:hover': {
-            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+            backgroundColor: (theme: Theme) => (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.25)'),
           },
         },
         '& .os-scrollbar-track': {

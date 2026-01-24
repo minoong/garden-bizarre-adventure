@@ -5,6 +5,8 @@
  * - 업비트 API와 호환되는 빗썸 V2 API 사용
  */
 
+import { tradingColors } from '@/shared/config/colors';
+
 import type { MinuteUnit, WebSocketCandleType } from './types';
 
 // ============================================================
@@ -149,9 +151,9 @@ export const CHANGE_TYPE_LABELS = {
 } as const;
 
 export const CHANGE_TYPE_COLORS = {
-  RISE: '#c84a31',
-  EVEN: '#000000',
-  FALL: '#1261c4',
+  RISE: tradingColors.rise.main,
+  EVEN: tradingColors.neutral.main,
+  FALL: tradingColors.fall.main,
 } as const;
 
 // ============================================================

@@ -79,7 +79,7 @@ export const TradeLayout = memo(function TradeLayout({ initialMarket = 'KRW-BTC'
         gap: 2,
         p: 2,
         minHeight: '100vh',
-        bgcolor: theme.palette.mode === 'dark' ? '#0B1219' : '#f4f7fa',
+        bgcolor: theme.palette.background.default,
       }}
     >
       {/* 좌측 메인 영역: 헤더 + 차트 + 추가 */}

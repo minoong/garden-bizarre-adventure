@@ -193,15 +193,15 @@ export const Orderbook = memo(function Orderbook({ market, isLoading = false }: 
               <Box
                 sx={{
                   width: `${(orderbook.total_ask_size / (orderbook.total_ask_size + orderbook.total_bid_size)) * 100}%`,
-                  bgcolor: '#1261c4',
+                  bgcolor: theme.palette.trading.fall.main,
                   transition: 'width 0.5s ease-in-out',
                 }}
               />
-              <Box sx={{ flex: 1, bgcolor: '#c84a31', transition: 'all 0.5s ease-in-out' }} />
+              <Box sx={{ flex: 1, bgcolor: theme.palette.trading.rise.main, transition: 'all 0.5s ease-in-out' }} />
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 0.5 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography sx={{ color: '#1261c4', fontWeight: 900, fontSize: '13px', lineHeight: 1.1 }}>
+                <Typography sx={{ color: theme.palette.trading.fall.main, fontWeight: 900, fontSize: '13px', lineHeight: 1.1 }}>
                   {Math.round((orderbook.total_ask_size / (orderbook.total_ask_size + orderbook.total_bid_size)) * 100)}%
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>
@@ -209,7 +209,7 @@ export const Orderbook = memo(function Orderbook({ market, isLoading = false }: 
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <Typography sx={{ color: '#c84a31', fontWeight: 900, fontSize: '13px', lineHeight: 1.1 }}>
+                <Typography sx={{ color: theme.palette.trading.rise.main, fontWeight: 900, fontSize: '13px', lineHeight: 1.1 }}>
                   {Math.round((orderbook.total_bid_size / (orderbook.total_ask_size + orderbook.total_bid_size)) * 100)}%
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>

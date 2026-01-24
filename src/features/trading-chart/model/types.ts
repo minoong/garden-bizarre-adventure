@@ -1,6 +1,7 @@
 import type { CandlestickData, Time } from 'lightweight-charts';
 
 import type { CandleTimeframe } from '@/entities/bithumb';
+import { tradingColors } from '@/shared/config/colors';
 
 /**
  * 차트용 캔들 데이터
@@ -95,8 +96,8 @@ export const DEFAULT_CHART_OPTIONS: Required<ChartOptions> = {
   height: 400,
   width: 0, // 0 = 100%
   darkMode: true,
-  upColor: '#C84A31', // Trading Chart Style Red
-  downColor: '#1261C4', // Trading Chart Style Blue
+  upColor: tradingColors.rise.main, // Trading Chart Style Red
+  downColor: tradingColors.fall.main, // Trading Chart Style Blue
   showGrid: true,
   showVolume: true,
   showMovingAverage: true,

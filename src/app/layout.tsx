@@ -1,12 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Noto_Sans_KR } from 'next/font/google';
-import { ThemeProvider } from '@mui/material/styles';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
-import CssBaseline from '@mui/material/CssBaseline';
 import Script from 'next/script';
 
-import theme from './theme';
-import { AuthProvider, QueryClientProvider } from './providers';
+import { AuthProvider, QueryClientProvider, MUIProvider } from './providers';
 
 import './globals.css';
 
@@ -56,12 +52,9 @@ export default function RootLayout({
     <html lang="ko">
       <body className={`${notoSansKr.variable} antialiased`}>
         <QueryClientProvider>
-          <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-            <ThemeProvider theme={theme}>
-              <CssBaseline />
-              <AuthProvider>{children}</AuthProvider>
-            </ThemeProvider>
-          </AppRouterCacheProvider>
+          <MUIProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </MUIProvider>
           <Script src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&autoload=false`} strategy="beforeInteractive" />
         </QueryClientProvider>
       </body>
