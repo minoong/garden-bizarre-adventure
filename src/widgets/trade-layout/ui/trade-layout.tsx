@@ -21,6 +21,7 @@ import {
 import { CandlestickChart } from '@/features/trading-chart';
 import { MarketList } from '@/features/market-list';
 import tradingLottie from '@/shared/assets/lottie/trading-lottie.json';
+import { Orderbook } from '@/features/orderbook';
 
 import { MarketHeaderInfo, AnimatedPrice } from './market-header-info';
 
@@ -205,6 +206,9 @@ export const TradeLayout = memo(function TradeLayout({ initialMarket = 'KRW-BTC'
   // 모든 KRW 마켓에 대한 ticker 구독
   useBithumbSocket(marketCodes, ['ticker']);
 
+  // 선택된 마켓에 대한 호가(Orderbook) 구독
+  useBithumbSocket([selectedMarket], ['orderbook']);
+
   const { base, quote } = useMemo(() => parseMarketCode(selectedMarket), [selectedMarket]);
 
   // 콜백 핸들러 안정화
@@ -287,15 +291,8 @@ export const TradeLayout = memo(function TradeLayout({ initialMarket = 'KRW-BTC'
         {/* 추가 영역 (호가, 거래내역 등) */}
         <Grid container spacing={2}>
           <Grid size={6}>
-            <Paper elevation={0} sx={{ height: 400, borderRadius: 2, border: `1px solid ${theme.palette.divider}`, p: 2 }}>
-              <Typography variant="subtitle2" fontWeight="bold">
-                호가
-              </Typography>
-              <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography color="text.secondary" variant="body2">
-                  빗썸 호가 위젯 연동 예정
-                </Typography>
-              </Box>
+            <Paper elevation={0} sx={{ height: 400, borderRadius: 2, border: `1px solid ${theme.palette.divider}`, overflow: 'hidden' }}>
+              <Orderbook market={selectedMarket} isLoading={isPending} />
             </Paper>
           </Grid>
           <Grid size={6}>
