@@ -1,0 +1,1 @@
+import{c as r,a as f,f as u}from"./feature-bundle-vgxySBK3.js";function s(e,c){if(typeof Proxy>"u")return r;const o=new Map,a=(n,t)=>r(n,t,e,c),i=(n,t)=>a(n,t);return new Proxy(i,{get:(n,t)=>t==="create"?a:(o.has(t)||o.set(t,r(t,void 0,e,c)),o.get(t))})}const p=s(u,f);export{p as m};
