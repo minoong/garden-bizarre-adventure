@@ -1,3 +1,9 @@
+## [1.40.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.40.0...v1.40.1) (2026-01-25)
+
+### 🐛 버그 수정
+
+* 스토리북 app router ([#98](https://github.com/minoong/garden-bizarre-adventure/issues/98)) ([bb584cc](https://github.com/minoong/garden-bizarre-adventure/commit/bb584cc384ef96eed1b8ca1a636fd60056a6c790))
+
 ## [1.40.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.39.0...v1.40.0) (2026-01-25)
 
 ### ✨ 새로운 기능
