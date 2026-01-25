@@ -1,3 +1,9 @@
+## [1.41.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.40.1...v1.41.0) (2026-01-25)
+
+### ✨ 새로운 기능
+
+* GNB, coingecko API 연동 ([#100](https://github.com/minoong/garden-bizarre-adventure/issues/100)) ([dbce4a3](https://github.com/minoong/garden-bizarre-adventure/commit/dbce4a3ee416faedd315375036bfee5f7bda99de))
+
 ## [1.40.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.40.0...v1.40.1) (2026-01-25)
 
 ### 🐛 버그 수정
