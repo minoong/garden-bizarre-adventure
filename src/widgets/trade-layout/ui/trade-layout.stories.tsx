@@ -1,6 +1,8 @@
 import { Box } from '@mui/material';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
+import { MainHeader } from '@/widgets/main-header';
+
 import { TradeLayout } from './trade-layout';
 
 const meta: Meta<typeof TradeLayout> = {
@@ -11,8 +13,11 @@ const meta: Meta<typeof TradeLayout> = {
   },
   decorators: [
     (Story) => (
-      <Box sx={{ minHeight: '150vh', bgcolor: '#f5f7f9' }}>
-        <Story />
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f5f7f9' }}>
+        <MainHeader />
+        <Box component="main" sx={{ flex: 1 }}>
+          <Story />
+        </Box>
       </Box>
     ),
   ],
