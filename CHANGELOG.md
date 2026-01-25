@@ -1,3 +1,9 @@
+## [1.40.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.39.0...v1.40.0) (2026-01-25)
+
+### ✨ 새로운 기능
+
+* 스토리북 테마 ([#96](https://github.com/minoong/garden-bizarre-adventure/issues/96)) ([5c1b2da](https://github.com/minoong/garden-bizarre-adventure/commit/5c1b2da12b2650b6adff7875ec0a1316d29a7c65))
+
 ## [1.39.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.38.0...v1.39.0) (2026-01-25)
 
 ### ✨ 새로운 기능
