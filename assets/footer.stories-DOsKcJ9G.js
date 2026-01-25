@@ -1,0 +1,1 @@
+import{F as t}from"./iframe-DC569oLP.js";import"./preload-helper-PPVm8Dsz.js";const a={title:"Widgets/Footer",component:t,tags:["autodocs"],parameters:{layout:"fullscreen"}},e={};e.parameters={...e.parameters,docs:{...e.parameters?.docs,source:{originalSource:"{}",...e.parameters?.docs?.source}}};const s=["Default"];export{e as Default,s as __namedExportsOrder,a as default};
