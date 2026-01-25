@@ -1,11 +1,9 @@
 import type { Preview } from '@storybook/nextjs-vite';
 import { Noto_Sans_KR } from 'next/font/google';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createElement } from 'react';
+import React from 'react';
 
-import theme from '../src/app/theme';
+import { MUIProvider } from '../src/app/providers';
 import '../src/app/globals.css';
 
 // Noto Sans KR 폰트 설정
@@ -41,17 +39,20 @@ const preview: Preview = {
     a11y: {
       test: 'todo',
     },
+    nextjs: {
+      appDirectory: true,
+    },
   },
   decorators: [
-    (Story) =>
-      createElement(
-        'div',
-        {
-          className: `${notoSansKr.className} ${notoSansKr.variable} antialiased`,
-          style: { fontFamily: 'var(--font-noto-sans-kr)' },
-        },
-        createElement(QueryClientProvider, { client: queryClient }, createElement(ThemeProvider, { theme }, createElement(CssBaseline), createElement(Story))),
-      ),
+    (Story) => (
+      <div className={`${notoSansKr.className} ${notoSansKr.variable} antialiased`} style={{ fontFamily: 'var(--font-noto-sans-kr)' }}>
+        <QueryClientProvider client={queryClient}>
+          <MUIProvider>
+            <Story />
+          </MUIProvider>
+        </QueryClientProvider>
+      </div>
+    ),
   ],
 };
 
