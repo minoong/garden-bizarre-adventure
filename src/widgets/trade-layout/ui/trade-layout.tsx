@@ -78,7 +78,7 @@ export const TradeLayout = memo(function TradeLayout({ initialMarket = 'KRW-BTC'
         margin: '0 auto',
         gap: 2,
         p: 2,
-        minHeight: '100vh',
+        minHeight: 'calc(100vh - 64px)',
         bgcolor: theme.palette.background.default,
       }}
     >
