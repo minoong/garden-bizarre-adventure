@@ -17,29 +17,25 @@ export const RollingDigit = memo(({ char, color }: RollingDigitProps) => {
   const isNumber = /[0-9]/.test(char);
 
   const digitVal = isNumber ? parseInt(char, 10) : 0;
-  const targetIndex = digitVal; // 0-9 순서이므로 값이 곧 인덱스
+  const targetIndex = 9 - digitVal;
 
-  const prevIndexRef = useRef(targetIndex);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
-    if (!isNumber || !columnRef.current) return;
+    if (!columnRef.current) return;
 
-    if (prevIndexRef.current !== targetIndex) {
+    if (isFirstMount.current) {
+      gsap.set(columnRef.current, { y: `${-targetIndex}em`, overwrite: true });
+      isFirstMount.current = false;
+    } else if (isNumber) {
       gsap.to(columnRef.current, {
         y: `${-targetIndex}em`,
         duration: 0.45,
         ease: 'power2.out',
         overwrite: true,
       });
-      prevIndexRef.current = targetIndex;
     }
   }, [targetIndex, isNumber]);
-
-  useEffect(() => {
-    if (columnRef.current) {
-      gsap.set(columnRef.current, { y: `${-targetIndex}em`, overwrite: true });
-    }
-  }, [targetIndex]);
 
   if (!isNumber) {
     return (
@@ -71,7 +67,7 @@ export const RollingDigit = memo(({ char, color }: RollingDigitProps) => {
           willChange: 'transform',
         }}
       >
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+        {[9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map((digit) => (
           <Box
             key={digit}
             sx={{
