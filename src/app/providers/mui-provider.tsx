@@ -1,68 +1,58 @@
 'use client';
 
-import { createContext, useContext, useMemo, useState, useEffect } from 'react';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as NextThemesProvider, useTheme } from 'next-themes';
+import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import CssBaseline from '@mui/material/CssBaseline';
+import { useState, useEffect, useMemo } from 'react';
 import type { PaletteMode } from '@mui/material';
 import type * as React from 'react';
 
 import { getTheme } from '@/app/theme';
 
-interface ThemeContextType {
-  mode: PaletteMode;
-  toggleTheme: () => void;
-}
+/**
+ * MUI 테마와 next-themes를 동기화하는 컴포넌트
+ */
+function MUIThemeWrapper({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const useThemeMode = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useThemeMode must be used within a MUIProvider');
-  }
-  return context;
-};
-
-export function MUIProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<PaletteMode>('light');
-
-  // 로컬 스토리지에서 이전 설정 불러오기
+  // 하이드레이션 오류 방지를 위해 마운트된 후 렌더링
   useEffect(() => {
-    const savedMode = localStorage.getItem('theme-mode') as PaletteMode;
-    if (savedMode) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMode(savedMode);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      // 시스템 설정 확인 (선택 사항)
-      // setMode('dark');
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
   }, []);
 
-  const themeContextValue = useMemo(
-    () => ({
-      mode,
-      toggleTheme: () => {
-        setMode((prevMode) => {
-          const newMode = prevMode === 'light' ? 'dark' : 'light';
-          localStorage.setItem('theme-mode', newMode);
-          return newMode;
-        });
-      },
-    }),
-    [mode],
-  );
+  const mode = useMemo<PaletteMode>(() => {
+    return (resolvedTheme === 'dark' ? 'dark' : 'light') as PaletteMode;
+  }, [resolvedTheme]);
 
   const theme = useMemo(() => getTheme(mode), [mode]);
 
+  if (!mounted) {
+    // 초기 로딩 시 레이아웃 깜빡임 방지용 빈 박스 또는 기본 테마 설정 유지
+    return (
+      <MUIThemeProvider theme={getTheme('dark')}>
+        <CssBaseline />
+        <div style={{ visibility: 'hidden' }}>{children}</div>
+      </MUIThemeProvider>
+    );
+  }
+
   return (
-    <ThemeContext.Provider value={themeContextValue}>
+    <MUIThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </MUIThemeProvider>
+  );
+}
+
+export function MUIProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
       <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
+        <MUIThemeWrapper>{children}</MUIThemeWrapper>
       </AppRouterCacheProvider>
-    </ThemeContext.Provider>
+    </NextThemesProvider>
   );
 }
