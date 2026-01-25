@@ -1,3 +1,9 @@
+## [1.39.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.38.0...v1.39.0) (2026-01-25)
+
+### ✨ 새로운 기능
+
+* next-themes ([#94](https://github.com/minoong/garden-bizarre-adventure/issues/94)) ([706e799](https://github.com/minoong/garden-bizarre-adventure/commit/706e7999b1b0eb9015ae326540f265045eb907d0))
+
 ## [1.38.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.37.1...v1.38.0) (2026-01-24)
 
 ### ✨ 새로운 기능
