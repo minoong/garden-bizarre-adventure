@@ -23,15 +23,15 @@ export const HeaderClock = memo(function HeaderClock() {
   useEffect(() => {
     const updateTime = () => {
       const now = dayjs();
+      let nextStr = '';
 
       if (is24Hour) {
-        // 24시간 모드: '24H HH시 mm분 ss초'
-        setTimeStr(now.format('[24H] HH시 mm분 ss초'));
+        nextStr = now.format('[24H] HH시 mm분 ss초');
       } else {
-        // 12시간 모드: '오전/오후 hh시 mm분 ss초'
-        // dayjs 'A'는 로케일에 따라 오전/오후로 출력됨
-        setTimeStr(now.format('A hh시 mm분 ss초'));
+        nextStr = now.format('A hh시 mm분 ss초');
       }
+
+      setTimeStr((prev) => (prev !== nextStr ? nextStr : prev));
       rafRef.current = requestAnimationFrame(updateTime);
     };
 
