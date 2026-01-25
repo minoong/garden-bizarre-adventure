@@ -1,3 +1,9 @@
+## [1.41.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.41.0...v1.41.1) (2026-01-25)
+
+### 🐛 버그 수정
+
+* 롤링 애니메이션 버그 수정 ([#102](https://github.com/minoong/garden-bizarre-adventure/issues/102)) ([3a7f955](https://github.com/minoong/garden-bizarre-adventure/commit/3a7f955d3c3dc5e1c516ac65115cecf603c149d4))
+
 ## [1.41.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.40.1...v1.41.0) (2026-01-25)
 
 ### ✨ 새로운 기능
