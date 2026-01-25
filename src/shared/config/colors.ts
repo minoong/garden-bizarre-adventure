@@ -36,8 +36,8 @@ export const layoutColors = {
     textSecondary: '#666666',
   },
   dark: {
-    background: '#0B1219',
-    paper: '#121d27',
+    background: '#17171c',
+    paper: '#1e1e24',
     border: 'rgba(255, 255, 255, 0.08)',
     textPrimary: '#ffffff',
     textSecondary: '#999999',
