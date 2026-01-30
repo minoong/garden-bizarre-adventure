@@ -474,7 +474,7 @@ export const CandlestickChart = memo(function CandlestickChart({
       rightPriceScale: {
         borderColor: BORDER_COLOR,
         scaleMargins: { top: 0.1, bottom: 0.1 },
-        minimumWidth: 100,
+        minimumWidth: 130,
       },
       timeScale: {
         borderColor: BORDER_COLOR,
@@ -530,7 +530,7 @@ export const CandlestickChart = memo(function CandlestickChart({
         rightPriceScale: {
           borderColor: BORDER_COLOR,
           scaleMargins: { top: 0.1, bottom: 0 },
-          minimumWidth: 100,
+          minimumWidth: 130,
         },
         timeScale: {
           borderColor: BORDER_COLOR,

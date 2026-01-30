@@ -168,7 +168,7 @@ export function PostCard({ post }: PostCardProps) {
               {images.map((image) => (
                 <SwiperSlide key={image.id}>
                   <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-                    <Image src={image.image_url} alt={post.title || 'Post image'} fill style={{ objectFit: 'contain' }} sizes="614px" priority />
+                    <Image src={image.image_url} alt={post.title || 'Post image'} fill style={{ objectFit: 'contain' }} sizes="614px" />
                   </Box>
                 </SwiperSlide>
               ))}

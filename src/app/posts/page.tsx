@@ -25,7 +25,7 @@ export default async function PostsPage() {
 
   return (
     <LayoutProvider showFooter={false}>
-      <Container maxWidth="sm" disableGutters sx={{ bgcolor: '#000000', py: 0, minHeight: '100vh' }}>
+      <Container maxWidth="sm" disableGutters sx={{ bgcolor: '#000000', py: 0, minHeight: '100vh', mt: '72px' }}>
         <PostFeedInfinite initialPosts={initialPosts} isPublic />
       </Container>
     </LayoutProvider>

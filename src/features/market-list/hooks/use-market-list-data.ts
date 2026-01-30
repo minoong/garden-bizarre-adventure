@@ -9,7 +9,8 @@ import type { MarketRowData } from '../model/types';
  * - REST API로 초기 데이터 로드
  * - WebSocket으로 실시간 업데이트
  */
-export function useMarketListData() {
+export function useMarketListData(options: { enabledRealtime?: boolean } = {}) {
+  const { enabledRealtime = true } = options;
   // 1. KRW 마켓 목록 조회 (REST API)
   const { data: markets, isLoading: isLoadingMarkets } = useKrwMarkets();
 
@@ -24,14 +25,14 @@ export function useMarketListData() {
     tickers: realtimeTickers,
     connect,
     status: wsStatus,
-  } = useBithumbSocket(marketCodes.length > 0 ? marketCodes : [], marketCodes.length > 0 ? ['ticker'] : []);
+  } = useBithumbSocket(enabledRealtime && marketCodes.length > 0 ? marketCodes : [], enabledRealtime && marketCodes.length > 0 ? ['ticker'] : []);
 
   // WebSocket 자동 연결
   useEffect(() => {
-    if (wsStatus === 'disconnected' && marketCodes.length > 0) {
+    if (enabledRealtime && wsStatus === 'disconnected' && marketCodes.length > 0) {
       connect();
     }
-  }, [connect, marketCodes.length, wsStatus]);
+  }, [connect, marketCodes.length, wsStatus, enabledRealtime]);
 
   // 4. 테이블 데이터 생성 (안정적인 데이터 구조 유지)
   const data = useMemo<MarketRowData[]>(() => {

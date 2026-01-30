@@ -160,8 +160,8 @@ export const TradeLayout = memo(function TradeLayout({ initialMarket = 'KRW-BTC'
       <Box
         sx={{
           position: 'sticky',
-          top: 16,
-          height: 'calc(100vh - 32px)',
+          top: 76,
+          height: 'calc(100vh - 92px)',
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,

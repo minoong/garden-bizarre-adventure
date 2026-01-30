@@ -5,7 +5,7 @@
 /**
  * 한 페이지당 게시물 수
  */
-export const POSTS_PER_PAGE = 1;
+export const POSTS_PER_PAGE = 3;
 
 /**
  * 한 페이지당 댓글 수

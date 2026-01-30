@@ -6,6 +6,8 @@ import type { ReactNode } from 'react';
 import { Header } from '@/widgets/header';
 import { Footer } from '@/widgets/footer';
 
+import { SmoothScrollProvider } from './smooth-scroll-provider';
+
 interface LayoutProviderProps {
   children: ReactNode;
   showFooter?: boolean;
@@ -13,24 +15,26 @@ interface LayoutProviderProps {
 
 export const LayoutProvider = ({ children, showFooter = true }: LayoutProviderProps) => {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        bgcolor: '#000000',
-      }}
-    >
-      <Header />
+    <SmoothScrollProvider>
       <Box
-        component="main"
         sx={{
-          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+          bgcolor: '#000000',
         }}
       >
-        {children}
+        <Header />
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+          }}
+        >
+          {children}
+        </Box>
+        {showFooter && <Footer />}
       </Box>
-      {showFooter && <Footer />}
-    </Box>
+    </SmoothScrollProvider>
   );
 };

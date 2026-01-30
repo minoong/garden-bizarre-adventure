@@ -19,6 +19,7 @@ export const MainHeader = memo(function MainHeader() {
     <Box
       component="header"
       sx={{
+        width: '100%',
         height: 60,
         bgcolor: alpha(theme.palette.background.paper, 0.9),
         backdropFilter: 'blur(12px)',
@@ -33,6 +34,7 @@ export const MainHeader = memo(function MainHeader() {
       <Container
         maxWidth={false}
         sx={{
+          minWidth: '1440px',
           width: '1440px',
           mx: 'auto',
           px: '16px !important',

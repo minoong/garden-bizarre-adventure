@@ -43,6 +43,8 @@ export interface MarketListRootProps {
   columns?: readonly string[];
   /** 검색어 */
   searchQuery?: string;
+  /** 실시간 업데이트 사용 여부 */
+  realtime?: boolean;
 }
 
 /**
@@ -63,6 +65,7 @@ export function MarketListRoot({
   showStatusChip = true,
   columns = DEFAULT_COLUMNS,
   searchQuery = '',
+  realtime = true,
 }: MarketListRootProps) {
   const [selectedMarket, setSelectedMarket] = useState<string | null>(initialSelectedMarket);
   const [virtualizer, setVirtualizerState] = useState<Virtualizer<HTMLElement, Element> | null>(null);
@@ -73,7 +76,7 @@ export function MarketListRoot({
   const gridTemplateColumns = useMemo(() => columns.join(' '), [columns]);
 
   // 1. 데이터 fetching & WebSocket
-  const { data, realtimeTickers, isLoading, wsStatus } = useMarketListData();
+  const { data, realtimeTickers, isLoading, wsStatus } = useMarketListData({ enabledRealtime: realtime });
 
   // 검색 인덱스 데이터 (초성 사전 계산 유지)
   const [searchIndex, setSearchIndex] = useState<Map<string, string>>(new Map());

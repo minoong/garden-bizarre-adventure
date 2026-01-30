@@ -8,13 +8,15 @@ import { POSTS_PER_PAGE } from '@/shared/config/pagination';
 
 interface UseInfinitePostsOptions extends Omit<GetPostsOptions, 'limit' | 'offset'> {
   initialData?: Post[];
+  enabled?: boolean;
 }
 
 export function useInfinitePosts(options: UseInfinitePostsOptions = {}) {
-  const { initialData, ...restOptions } = options;
+  const { initialData, enabled, ...restOptions } = options;
 
   return useInfiniteQuery({
     queryKey: ['posts', 'infinite', restOptions],
+    enabled,
     queryFn: async ({ pageParam }: { pageParam: number }) => {
       const posts = await getPostsClient({
         ...restOptions,
