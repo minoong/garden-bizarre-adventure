@@ -1,3 +1,9 @@
+## [1.42.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.41.1...v1.42.0) (2026-01-30)
+
+### ✨ 새로운 기능
+
+* 소개 페이지 리뉴얼 ([62e0a51](https://github.com/minoong/garden-bizarre-adventure/commit/62e0a51adc16beb2d88fe6710b9010430d2cb8b4))
+
 ## [1.41.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.41.0...v1.41.1) (2026-01-25)
 
 ### 🐛 버그 수정
