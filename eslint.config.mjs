@@ -11,7 +11,7 @@ import typescriptPlugin from '@typescript-eslint/eslint-plugin';
 
 const eslintConfig = [
   {
-    ignores: ['node_modules/**', '.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'storybook-static/**', '.claude/**'],
+    ignores: ['node_modules/**', '.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'storybook-static/**', '.claude/**', '.agent/**', '.agents/**'],
   },
   {
     files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
