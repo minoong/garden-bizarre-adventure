@@ -1,3 +1,9 @@
+## [1.42.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.42.0...v1.42.1) (2026-03-05)
+
+### 🐛 버그 수정
+
+* **deps:** resolve multiple security vulnerabilities (pnpm audit) ([344d258](https://github.com/minoong/garden-bizarre-adventure/commit/344d25800c335296f74de13c3b4f96c81242f86f))
+
 ## [1.42.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.41.1...v1.42.0) (2026-01-30)
 
 ### ✨ 새로운 기능
