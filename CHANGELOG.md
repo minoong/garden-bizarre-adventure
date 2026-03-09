@@ -1,3 +1,13 @@
+## [1.43.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.42.1...v1.43.0) (2026-03-09)
+
+### ✨ 새로운 기능
+
+* ai elements ([#104](https://github.com/minoong/garden-bizarre-adventure/issues/104)) ([4105c04](https://github.com/minoong/garden-bizarre-adventure/commit/4105c04cce75fa79a2b780849cdf4ffbddd3e382))
+
+### 📦 기타
+
+* **tools:** add agent skills and best practice guidelines ([5125100](https://github.com/minoong/garden-bizarre-adventure/commit/5125100f8193fbc0aab14ae42cf7c716db503ffe))
+
 ## [1.42.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.42.0...v1.42.1) (2026-03-05)
 
 ### 🐛 버그 수정
