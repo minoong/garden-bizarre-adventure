@@ -1,7 +1,7 @@
 'use client';
 
-import type { ComponentProps, ReactNode } from 'react';
 import { ChevronDownIcon } from 'lucide-react';
+import type { ComponentProps, ReactNode } from 'react';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -182,7 +182,7 @@ export const WebPreviewConsole = ({ className, logs = [], children, ...props }: 
           {logs.length === 0 ? (
             <p className="text-muted-foreground">No console output</p>
           ) : (
-            logs.map((log, index) => (
+            logs.map((log) => (
               <div
                 className={cn(
                   'text-xs',
@@ -190,7 +190,7 @@ export const WebPreviewConsole = ({ className, logs = [], children, ...props }: 
                   log.level === 'warn' && 'text-yellow-600',
                   log.level === 'log' && 'text-foreground',
                 )}
-                key={`${log.timestamp.getTime()}-${index}`}
+                key={`${log.timestamp.getTime()}-${log.level}-${log.message}`}
               >
                 <span className="text-muted-foreground">{log.timestamp.toLocaleTimeString()}</span> {log.message}
               </div>

@@ -1,8 +1,8 @@
 'use client';
 
 import type { ToolUIPart } from 'ai';
-import type { ComponentProps } from 'react';
 import { ChevronDownIcon, Code } from 'lucide-react';
+import type { ComponentProps } from 'react';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

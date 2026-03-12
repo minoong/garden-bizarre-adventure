@@ -1,13 +1,13 @@
 'use client';
 
 import type { Tool } from 'ai';
-import type { ComponentProps } from 'react';
 import { BotIcon } from 'lucide-react';
+import type { ComponentProps } from 'react';
 import { memo } from 'react';
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 import { CodeBlock } from './code-block';
 

@@ -1,7 +1,7 @@
 'use client';
 
-import type { ComponentProps, HTMLAttributes } from 'react';
 import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
+import type { ComponentProps, HTMLAttributes } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -106,30 +106,6 @@ const EnvironmentVariableContext = createContext<EnvironmentVariableContextType>
   value: '',
 });
 
-export type EnvironmentVariableProps = HTMLAttributes<HTMLDivElement> & {
-  name: string;
-  value: string;
-};
-
-export const EnvironmentVariable = ({ name, value, className, children, ...props }: EnvironmentVariableProps) => {
-  const envVarContextValue = useMemo(() => ({ name, value }), [name, value]);
-
-  return (
-    <EnvironmentVariableContext.Provider value={envVarContextValue}>
-      <div className={cn('flex items-center justify-between gap-4 px-4 py-3', className)} {...props}>
-        {children ?? (
-          <>
-            <div className="flex items-center gap-2">
-              <EnvironmentVariableName />
-            </div>
-            <EnvironmentVariableValue />
-          </>
-        )}
-      </div>
-    </EnvironmentVariableContext.Provider>
-  );
-};
-
 export type EnvironmentVariableGroupProps = HTMLAttributes<HTMLDivElement>;
 
 export const EnvironmentVariableGroup = ({ className, children, ...props }: EnvironmentVariableGroupProps) => (
@@ -162,6 +138,30 @@ export const EnvironmentVariableValue = ({ className, children, ...props }: Envi
     <span className={cn('text-muted-foreground font-mono text-sm', !showValues && 'select-none', className)} {...props}>
       {children ?? displayValue}
     </span>
+  );
+};
+
+export type EnvironmentVariableProps = HTMLAttributes<HTMLDivElement> & {
+  name: string;
+  value: string;
+};
+
+export const EnvironmentVariable = ({ name, value, className, children, ...props }: EnvironmentVariableProps) => {
+  const envVarContextValue = useMemo(() => ({ name, value }), [name, value]);
+
+  return (
+    <EnvironmentVariableContext.Provider value={envVarContextValue}>
+      <div className={cn('flex items-center justify-between gap-4 px-4 py-3', className)} {...props}>
+        {children ?? (
+          <>
+            <div className="flex items-center gap-2">
+              <EnvironmentVariableName />
+            </div>
+            <EnvironmentVariableValue />
+          </>
+        )}
+      </div>
+    </EnvironmentVariableContext.Provider>
   );
 };
 
