@@ -1,8 +1,8 @@
 'use client';
 
-import type { ComponentProps } from 'react';
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { AlertTriangleIcon, CheckIcon, ChevronDownIcon, CopyIcon } from 'lucide-react';
+import type { ComponentProps } from 'react';
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -225,8 +225,6 @@ const handleActionsKeyDown = (e: React.KeyboardEvent) => {
 };
 
 export const StackTraceActions = memo(({ className, children, ...props }: StackTraceActionsProps) => (
-  // biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation required for nested interactions
-  // biome-ignore lint/a11y/useSemanticElements: fieldset doesn't fit this UI pattern
   <div className={cn('flex shrink-0 items-center gap-1', className)} onClick={handleActionsClick} onKeyDown={handleActionsKeyDown} role="group" {...props}>
     {children}
   </div>
@@ -350,8 +348,8 @@ export const StackTraceFrames = memo(({ className, showInternalFrames = true, ..
 
   return (
     <div className={cn('space-y-1 p-3', className)} {...props}>
-      {framesToShow.map((frame, index) => (
-        <div className={cn('text-xs', frame.isInternal ? 'text-muted-foreground/50' : 'text-foreground/90')} key={`${frame.raw}-${index}`}>
+      {framesToShow.map((frame) => (
+        <div className={cn('text-xs', frame.isInternal ? 'text-muted-foreground/50' : 'text-foreground/90')} key={frame.raw}>
           <span className="text-muted-foreground">at </span>
           {frame.functionName && <span className={frame.isInternal ? '' : 'text-foreground'}>{frame.functionName} </span>}
           {frame.filePath && (

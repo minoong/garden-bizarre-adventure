@@ -1,5 +1,5 @@
-import type { ComponentProps } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import type { ComponentProps } from 'react';
 
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';

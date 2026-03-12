@@ -1,8 +1,8 @@
 'use client';
 
-import type { ComponentProps } from 'react';
 import { ChevronsUpDownIcon } from 'lucide-react';
-import { createContext, useContext } from 'react';
+import type { ComponentProps } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,13 +29,17 @@ export type PlanProps = ComponentProps<typeof Collapsible> & {
   isStreaming?: boolean;
 };
 
-export const Plan = ({ className, isStreaming = false, children, ...props }: PlanProps) => (
-  <PlanContext.Provider value={{ isStreaming }}>
-    <Collapsible asChild data-slot="plan" {...props}>
-      <Card className={cn('shadow-none', className)}>{children}</Card>
-    </Collapsible>
-  </PlanContext.Provider>
-);
+export const Plan = ({ className, isStreaming = false, children, ...props }: PlanProps) => {
+  const contextValue = useMemo(() => ({ isStreaming }), [isStreaming]);
+
+  return (
+    <PlanContext.Provider value={contextValue}>
+      <Collapsible asChild data-slot="plan" {...props}>
+        <Card className={cn('shadow-none', className)}>{children}</Card>
+      </Collapsible>
+    </PlanContext.Provider>
+  );
+};
 
 export type PlanHeaderProps = ComponentProps<typeof CardHeader>;
 

@@ -1,11 +1,11 @@
 'use client';
 
-import type { ComponentProps } from 'react';
 import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
+import type { ComponentProps } from 'react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
-import type { CarouselApi } from '@/components/ui/carousel';
 import { Badge } from '@/components/ui/badge';
+import type { CarouselApi } from '@/components/ui/carousel';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
@@ -94,25 +94,28 @@ export const InlineCitationCarouselIndex = ({ children, className, ...props }: I
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
 
+  const syncState = useCallback(() => {
+    if (!api) {
+      return;
+    }
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap() + 1);
+  }, [api]);
+
   useEffect(() => {
     if (!api) {
       return;
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap() + 1);
+    syncState();
 
-    const handleSelect = () => {
-      setCurrent(api.selectedScrollSnap() + 1);
-    };
-
-    api.on('select', handleSelect);
+    api.on('select', syncState);
 
     return () => {
-      api.off('select', handleSelect);
+      api.off('select', syncState);
     };
-  }, [api]);
+  }, [api, syncState]);
 
   return (
     <div className={cn('text-muted-foreground flex flex-1 items-center justify-end px-3 py-1 text-xs', className)} {...props}>

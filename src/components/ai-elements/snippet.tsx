@@ -1,11 +1,11 @@
 'use client';
 
-import type { ComponentProps } from 'react';
 import { CheckIcon, CopyIcon } from 'lucide-react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import type { ComponentProps } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGroupText } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGroupText } from '@/components/ui/input-group';
 
 interface SnippetContextType {
   code: string;
@@ -19,13 +19,17 @@ export type SnippetProps = ComponentProps<typeof InputGroup> & {
   code: string;
 };
 
-export const Snippet = ({ code, className, children, ...props }: SnippetProps) => (
-  <SnippetContext.Provider value={{ code }}>
-    <InputGroup className={cn('font-mono', className)} {...props}>
-      {children}
-    </InputGroup>
-  </SnippetContext.Provider>
-);
+export const Snippet = ({ code, className, children, ...props }: SnippetProps) => {
+  const contextValue = useMemo(() => ({ code }), [code]);
+
+  return (
+    <SnippetContext.Provider value={contextValue}>
+      <InputGroup className={cn('font-mono', className)} {...props}>
+        {children}
+      </InputGroup>
+    </SnippetContext.Provider>
+  );
+};
 
 export type SnippetAddonProps = ComponentProps<typeof InputGroupAddon>;
 

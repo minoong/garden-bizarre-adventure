@@ -1,14 +1,12 @@
 'use client';
 
-import type { ComponentProps, HTMLAttributes } from 'react';
 import Ansi from 'ansi-to-react';
 import { CheckIcon, CopyIcon, TerminalIcon, Trash2Icon } from 'lucide-react';
+import type { ComponentProps, HTMLAttributes } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-
-import { Shimmer } from './shimmer';
 
 interface TerminalContextType {
   output: string;
@@ -22,39 +20,6 @@ const TerminalContext = createContext<TerminalContextType>({
   isStreaming: false,
   output: '',
 });
-
-export type TerminalProps = HTMLAttributes<HTMLDivElement> & {
-  output: string;
-  isStreaming?: boolean;
-  autoScroll?: boolean;
-  onClear?: () => void;
-};
-
-export const Terminal = ({ output, isStreaming = false, autoScroll = true, onClear, className, children, ...props }: TerminalProps) => {
-  const contextValue = useMemo(() => ({ autoScroll, isStreaming, onClear, output }), [autoScroll, isStreaming, onClear, output]);
-
-  return (
-    <TerminalContext.Provider value={contextValue}>
-      <div className={cn('flex flex-col overflow-hidden rounded-lg border bg-zinc-950 text-zinc-100', className)} {...props}>
-        {children ?? (
-          <>
-            <TerminalHeader>
-              <TerminalTitle />
-              <div className="flex items-center gap-1">
-                <TerminalStatus />
-                <TerminalActions>
-                  <TerminalCopyButton />
-                  {onClear && <TerminalClearButton />}
-                </TerminalActions>
-              </div>
-            </TerminalHeader>
-            <TerminalContent />
-          </>
-        )}
-      </div>
-    </TerminalContext.Provider>
-  );
-};
 
 export type TerminalHeaderProps = HTMLAttributes<HTMLDivElement>;
 
@@ -84,7 +49,7 @@ export const TerminalStatus = ({ className, children, ...props }: TerminalStatus
 
   return (
     <div className={cn('flex items-center gap-2 text-xs text-zinc-400', className)} {...props}>
-      {children ?? <Shimmer className="w-16">Streaming...</Shimmer>}
+      {children}
     </div>
   );
 };
@@ -174,7 +139,6 @@ export const TerminalContent = ({ className, children, ...props }: TerminalConte
   const { output, isStreaming, autoScroll } = useContext(TerminalContext);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: output triggers auto-scroll when new content arrives
   useEffect(() => {
     if (autoScroll && containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -190,5 +154,38 @@ export const TerminalContent = ({ className, children, ...props }: TerminalConte
         </pre>
       )}
     </div>
+  );
+};
+
+export type TerminalProps = HTMLAttributes<HTMLDivElement> & {
+  output: string;
+  isStreaming?: boolean;
+  autoScroll?: boolean;
+  onClear?: () => void;
+};
+
+export const Terminal = ({ output, isStreaming = false, autoScroll = true, onClear, className, children, ...props }: TerminalProps) => {
+  const contextValue = useMemo(() => ({ autoScroll, isStreaming, onClear, output }), [autoScroll, isStreaming, onClear, output]);
+
+  return (
+    <TerminalContext.Provider value={contextValue}>
+      <div className={cn('flex flex-col overflow-hidden rounded-lg border bg-zinc-950 text-zinc-100', className)} {...props}>
+        {children ?? (
+          <>
+            <TerminalHeader>
+              <TerminalTitle />
+              <div className="flex items-center gap-1">
+                <TerminalStatus />
+                <TerminalActions>
+                  <TerminalCopyButton />
+                  {onClear && <TerminalClearButton />}
+                </TerminalActions>
+              </div>
+            </TerminalHeader>
+            <TerminalContent />
+          </>
+        )}
+      </div>
+    </TerminalContext.Provider>
   );
 };

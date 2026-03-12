@@ -1,7 +1,7 @@
 'use client';
 
-import type { ComponentProps, HTMLAttributes } from 'react';
 import { CheckIcon, CopyIcon, FileIcon, GitCommitIcon, MinusIcon, PlusIcon } from 'lucide-react';
+import type { ComponentProps, HTMLAttributes } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -94,9 +94,22 @@ const relativeTimeFormat = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',
 });
 
+const formatRelativeDate = (date: Date) => {
+  const days = Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  return relativeTimeFormat.format(days, 'day');
+};
+
 export const CommitTimestamp = ({ date, className, children, ...props }: CommitTimestampProps) => {
-  // eslint-disable-next-line react-hooks/purity
-  const formatted = relativeTimeFormat.format(Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)), 'day');
+  const [formatted, setFormatted] = useState('');
+
+  const updateFormatted = useCallback(() => {
+    setFormatted(formatRelativeDate(date));
+  }, [date]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    updateFormatted();
+  }, [updateFormatted]);
 
   return (
     <time className={cn('text-xs', className)} dateTime={date.toISOString()} {...props}>
@@ -111,8 +124,6 @@ const handleActionsClick = (e: React.MouseEvent) => e.stopPropagation();
 const handleActionsKeyDown = (e: React.KeyboardEvent) => e.stopPropagation();
 
 export const CommitActions = ({ className, children, ...props }: CommitActionsProps) => (
-  // biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation required for nested interactions
-  // biome-ignore lint/a11y/useSemanticElements: fieldset doesn't fit this UI pattern
   <div className={cn('flex items-center gap-1', className)} onClick={handleActionsClick} onKeyDown={handleActionsKeyDown} role="group" {...props}>
     {children}
   </div>

@@ -1,11 +1,29 @@
+/* eslint-disable react-hooks/immutability */
 'use client';
 
 import type { RiveParameters } from '@rive-app/react-webgl2';
-import type { FC, ReactNode } from 'react';
 import { useRive, useStateMachineInput, useViewModel, useViewModelInstance, useViewModelInstanceColor } from '@rive-app/react-webgl2';
+import type { FC, ReactNode } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
+
+// Delays Rive initialization by one frame so that React Strict Mode's
+// immediate unmount cycle never creates a WebGL2 context. Only the
+// second (real) mount will initialise, avoiding context exhaustion.
+const useStrictModeSafeInit = () => {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => {
+      cancelAnimationFrame(id);
+      setReady(false);
+    };
+  }, []);
+
+  return ready;
+};
 
 export type PersonaState = 'idle' | 'listening' | 'thinking' | 'speaking' | 'asleep';
 
@@ -139,13 +157,11 @@ const PersonaWithModel = memo(({ rive, source, children }: PersonaWithModelProps
 
 PersonaWithModel.displayName = 'PersonaWithModel';
 
-interface PersonaSubComponentProps {
-  rive: ReturnType<typeof useRive>['rive'];
-  source: (typeof sources)[keyof typeof sources];
+interface PersonaWithoutModelProps {
   children: ReactNode;
 }
 
-const PersonaWithoutModel = memo(({ children }: PersonaSubComponentProps) => <>{children}</>);
+const PersonaWithoutModel = memo(({ children }: PersonaWithoutModelProps) => children);
 
 PersonaWithoutModel.displayName = 'PersonaWithoutModel';
 
@@ -189,38 +205,44 @@ export const Persona: FC<PersonaProps> = memo(({ variant = 'obsidian', state = '
     [],
   );
 
-  const { rive, RiveComponent } = useRive({
-    autoplay: true,
-    onLoad: stableCallbacks.onLoad,
-    onLoadError: stableCallbacks.onLoadError,
-    onPause: stableCallbacks.onPause,
-    onPlay: stableCallbacks.onPlay,
-    onRiveReady: stableCallbacks.onReady,
-    onStop: stableCallbacks.onStop,
-    src: source.source,
-    stateMachines: stateMachine,
-  });
+  // Delay initialisation by one frame to avoid creating (and leaking)
+  // a WebGL2 context during React Strict Mode's first throw-away mount.
+  const ready = useStrictModeSafeInit();
+
+  const { rive, RiveComponent } = useRive(
+    ready
+      ? {
+          autoplay: true,
+          onLoad: stableCallbacks.onLoad,
+          onLoadError: stableCallbacks.onLoadError,
+          onPause: stableCallbacks.onPause,
+          onPlay: stableCallbacks.onPlay,
+          onRiveReady: stableCallbacks.onReady,
+          onStop: stableCallbacks.onStop,
+          src: source.source,
+          stateMachines: stateMachine,
+        }
+      : null,
+  );
 
   const listeningInput = useStateMachineInput(rive, stateMachine, 'listening');
   const thinkingInput = useStateMachineInput(rive, stateMachine, 'thinking');
   const speakingInput = useStateMachineInput(rive, stateMachine, 'speaking');
   const asleepInput = useStateMachineInput(rive, stateMachine, 'asleep');
 
+  // Rive state machine inputs are mutable objects that must be set via direct
+  // property assignment — this is the intended Rive API, not a React anti-pattern.
   useEffect(() => {
     if (listeningInput) {
-      // eslint-disable-next-line react-hooks/immutability
       listeningInput.value = state === 'listening';
     }
     if (thinkingInput) {
-      // eslint-disable-next-line react-hooks/immutability
       thinkingInput.value = state === 'thinking';
     }
     if (speakingInput) {
-      // eslint-disable-next-line react-hooks/immutability
       speakingInput.value = state === 'speaking';
     }
     if (asleepInput) {
-      // eslint-disable-next-line react-hooks/immutability
       asleepInput.value = state === 'asleep';
     }
   }, [state, listeningInput, thinkingInput, speakingInput, asleepInput]);

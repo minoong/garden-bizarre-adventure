@@ -176,6 +176,17 @@ export const ContextContentFooter = ({ children, className, ...props }: ContextC
   );
 };
 
+const TokensWithCost = ({ tokens, costText }: { tokens?: number; costText?: string }) => (
+  <span>
+    {tokens === undefined
+      ? '—'
+      : new Intl.NumberFormat('en-US', {
+          notation: 'compact',
+        }).format(tokens)}
+    {costText ? <span className="text-muted-foreground ml-2">• {costText}</span> : null}
+  </span>
+);
+
 export type ContextInputUsageProps = ComponentProps<'div'>;
 
 export const ContextInputUsage = ({ className, children, ...props }: ContextInputUsageProps) => {
@@ -307,14 +318,3 @@ export const ContextCacheUsage = ({ className, children, ...props }: ContextCach
     </div>
   );
 };
-
-const TokensWithCost = ({ tokens, costText }: { tokens?: number; costText?: string }) => (
-  <span>
-    {tokens === undefined
-      ? '—'
-      : new Intl.NumberFormat('en-US', {
-          notation: 'compact',
-        }).format(tokens)}
-    {costText ? <span className="text-muted-foreground ml-2">• {costText}</span> : null}
-  </span>
-);
