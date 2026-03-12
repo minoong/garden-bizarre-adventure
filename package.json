@@ -83,7 +83,7 @@
     "react-intersection-observer": "^10.0.3",
     "react-jsx-parser": "^2.4.1",
     "react-modal-sheet": "^5.2.1",
-    "react-resizable-panels": "^4.6.5",
+    "react-resizable-panels": "^4.7.2",
     "react-zoom-pan-pinch": "^3.7.0",
     "shiki": "^4.0.1",
     "streamdown": "^2.3.0",
