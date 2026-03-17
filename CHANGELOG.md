@@ -1,3 +1,14 @@
+## [1.44.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.43.0...v1.44.0) (2026-03-17)
+
+### ✨ 새로운 기능
+
+* **chat:** Vercel AI SDK를 이용한 AI 채팅 페이지 및 API 라우트 추가 ([d5c3013](https://github.com/minoong/garden-bizarre-adventure/commit/d5c30136456dea18bcb6c5c5854cded5a07a7fae))
+
+### 📦 기타
+
+* ai sdk ([#106](https://github.com/minoong/garden-bizarre-adventure/issues/106)) ([32ce90f](https://github.com/minoong/garden-bizarre-adventure/commit/32ce90f8ead4073d9943d2215c9867d5bf72c823))
+* dependabot ([#108](https://github.com/minoong/garden-bizarre-adventure/issues/108)) ([d26460c](https://github.com/minoong/garden-bizarre-adventure/commit/d26460c298da97bfd6a7d48fa4d58ff3f5968e25))
+
 ## [1.43.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.42.1...v1.43.0) (2026-03-09)
 
 ### ✨ 새로운 기능
