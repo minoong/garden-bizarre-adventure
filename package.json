@@ -54,7 +54,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "d3-scale": "^4.0.2",
-    "dayjs": "^1.11.19",
+    "dayjs": "^1.11.20",
     "embla-carousel-react": "^8.6.0",
     "es-hangul": "^2.3.8",
     "exifr": "^7.1.3",
