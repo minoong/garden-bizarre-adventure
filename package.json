@@ -44,7 +44,7 @@
     "@supabase/supabase-js": "^2.97.0",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
-    "@tanstack/react-virtual": "^3.13.19",
+    "@tanstack/react-virtual": "^3.13.21",
     "@xyflow/react": "^12.10.1",
     "ai": "^6.0.116",
     "ansi-to-react": "^6.2.6",
