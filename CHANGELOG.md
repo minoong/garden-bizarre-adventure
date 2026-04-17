@@ -1,3 +1,13 @@
+## [1.44.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.44.0...v1.44.1) (2026-04-17)
+
+### 🐛 버그 수정
+
+* **ui:** resolve lint issues and Next.js runtime warnings ([d3dec33](https://github.com/minoong/garden-bizarre-adventure/commit/d3dec33e5a6c7618b4747a6b88d47fe71ecc6707))
+
+### 📦 기타
+
+* **deps:** upgrade Next.js/MUI and patch vulnerable transitive dependencies ([2912e60](https://github.com/minoong/garden-bizarre-adventure/commit/2912e60dcb1864cfb18aac5fd05bd21aec2e3953))
+
 ## [1.44.0](https://github.com/minoong/garden-bizarre-adventure/compare/v1.43.0...v1.44.0) (2026-03-17)
 
 ### ✨ 새로운 기능
