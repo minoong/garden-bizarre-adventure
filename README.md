@@ -80,7 +80,7 @@
 
 ### UI Libraries
 
-- **@mui/material v7** - React UI 컴포넌트 라이브러리
+- **@mui/material v9** - React UI 컴포넌트 라이브러리
 - **@mui/icons-material** - Material Design 아이콘
 - **@emotion/react & @emotion/styled** - CSS-in-JS 스타일링
 - **Tailwind CSS v4** - 유틸리티 CSS 프레임워크

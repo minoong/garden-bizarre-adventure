@@ -69,7 +69,7 @@ export const AiChatWidget = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <RobotIcon />
                   <Box>
-                    <Typography variant="subtitle1" fontWeight="bold" lineHeight={1.2}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
                       Bizarre AI Assistant
                     </Typography>
                     <Typography variant="caption" sx={{ opacity: 0.8 }}>
@@ -84,7 +84,7 @@ export const AiChatWidget = () => {
 
               {/* Chat Content Area (Placeholder for AI SDK / Elements) */}
               <Box sx={{ flex: 1, p: 2, overflowY: 'auto', bgcolor: 'background.default' }}>
-                <Typography color="text.secondary" textAlign="center" sx={{ mt: 10 }}>
+                <Typography color="text.secondary" sx={{ mt: 10, textAlign: 'center' }}>
                   안녕하세요! 무엇을 도와드릴까요?
                   <br />
                   (AI-SDK 적용 예정 영역)

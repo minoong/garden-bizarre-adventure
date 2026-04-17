@@ -126,8 +126,8 @@ export const PostsHorizontalGallery = () => {
             <Box>
               <Typography
                 variant="h2"
-                fontWeight="800"
                 sx={{
+                  fontWeight: 800,
                   background: 'linear-gradient(45deg, #4FC3F7 30%, #fff 90%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -188,9 +188,9 @@ export const PostsHorizontalGallery = () => {
                 />
                 <Typography
                   variant="h2"
-                  fontWeight="900"
                   gutterBottom
                   sx={{
+                    fontWeight: 900,
                     fontSize: { xs: '2.2rem', sm: '3.5rem' },
                     lineHeight: 1.2,
                     mb: { xs: 2, sm: 3 },
@@ -220,7 +220,7 @@ export const PostsHorizontalGallery = () => {
                   Kakao Maps 위에 사진을 표시합니다.
                 </Typography>
 
-                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 5, gap: 1 }}>
+                <Stack direction="row" spacing={1} sx={{ mb: 5, gap: 1, flexWrap: 'wrap' }}>
                   {['Motion 12', 'TanStack Query', 'Supabase DB', 'Firebase Storage', 'TMAP API', 'Kakao Maps'].map((tech) => (
                     <Chip
                       key={tech}

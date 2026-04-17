@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, ToggleButton, ToggleButtonGroup, FormControlLabel, Switch, Typography, Stack, Autocomplete, TextField } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -148,7 +148,7 @@ function PlaygroundExample() {
     english_name: 'Bitcoin',
   };
 
-  const [selectedMarket, setSelectedMarket] = useState<Market>(defaultMarketObject);
+  const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [timeframe, setTimeframe] = useState<CandleTimeframe>({ type: 'minutes', unit: 1 });
   const [darkMode, setDarkMode] = useState(true);
   const [showVolume, setShowVolume] = useState(true);
@@ -159,14 +159,7 @@ function PlaygroundExample() {
   // KRW 마켓 목록 조회
   const { data: krwMarkets, isLoading: isLoadingMarkets } = useKrwMarkets();
 
-  // 초기 마켓 설정 (API 데이터 로드 시 실제 데이터로 교체)
-  useEffect(() => {
-    if (krwMarkets && krwMarkets.length > 0 && selectedMarket === defaultMarketObject) {
-      const defaultMarket = krwMarkets.find((m) => m.market === DEFAULT_MARKET) ?? krwMarkets[0];
-      setSelectedMarket(defaultMarket);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [krwMarkets]);
+  const activeMarket = selectedMarket ?? krwMarkets?.find((m) => m.market === DEFAULT_MARKET) ?? krwMarkets?.[0] ?? defaultMarketObject;
 
   const handleTimeframeChange = (_: React.MouseEvent<HTMLElement>, value: string | null) => {
     if (!value) return;
@@ -195,7 +188,7 @@ function PlaygroundExample() {
   };
 
   // 마켓 코드 추출
-  const market = selectedMarket.market;
+  const market = activeMarket.market;
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1200 }}>
@@ -207,7 +200,7 @@ function PlaygroundExample() {
             마켓
           </Typography>
           <Autocomplete
-            value={selectedMarket}
+            value={activeMarket}
             onChange={(_, newValue) => {
               if (newValue) setSelectedMarket(newValue);
             }}
@@ -273,7 +266,7 @@ function PlaygroundExample() {
         </Box>
 
         {/* 옵션 */}
-        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+        <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: 'wrap' }}>
           <FormControlLabel control={<Switch checked={darkMode} onChange={(e) => setDarkMode(e.target.checked)} />} label="다크 모드" sx={{ color: 'white' }} />
           <FormControlLabel
             control={<Switch checked={showVolume} onChange={(e) => setShowVolume(e.target.checked)} />}

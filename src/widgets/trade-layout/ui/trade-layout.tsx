@@ -143,7 +143,7 @@ export const TradeLayout = memo(function TradeLayout({ initialMarket = 'KRW-BTC'
           </Grid>
           <Grid size={6}>
             <Paper elevation={0} sx={{ height: 400, borderRadius: 2, border: `1px solid ${theme.palette.divider}`, p: 2 }}>
-              <Typography variant="subtitle2" fontWeight="bold">
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                 최근 거래내역
               </Typography>
               <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

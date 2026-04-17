@@ -93,7 +93,7 @@ export const OrderbookItem = memo(function OrderbookItem({ type, price, size, ch
           }),
         }}
       >
-        <Typography variant="body2" fontWeight={800} sx={{ color, fontSize: '12px', letterSpacing: '-0.2px' }}>
+        <Typography variant="body2" sx={{ color, fontSize: '12px', letterSpacing: '-0.2px', fontWeight: 800 }}>
           {formatPrice(price)}
         </Typography>
         <Typography variant="caption" sx={{ color, fontSize: '10px', opacity: 0.9, fontWeight: 700 }}>

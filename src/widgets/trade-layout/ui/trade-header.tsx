@@ -46,14 +46,12 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
   useEffect(() => {
     const next = realtimeTicker || initialTicker;
     if (next) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPersistedTicker(next);
     }
   }, [realtimeTicker, initialTicker]);
 
   // 마켓이 변경되면 우선순위가 낮은 데이터는 지워줍니다.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPersistedTicker(null);
   }, [market]);
 
@@ -136,7 +134,7 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
         >
           {/* 시세 탭 */}
           <Box sx={{ width: '50%', p: 2, flexShrink: 0, userSelect: 'none' }}>
-            <Grid container alignItems="center" spacing={2} sx={{ filter: isLoading ? 'blur(1px)' : 'none', transition: 'filter 0.4s' }}>
+            <Grid container spacing={2} sx={{ alignItems: 'center', filter: isLoading ? 'blur(1px)' : 'none', transition: 'filter 0.4s' }}>
               {/* 왼쪽 그룹: 코인 이름 및 가격 정보 */}
               <Grid>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -184,7 +182,7 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
               </Grid>
 
               {/* 고가/저가/거래량 상세 */}
-              <Grid container size="grow" justifyContent="flex-end" sx={{ ml: 'auto' }}>
+              <Grid container size="grow" sx={{ ml: 'auto', justifyContent: 'flex-end' }}>
                 <Box sx={{ display: 'flex', gap: 3 }}>
                   <Box sx={{ display: 'flex', flexDirection: 'column', width: 120 }}>
                     <Box
@@ -197,18 +195,18 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
                         mb: 0.5,
                       }}
                     >
-                      <Typography variant="caption" color="text.secondary" fontSize="0.7rem">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                         고가
                       </Typography>
-                      <Typography variant="caption" fontWeight={700} color={riseColor}>
+                      <Typography variant="caption" color={riseColor} sx={{ fontWeight: 700 }}>
                         {ticker ? formatPrice(ticker.high_price) : '---'}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="caption" color="text.secondary" fontSize="0.7rem">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                         저가
                       </Typography>
-                      <Typography variant="caption" fontWeight={700} color={fallColor}>
+                      <Typography variant="caption" color={fallColor} sx={{ fontWeight: 700 }}>
                         {ticker ? formatPrice(ticker.low_price) : '---'}
                       </Typography>
                     </Box>
@@ -224,10 +222,10 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
                         mb: 0.5,
                       }}
                     >
-                      <Typography variant="caption" color="text.secondary" fontSize="0.7rem">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                         거래량(24H)
                       </Typography>
-                      <Typography variant="caption" fontWeight={700}>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
                         {ticker ? formatVolume(ticker.acc_trade_volume_24h) : '---'}
                         <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5, fontSize: '0.65rem' }}>
                           {base}
@@ -235,10 +233,10 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="caption" color="text.secondary" fontSize="0.7rem">
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                         거래대금(24H)
                       </Typography>
-                      <Typography variant="caption" fontWeight={700}>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
                         {ticker ? formatVolume(ticker.acc_trade_price_24h) : '---'}
                         <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5, fontSize: '0.65rem' }}>
                           {quote}

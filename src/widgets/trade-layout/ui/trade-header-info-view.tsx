@@ -89,12 +89,12 @@ export function InfoView({ base, enabled = true }: InfoViewProps) {
 
   return (
     <Box sx={{ position: 'relative' }}>
-      <Grid container spacing={3} alignItems="flex-start">
+      <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
         {/* 1. 기본 정보 & 링크 */}
         <Grid size={{ xs: 12, md: 2.5 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle2" fontWeight="900" noWrap>
+              <Typography variant="subtitle2" noWrap sx={{ fontWeight: 900 }}>
                 {info.name}
               </Typography>
               <Chip
@@ -113,7 +113,7 @@ export function InfoView({ base, enabled = true }: InfoViewProps) {
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'primary.main' }}
                 >
                   <TravelExploreIcon sx={{ fontSize: 13 }} />
-                  <Typography variant="caption" fontWeight={700} fontSize="0.65rem">
+                  <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem' }}>
                     WEB
                   </Typography>
                 </Link>
@@ -126,7 +126,7 @@ export function InfoView({ base, enabled = true }: InfoViewProps) {
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#1DA1F2' }}
                 >
                   <TwitterIcon sx={{ fontSize: 13 }} />
-                  <Typography variant="caption" fontWeight={700} fontSize="0.65rem">
+                  <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem' }}>
                     SNS
                   </Typography>
                 </Link>
@@ -166,37 +166,33 @@ export function InfoView({ base, enabled = true }: InfoViewProps) {
             }}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary" fontSize="0.65rem" fontWeight={600}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', fontWeight: 600 }}>
                 Market Cap
               </Typography>
-              <Typography variant="caption" fontWeight={800} fontSize="0.65rem">
+              <Typography variant="caption" sx={{ fontWeight: 800, fontSize: '0.65rem' }}>
                 {formatCurrency(info.market_data.market_cap.usd)}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary" fontSize="0.65rem" fontWeight={600}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', fontWeight: 600 }}>
                 Supply
               </Typography>
-              <Typography variant="caption" fontWeight={800} fontSize="0.65rem">
+              <Typography variant="caption" sx={{ fontWeight: 800, fontSize: '0.65rem' }}>
                 {formatNum(info.market_data.circulating_supply)} {info.symbol.toUpperCase()}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary" fontSize="0.65rem" fontWeight={600}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', fontWeight: 600 }}>
                 24h Range
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.8 }}>
-                <Typography variant="caption" fontWeight={900} color="trading.rise.main" fontSize="0.65rem">
+                <Typography variant="caption" color="trading.rise.main" sx={{ fontWeight: 900, fontSize: '0.65rem' }}>
                   {formatNum(info.market_data.high_24h.usd)}
                 </Typography>
                 <Typography
                   variant="caption"
-                  borderLeft="1px solid"
-                  borderColor="divider"
-                  pl={0.8}
-                  fontWeight={900}
                   color="trading.fall.main"
-                  fontSize="0.65rem"
+                  sx={{ borderLeft: '1px solid', borderColor: 'divider', pl: 0.8, fontWeight: 900, fontSize: '0.65rem' }}
                 >
                   {formatNum(info.market_data.low_24h.usd)}
                 </Typography>

@@ -26,7 +26,7 @@ export const MarketHeaderInfo = memo(function MarketHeaderInfo({ base, quote, ko
         {base.substring(0, 1)}
       </Avatar>
       <Box>
-        <Typography variant="h5" fontWeight="900" sx={{ lineHeight: 1.2 }}>
+        <Typography variant="h5" sx={{ fontWeight: 900, lineHeight: 1.2 }}>
           {koreanName || base}
           <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, fontWeight: 500 }}>
             {base}/{quote}
@@ -164,9 +164,9 @@ export const AnimatedPrice = memo(function AnimatedPrice({ price, quote, color =
       <Typography
         ref={containerRef}
         variant="h4"
-        fontWeight="900"
         sx={{
           display: 'flex',
+          fontWeight: 900,
           lineHeight: 1,
           color: color,
           transition: 'color 0.2s',

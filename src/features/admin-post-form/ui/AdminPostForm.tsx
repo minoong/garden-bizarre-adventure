@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert, Box, Button, Card, CardContent, Container, Stack, Typography } from '@mui/material';
 import { Save as SaveIcon, LocationOn as LocationOnIcon } from '@mui/icons-material';
@@ -29,7 +29,6 @@ export function AdminPostForm() {
   const {
     control,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<AdminPostFormValues>({
@@ -46,6 +45,10 @@ export function AdminPostForm() {
       dateTo: new Date(),
       tags: [],
     },
+  });
+  const [dateFrom, dateTo] = useWatch({
+    control,
+    name: ['dateFrom', 'dateTo'],
   });
 
   // 인증 상태 확인
@@ -210,7 +213,7 @@ export function AdminPostForm() {
   if (isCheckingAuth) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+        <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
           게시물 작성
         </Typography>
         <Alert severity="info">인증 상태를 확인하는 중...</Alert>
@@ -222,7 +225,7 @@ export function AdminPostForm() {
   if (!isAuthenticated) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+        <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
           게시물 작성
         </Typography>
         <Alert severity="warning">로그인이 필요합니다. 게시물을 작성하려면 먼저 로그인해주세요.</Alert>
@@ -232,7 +235,7 @@ export function AdminPostForm() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+      <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
         게시물 작성
       </Typography>
 
@@ -264,8 +267,8 @@ export function AdminPostForm() {
               </Typography>
               <DateRangePicker
                 value={{
-                  from: watch('dateFrom') ? dayjs(watch('dateFrom')) : null,
-                  to: watch('dateTo') ? dayjs(watch('dateTo')) : null,
+                  from: dateFrom ? dayjs(dateFrom) : null,
+                  to: dateTo ? dayjs(dateTo) : null,
                 }}
                 onChange={(range) => {
                   if (range.from) setValue('dateFrom', range.from.toDate());
@@ -285,7 +288,7 @@ export function AdminPostForm() {
           {/* 에러 표시 */}
           {Object.keys(errors).length > 0 && (
             <Alert severity="error">
-              <Typography variant="body2" fontWeight="bold" gutterBottom>
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: 'bold' }}>
                 입력 오류가 있습니다:
               </Typography>
               <ul style={{ margin: 0, paddingLeft: 20 }}>

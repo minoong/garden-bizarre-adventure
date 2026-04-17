@@ -21,8 +21,6 @@ interface MarkerPosition {
 
 export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: LocationEditModalProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [markerPositions, setMarkerPositions] = useState<Map<number, MarkerPosition>>(new Map());
-  const [originalPositions, setOriginalPositions] = useState<Map<number, MarkerPosition>>(new Map());
 
   const mapRef = useRef<HTMLDivElement>(null);
   const kakaoMapRef = useRef<kakao.maps.Map | null>(null);
@@ -36,18 +34,7 @@ export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: Loc
 
   // 이미지가 있는 파일만 필터링 (useMemo로 메모이제이션)
   const imageFiles = useMemo(() => dropzoneFiles.filter((f) => f.file.type.startsWith('image/')), [dropzoneFiles]);
-
-  // 현재 선택된 파일
-  const selectedFile = imageFiles[selectedIndex];
-
-  // 초기 위치 설정 (모달 열릴 때 한 번만)
-  useEffect(() => {
-    if (!open) {
-      setSelectedIndex(0);
-      return;
-    }
-
-    // 모달이 열릴 때만 초기 위치 설정
+  const originalPositions = useMemo(() => {
     const initial = new Map<number, MarkerPosition>();
     imageFiles.forEach((file, index) => {
       if (file.metadata?.latitude && file.metadata?.longitude) {
@@ -57,10 +44,12 @@ export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: Loc
         });
       }
     });
-    setMarkerPositions(new Map(initial));
-    setOriginalPositions(initial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]); // imageFiles 제거!
+    return initial;
+  }, [imageFiles]);
+  const [markerPositions, setMarkerPositions] = useState<Map<number, MarkerPosition>>(() => new Map(originalPositions));
+
+  // 현재 선택된 파일
+  const selectedFile = imageFiles[selectedIndex];
 
   // 모달이 닫힐 때 지도 정리
   useEffect(() => {
@@ -260,7 +249,7 @@ export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: Loc
           transition={{ duration: 0.3 }}
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderBottom: 1, borderColor: 'divider' }}
         >
-          <Typography variant="h5" fontWeight="bold">
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
             위치 설정
           </Typography>
           <IconButton onClick={onClose}>
@@ -302,7 +291,7 @@ export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: Loc
               },
             }}
           >
-            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
               이미지 목록 ({imageFiles.length})
             </Typography>
             {imageFiles.map((file, index) => (
@@ -432,16 +421,16 @@ export function LocationEditModal({ open, onClose, dropzoneFiles, onApply }: Loc
                 maxWidth: 300,
               }}
             >
-              <Typography variant="body2" fontWeight="bold" gutterBottom>
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: 'bold' }}>
                 {selectedFile && selectedFile.file.name}
               </Typography>
               <AnimatePresence mode="wait">
                 {currentPosition ? (
                   <motion.div key="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-                    <Typography variant="caption" display="block">
+                    <Typography variant="caption" sx={{ display: 'block' }}>
                       위도: {currentPosition.lat.toFixed(6)}
                     </Typography>
-                    <Typography variant="caption" display="block">
+                    <Typography variant="caption" sx={{ display: 'block' }}>
                       경도: {currentPosition.lng.toFixed(6)}
                     </Typography>
                   </motion.div>

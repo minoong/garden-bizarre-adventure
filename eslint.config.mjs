@@ -35,7 +35,7 @@ const eslintConfig = [
     },
     settings: {
       react: {
-        version: 'detect',
+        version: '19.2',
       },
       'import/resolver': {
         typescript: {

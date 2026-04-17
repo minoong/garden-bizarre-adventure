@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Bookmark as BookmarkIcon,
   BookmarkBorder as BookmarkBorderIcon,
-  ChatBubbleOutline as CommentIcon,
+  ChatBubbleOutlined as CommentIcon,
   Favorite as FavoriteIcon,
   FavoriteBorder as FavoriteBorderIcon,
   LocationOn as LocationOnIcon,
@@ -116,12 +116,12 @@ export function PostCard({ post }: PostCardProps) {
           </IconButton>
         }
         title={
-          <Typography variant="subtitle2" fontWeight="bold">
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
             {post.profiles?.display_name || post.profiles?.username || 'Unknown'}
           </Typography>
         }
         subheader={
-          <Stack direction="row" spacing={0.5} alignItems="center">
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
             {post.location_name && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
                 <LocationOnIcon sx={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }} />
@@ -276,7 +276,7 @@ export function PostCard({ post }: PostCardProps) {
         )}
 
         {/* Date */}
-        <Typography variant="caption" display="block" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+        <Typography variant="caption" sx={{ display: 'block', color: 'rgba(255, 255, 255, 0.5)' }}>
           {dayjs(post.created_at).fromNow()}
         </Typography>
       </CardContent>

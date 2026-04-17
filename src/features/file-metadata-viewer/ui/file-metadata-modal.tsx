@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Box, IconButton, Typography, Modal, Divider } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
@@ -210,7 +210,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
 
           {/* 파일명 - 전체 너비 */}
           <Box sx={{ mb: 1.5 }}>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
               파일명
             </Typography>
             <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
@@ -222,7 +222,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             {/* 파일 크기 */}
             <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                 파일 크기
               </Typography>
               <Typography variant="body2">
@@ -240,7 +240,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
 
             {/* 파일 타입 */}
             <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                 파일 타입
               </Typography>
               <Typography variant="body2">{file.file.type || '알 수 없음'}</Typography>
@@ -264,7 +264,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                   if (!hasCameraInfo) return null;
                   return (
                     <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                         카메라
                       </Typography>
                       <Typography variant="body2">
@@ -280,7 +280,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                   if (typeof lensModel !== 'string' || !lensModel) return null;
                   return (
                     <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                         렌즈
                       </Typography>
                       <Typography variant="body2">{lensModel}</Typography>
@@ -294,7 +294,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                   if (!(dateTaken instanceof Date)) return null;
                   return (
                     <Box sx={{ flex: '1 1 100%', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                         촬영 일시
                       </Typography>
                       <Typography variant="body2">{dayjs(dateTaken).format('YYYY년 MM월 DD일 HH:mm:ss')}</Typography>
@@ -313,7 +313,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                 {/* ISO */}
                 {file.metadata.iso && (
                   <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                       ISO
                     </Typography>
                     <Typography variant="body2">ISO {file.metadata.iso}</Typography>
@@ -323,7 +323,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                 {/* 조리개 */}
                 {file.metadata.fNumber && (
                   <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                       조리개
                     </Typography>
                     <Typography variant="body2">F/{file.metadata.fNumber}</Typography>
@@ -333,7 +333,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                 {/* 셔터 스피드 */}
                 {file.metadata.exposureTime && (
                   <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                       셔터 스피드
                     </Typography>
                     <Typography variant="body2">1/{Math.round(1 / file.metadata.exposureTime)}초</Typography>
@@ -343,7 +343,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                 {/* 초점 거리 */}
                 {file.metadata.focalLength && (
                   <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                       초점 거리
                     </Typography>
                     <Typography variant="body2">{file.metadata.focalLength}mm</Typography>
@@ -355,7 +355,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                   file.metadata.exposureCompensation !== null &&
                   typeof file.metadata.exposureCompensation === 'number' && (
                     <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                         노출 보정
                       </Typography>
                       <Typography variant="body2">
@@ -368,7 +368,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                 {/* 화이트 밸런스 */}
                 {file.metadata.whiteBalance && (
                   <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                       화이트 밸런스
                     </Typography>
                     <Typography variant="body2">{file.metadata.whiteBalance}</Typography>
@@ -378,7 +378,7 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
                 {/* 이미지 크기 */}
                 {(file.metadata.width || file.metadata.height) && (
                   <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                       이미지 크기
                     </Typography>
                     <Typography variant="body2">
@@ -399,14 +399,14 @@ export function FileMetadataModal({ file, open, onClose }: FileMetadataModalProp
 
                   <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                     <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                         위도
                       </Typography>
                       <Typography variant="body2">{file.metadata.latitude?.toFixed(6)}</Typography>
                     </Box>
 
                     <Box sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 200, mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.25, fontWeight: 600 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, fontWeight: 600, display: 'block' }}>
                         경도
                       </Typography>
                       <Typography variant="body2">{file.metadata.longitude?.toFixed(6)}</Typography>

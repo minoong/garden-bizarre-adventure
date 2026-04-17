@@ -38,7 +38,7 @@ export function LocationSection({ control, errors, selectedCount = 0, onApplyToS
   return (
     <Card>
       <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Stack direction="row" sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">위치 정보</Typography>
           {selectedCount > 0 && (
             <Button size="small" variant="outlined" onClick={onApplyToSelected}>

@@ -51,7 +51,7 @@ export function FileListSection({ files, selectedFileIds, onSelectedFilesChange,
   return (
     <Card>
       <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Stack direction="row" sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">업로드된 파일 ({files.length}개)</Typography>
           <Stack direction="row" spacing={1}>
             <Button size="small" onClick={allSelected ? handleDeselectAll : handleSelectAll}>
@@ -119,7 +119,7 @@ export function FileListSection({ files, selectedFileIds, onSelectedFilesChange,
                       {fileInfo.file.file.name}
                     </Typography>
 
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                       {isSuccess ? (
                         <>
                           <CheckCircleIcon color="success" fontSize="small" />

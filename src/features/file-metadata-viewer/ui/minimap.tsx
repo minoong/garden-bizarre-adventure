@@ -42,15 +42,15 @@ export function MiniMap(props: Props) {
       const rect = instance.contentComponent.getBoundingClientRect();
 
       return {
-        width: rect.width / instance.transformState.scale,
-        height: rect.height / instance.transformState.scale,
+        width: rect.width / instance.state.scale,
+        height: rect.height / instance.state.scale,
       };
     }
     return {
       width: 0,
       height: 0,
     };
-  }, [instance.contentComponent, instance.transformState.scale]);
+  }, [instance.contentComponent, instance.state.scale]);
 
   const computeMiniMapScale = useCallback(() => {
     const contentSize = getContentSize();
@@ -88,9 +88,9 @@ export function MiniMap(props: Props) {
     }
     if (previewRef.current) {
       const size = getViewportSize();
-      const previewScale = scale * (1 / instance.transformState.scale);
-      const x = -instance.transformState.positionX * previewScale;
-      const y = -instance.transformState.positionY * previewScale;
+      const previewScale = scale * (1 / instance.state.scale);
+      const x = -instance.state.positionX * previewScale;
+      const y = -instance.state.positionY * previewScale;
 
       previewRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) scale(1)`;
       previewRef.current.style.width = `${size.width * previewScale}px`;

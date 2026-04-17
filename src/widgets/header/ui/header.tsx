@@ -99,12 +99,14 @@ export const Header = () => {
       anchor="right"
       open={mobileMenuOpen}
       onClose={handleMobileMenuToggle}
-      PaperProps={{
-        sx: {
-          width: 280,
-          bgcolor: 'background.paper',
-          backgroundImage: 'none',
-          borderLeft: `1px solid ${theme.palette.divider}`,
+      slotProps={{
+        paper: {
+          sx: {
+            width: 280,
+            bgcolor: 'background.paper',
+            backgroundImage: 'none',
+            borderLeft: `1px solid ${theme.palette.divider}`,
+          },
         },
       }}
     >
@@ -160,9 +162,13 @@ export const Header = () => {
                 >
                   <ListItemText
                     primary={item.label}
-                    primaryTypographyProps={{
-                      fontWeight: pathname === item.href ? 800 : 500,
-                      fontSize: '1.1rem',
+                    slotProps={{
+                      primary: {
+                        sx: {
+                          fontWeight: pathname === item.href ? 800 : 500,
+                          fontSize: '1.1rem',
+                        },
+                      },
                     }}
                   />
                 </ListItemButton>

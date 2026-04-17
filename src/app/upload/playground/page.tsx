@@ -112,7 +112,7 @@ export default function UploadPlaygroundPage() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+      <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
         Firebase Storage Upload Playground
       </Typography>
 
@@ -180,10 +180,10 @@ export default function UploadPlaygroundPage() {
             <Stack spacing={2}>
               {uploadProgress.map((progress, index) => (
                 <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
+                  <Stack direction="row" spacing={2} sx={{ mb: 1, alignItems: 'center' }}>
                     {getStatusIcon(progress.status)}
                     <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                         {progress.file.name}
                       </Typography>
                     </Box>
@@ -193,7 +193,7 @@ export default function UploadPlaygroundPage() {
                   {progress.status === 'uploading' && (
                     <Box>
                       <LinearProgress variant="determinate" value={progress.progress} sx={{ mb: 0.5 }} />
-                      <Typography variant="caption" color="text.secondary" align="right" display="block">
+                      <Typography variant="caption" color="text.secondary" align="right" sx={{ display: 'block' }}>
                         {progress.progress.toFixed(1)}%
                       </Typography>
                     </Box>
@@ -226,7 +226,7 @@ export default function UploadPlaygroundPage() {
 
                   {result.downloadURL && (
                     <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" display="block" gutterBottom>
+                      <Typography variant="caption" gutterBottom sx={{ display: 'block' }}>
                         Download URL:
                       </Typography>
                       <Paper variant="outlined" sx={{ p: 1, mb: 1, bgcolor: 'background.paper' }}>
@@ -251,7 +251,7 @@ export default function UploadPlaygroundPage() {
 
                   {result.error && (
                     <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" display="block" gutterBottom>
+                      <Typography variant="caption" gutterBottom sx={{ display: 'block' }}>
                         에러 메시지:
                       </Typography>
                       <Paper variant="outlined" sx={{ p: 1, bgcolor: 'background.paper' }}>
@@ -274,7 +274,7 @@ export default function UploadPlaygroundPage() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <Typography variant="body2" color="text.secondary">
                     총 파일:{' '}
-                    <Typography component="span" fontWeight="bold">
+                    <Typography component="span" sx={{ fontWeight: 'bold' }}>
                       {uploadResults.length}개
                     </Typography>
                   </Typography>
@@ -282,7 +282,7 @@ export default function UploadPlaygroundPage() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <Typography variant="body2" color="text.secondary">
                     성공:{' '}
-                    <Typography component="span" fontWeight="bold" color="success.main">
+                    <Typography component="span" color="success.main" sx={{ fontWeight: 'bold' }}>
                       {uploadResults.filter((r) => r.status === 'success').length}개
                     </Typography>
                   </Typography>
@@ -290,7 +290,7 @@ export default function UploadPlaygroundPage() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <Typography variant="body2" color="text.secondary">
                     실패:{' '}
-                    <Typography component="span" fontWeight="bold" color="error.main">
+                    <Typography component="span" color="error.main" sx={{ fontWeight: 'bold' }}>
                       {uploadResults.filter((r) => r.status === 'error').length}개
                     </Typography>
                   </Typography>

@@ -302,13 +302,13 @@ export const TradeSection = () => {
             <Stack
               direction="row"
               spacing={1}
-              flexWrap="wrap"
-              justifyContent="center"
               sx={{
                 width: '100%',
                 mt: { xs: 0, sm: 1 },
                 gap: { xs: 1, sm: 1.5 },
                 opacity: 0.8,
+                flexWrap: 'wrap',
+                justifyContent: 'center',
               }}
             >
               {['Bithumb API', 'CoinGecko API', 'WebSocket', 'Lightweight Charts', 'D3.js', 'Zustand', '@tanstack/react-virtual', 'React Concurrency'].map(

@@ -48,7 +48,7 @@ export function ImageList({ imageFiles, selectedIndex, markerPositions, onImageS
         },
       }}
     >
-      <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
         이미지 목록 ({imageFiles.length})
       </Typography>
       {imageFiles.map((file, index) => (

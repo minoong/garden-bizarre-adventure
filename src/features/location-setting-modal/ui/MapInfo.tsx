@@ -29,16 +29,16 @@ export function MapInfo({ selectedFile, currentPosition }: MapInfoProps) {
         maxWidth: 300,
       }}
     >
-      <Typography variant="body2" fontWeight="bold" gutterBottom>
+      <Typography variant="body2" gutterBottom sx={{ fontWeight: 'bold' }}>
         {selectedFile && selectedFile.file.name}
       </Typography>
       <AnimatePresence mode="wait">
         {currentPosition ? (
           <motion.div key="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-            <Typography variant="caption" display="block">
+            <Typography variant="caption" sx={{ display: 'block' }}>
               위도: {currentPosition.lat.toFixed(6)}
             </Typography>
-            <Typography variant="caption" display="block">
+            <Typography variant="caption" sx={{ display: 'block' }}>
               경도: {currentPosition.lng.toFixed(6)}
             </Typography>
           </motion.div>

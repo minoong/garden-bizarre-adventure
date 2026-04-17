@@ -128,7 +128,7 @@ export function DropzonePreview() {
                       <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
                         {/* 노출 정보 (ISO, 초점거리, F값, 셔터스피드) */}
                         {(metadata?.iso || metadata?.focalLength || metadata?.fNumber || metadata?.exposureTime) && (
-                          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75, fontWeight: 500, letterSpacing: '0.02em' }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75, fontWeight: 500, letterSpacing: '0.02em' }}>
                             {metadata.iso && `ISO${metadata.iso}`}
                             {metadata.focalLength && ` ${metadata.focalLength}mm`}
                             {metadata.fNumber && ` F${metadata.fNumber}`}
@@ -138,14 +138,14 @@ export function DropzonePreview() {
 
                         {/* 촬영 일시 */}
                         {metadata?.dateTaken && (
-                          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75, lineHeight: 1.6 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75, lineHeight: 1.6 }}>
                             {dayjs(metadata.dateTaken).format('YYYY/MM/DD HH:mm:ss')}
                           </Typography>
                         )}
 
                         {/* 카메라 모델 */}
                         {(metadata?.make || metadata?.model) && (
-                          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.75, lineHeight: 1.6 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75, lineHeight: 1.6 }}>
                             <Box component="span" sx={{ fontWeight: 600 }}>
                               {metadata.make} {metadata.model}
                             </Box>
@@ -153,7 +153,7 @@ export function DropzonePreview() {
                         )}
 
                         {/* 파일 크기 */}
-                        <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1.6 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.6 }}>
                           <Box component="span" sx={{ fontWeight: 500 }}>
                             원본: {filesize(file.size, { standard: 'jedec' })}
                           </Box>

@@ -86,7 +86,7 @@ export function LocationSettingModalLayout({ open, onClose, dropzoneFiles, onApp
           transition={{ duration: 0.3 }}
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderBottom: 1, borderColor: 'divider' }}
         >
-          <Typography variant="h5" fontWeight="bold">
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
             위치 설정
           </Typography>
           <IconButton onClick={onClose}>

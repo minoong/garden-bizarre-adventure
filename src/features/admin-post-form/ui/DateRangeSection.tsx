@@ -30,7 +30,7 @@ export function DateRangeSection({ control, errors }: DateRangeSectionProps) {
                 <Box>
                   <ReactDatePicker
                     selected={field.value}
-                    onChange={(date) => field.onChange(date)}
+                    onChange={(date: Date | null) => field.onChange(date)}
                     dateFormat="yyyy-MM-dd"
                     placeholderText="시작 날짜 선택"
                     customInput={<TextField fullWidth label="시작 날짜" error={!!errors.dateFrom} helperText={errors.dateFrom?.message} />}
@@ -49,7 +49,7 @@ export function DateRangeSection({ control, errors }: DateRangeSectionProps) {
                 <Box>
                   <ReactDatePicker
                     selected={field.value}
-                    onChange={(date) => field.onChange(date)}
+                    onChange={(date: Date | null) => field.onChange(date)}
                     dateFormat="yyyy-MM-dd"
                     placeholderText="종료 날짜 선택"
                     customInput={<TextField fullWidth label="종료 날짜" error={!!errors.dateTo} helperText={errors.dateTo?.message} />}

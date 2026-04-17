@@ -38,15 +38,20 @@ export const ScrollSection = ({
   const isStacked = variant === 'stacked';
 
   const content = (
-    <Grid container spacing={isStacked ? 4 : 8} alignItems="center" direction={isStacked ? 'column' : isLeft ? 'row' : 'row-reverse'}>
+    <Grid
+      container
+      spacing={isStacked ? 4 : 8}
+      direction={isLeft ? 'row' : 'row-reverse'}
+      sx={{ flexDirection: isStacked ? 'column' : undefined, alignItems: 'center' }}
+    >
       <Grid size={{ xs: 12, md: isStacked ? 12 : 5 }}>
         <motion.div style={{ y: isStacked ? 0 : yText, opacity }}>
           <Box sx={{ textAlign: isStacked ? 'center' : 'inherit', mb: isStacked ? 2 : 0 }}>
             <Typography
               variant="h2"
-              fontWeight="800"
               sx={{
                 mb: 3,
+                fontWeight: 800,
                 fontSize: isStacked ? { xs: '2.5rem', md: '3.5rem' } : undefined,
                 background: 'linear-gradient(45deg, #fff 30%, #666 90%)',
                 WebkitBackgroundClip: 'text',
