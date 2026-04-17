@@ -462,8 +462,6 @@ export const CandlestickChart = memo(function CandlestickChart({
 
     // Main Chart Options (Candles)
     const mainChartOptions: DeepPartial<LWChartOptions> = {
-      width: container.clientWidth || 600,
-      height: showVolume ? height * 0.75 : height,
       autoSize: true,
       layout: { background: { color: BG_COLOR }, textColor: TEXT_COLOR },
       grid: {
@@ -518,8 +516,6 @@ export const CandlestickChart = memo(function CandlestickChart({
     if (showVolume && volumeContainerRef.current) {
       const volContainer = volumeContainerRef.current;
       const volumeChartOptions: DeepPartial<LWChartOptions> = {
-        width: volContainer.clientWidth || 600,
-        height: height * 0.25,
         autoSize: true,
         layout: { background: { color: BG_COLOR }, textColor: TEXT_COLOR },
         grid: {

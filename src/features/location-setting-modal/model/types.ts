@@ -30,6 +30,7 @@ export interface UseLocationEditorReturn {
   currentPosition: MarkerPosition | undefined;
   handleImageSelect: (index: number) => void;
   handleReset: () => void;
+  resetEditor: () => void;
   handleDialogEntered: () => void;
   handleCloseToast: () => void;
 }

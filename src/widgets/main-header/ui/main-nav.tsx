@@ -46,26 +46,29 @@ export const MainNav = memo(function MainNav() {
               display: 'flex',
               alignItems: 'center',
               px: 2,
-              cursor: 'pointer',
             }}
           >
-            <NextLink href={item.href} passHref legacyBehavior>
-              <Link
-                underline="none"
-                sx={{
-                  zIndex: 1,
-                  fontSize: '1rem',
-                  fontWeight: isActive ? 800 : 500,
-                  color: isActive || isHovered ? 'primary.main' : 'text.primary',
-                  transition: 'color 0.2s',
-                  '&:hover': {
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                {item.label}
-              </Link>
-            </NextLink>
+            <Link
+              component={NextLink}
+              href={item.href}
+              underline="none"
+              sx={{
+                zIndex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                height: '100%',
+                fontSize: '1rem',
+                fontWeight: isActive ? 800 : 500,
+                color: isActive || isHovered ? 'primary.main' : 'text.primary',
+                transition: 'color 0.2s',
+                cursor: 'pointer',
+                '&:hover': {
+                  color: 'primary.main',
+                },
+              }}
+            >
+              {item.label}
+            </Link>
 
             {/* Sliding Indicator */}
             <AnimatePresence mode="popLayout">

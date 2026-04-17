@@ -88,7 +88,6 @@ export const SpeechInput = ({ className, onTranscriptionChange, onAudioRecorded,
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mode] = useState<SpeechInputMode>(detectSpeechInputMode);
-  const [isRecognitionReady, setIsRecognitionReady] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -96,9 +95,10 @@ export const SpeechInput = ({ className, onTranscriptionChange, onAudioRecorded,
   const onTranscriptionChangeRef = useRef<SpeechInputProps['onTranscriptionChange']>(onTranscriptionChange);
   const onAudioRecordedRef = useRef<SpeechInputProps['onAudioRecorded']>(onAudioRecorded);
 
-  // Keep refs in sync
-  onTranscriptionChangeRef.current = onTranscriptionChange;
-  onAudioRecordedRef.current = onAudioRecorded;
+  useEffect(() => {
+    onTranscriptionChangeRef.current = onTranscriptionChange;
+    onAudioRecordedRef.current = onAudioRecorded;
+  }, [onAudioRecorded, onTranscriptionChange]);
 
   // Initialize Speech Recognition when mode is speech-recognition
   useEffect(() => {
@@ -147,7 +147,6 @@ export const SpeechInput = ({ className, onTranscriptionChange, onAudioRecorded,
     speechRecognition.addEventListener('error', handleError);
 
     recognitionRef.current = speechRecognition;
-    setIsRecognitionReady(true);
 
     return () => {
       speechRecognition.removeEventListener('start', handleStart);
@@ -156,7 +155,6 @@ export const SpeechInput = ({ className, onTranscriptionChange, onAudioRecorded,
       speechRecognition.removeEventListener('error', handleError);
       speechRecognition.stop();
       recognitionRef.current = null;
-      setIsRecognitionReady(false);
     };
   }, [mode, lang]);
 
@@ -263,8 +261,7 @@ export const SpeechInput = ({ className, onTranscriptionChange, onAudioRecorded,
   }, [mode, isListening, startMediaRecorder, stopMediaRecorder]);
 
   // Determine if button should be disabled
-  const isDisabled =
-    mode === 'none' || (mode === 'speech-recognition' && !isRecognitionReady) || (mode === 'media-recorder' && !onAudioRecorded) || isProcessing;
+  const isDisabled = mode === 'none' || (mode === 'media-recorder' && !onAudioRecorded) || isProcessing;
 
   return (
     <div className="relative inline-flex items-center justify-center">

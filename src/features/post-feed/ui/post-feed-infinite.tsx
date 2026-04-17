@@ -28,7 +28,6 @@ export function PostFeedInfinite({ initialPosts, isPublic = true, userId }: Post
 
   useEffect(() => {
     if (error && error !== prevErrorRef.current && posts.length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowErrorToast(true);
       prevErrorRef.current = error;
     } else if (!error && prevErrorRef.current) {

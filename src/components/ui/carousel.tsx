@@ -85,7 +85,9 @@ function Carousel({ orientation = 'horizontal', opts, setApi, plugins, className
 
   React.useEffect(() => {
     if (!api) return;
-    onSelect(api);
+    queueMicrotask(() => {
+      onSelect(api);
+    });
     api.on('reInit', onSelect);
     api.on('select', onSelect);
 

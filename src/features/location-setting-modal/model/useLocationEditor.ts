@@ -1,35 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { MarkerPosition, UseLocationEditorProps, UseLocationEditorReturn } from './types';
 
 export function useLocationEditor({ open, imageFiles }: UseLocationEditorProps): UseLocationEditorReturn {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [markerPositions, setMarkerPositions] = useState<Map<number, MarkerPosition>>(new Map());
-  const [originalPositions, setOriginalPositions] = useState<Map<number, MarkerPosition>>(new Map());
   const [showToast, setShowToast] = useState(false);
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const kakaoMapRef = useRef<kakao.maps.Map | null>(null);
   const markerRef = useRef<kakao.maps.Marker | null>(null);
   const selectedIndexRef = useRef(selectedIndex);
-
-  // selectedIndex 변경 시 ref 업데이트
-  useEffect(() => {
-    selectedIndexRef.current = selectedIndex;
-  }, [selectedIndex]);
-
-  // 현재 선택된 파일
-  const selectedFile = imageFiles[selectedIndex];
-  const currentPosition = markerPositions.get(selectedIndex);
-
-  // 초기 위치 설정 (모달 열릴 때 한 번만)
-  useEffect(() => {
-    if (!open) {
-      setSelectedIndex(0);
-      return;
-    }
-
-    // 모달이 열릴 때만 초기 위치 설정
+  const originalPositions = useMemo(() => {
     const initial = new Map<number, MarkerPosition>();
     imageFiles.forEach((file, index) => {
       if (file.metadata?.latitude && file.metadata?.longitude) {
@@ -39,10 +20,18 @@ export function useLocationEditor({ open, imageFiles }: UseLocationEditorProps):
         });
       }
     });
-    setMarkerPositions(new Map(initial));
-    setOriginalPositions(initial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+    return initial;
+  }, [imageFiles]);
+  const [markerPositions, setMarkerPositions] = useState<Map<number, MarkerPosition>>(() => new Map(originalPositions));
+
+  // selectedIndex 변경 시 ref 업데이트
+  useEffect(() => {
+    selectedIndexRef.current = selectedIndex;
+  }, [selectedIndex]);
+
+  // 현재 선택된 파일
+  const selectedFile = imageFiles[selectedIndex];
+  const currentPosition = markerPositions.get(selectedIndex);
 
   // 모달이 닫힐 때 지도 정리
   useEffect(() => {
@@ -57,6 +46,12 @@ export function useLocationEditor({ open, imageFiles }: UseLocationEditorProps):
       }
     }
   }, [open]);
+
+  const resetEditor = useCallback(() => {
+    setSelectedIndex(0);
+    setMarkerPositions(new Map(originalPositions));
+    setShowToast(false);
+  }, [originalPositions]);
 
   // 초기화 - 원본 위치로 복구
   const handleReset = useCallback(() => {
@@ -220,6 +215,7 @@ export function useLocationEditor({ open, imageFiles }: UseLocationEditorProps):
     currentPosition,
     handleImageSelect,
     handleReset,
+    resetEditor,
     handleDialogEntered,
     handleCloseToast,
   };

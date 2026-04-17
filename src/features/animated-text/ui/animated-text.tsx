@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 
 interface AnimatedTextProps {
   maxWidth?: number;
@@ -12,7 +12,6 @@ interface AnimatedTextProps {
 
 export function AnimatedText({ maxWidth = 400, fontSize = 24, underlineHeight = 4, underlineColor = '#000000', textColor = '#000000' }: AnimatedTextProps) {
   const [text, setText] = useState('');
-  const [lines, setLines] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -48,9 +47,7 @@ export function AnimatedText({ maxWidth = 400, fontSize = 24, underlineHeight = 
     [maxWidth, fontSize],
   );
 
-  useEffect(() => {
-    setLines(splitTextIntoLines(text));
-  }, [text, splitTextIntoLines]);
+  const lines = useMemo(() => splitTextIntoLines(text), [splitTextIntoLines, text]);
 
   // 각 글자에 랜덤 rotate 값 생성 (-80 ~ 80도)
   const getRandomRotate = useCallback(

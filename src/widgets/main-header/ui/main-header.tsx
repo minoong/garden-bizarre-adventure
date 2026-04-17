@@ -45,22 +45,9 @@ export const MainHeader = memo(function MainHeader() {
       >
         {/* 왼쪽 섹션: 로고 + 주 메뉴 */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <NextLink href="/" passHref legacyBehavior>
-            <Link underline="none" sx={{ display: 'flex', alignItems: 'center' }}>
-              <NextImage
-                src="/images/logo.webp"
-                alt="Logo"
-                width={140}
-                height={32}
-                style={{
-                  height: '32px',
-                  width: 'auto',
-                  display: 'block',
-                }}
-                priority
-              />
-            </Link>
-          </NextLink>
+          <Link component={NextLink} href="/" underline="none" sx={{ display: 'flex', alignItems: 'center' }}>
+            <NextImage src="/images/logo.webp" alt="Logo" width={24} height={34} style={{ display: 'block' }} priority />
+          </Link>
 
           <MainNav />
         </Box>

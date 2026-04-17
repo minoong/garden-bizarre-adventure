@@ -16,11 +16,21 @@ import { MapView } from './MapView';
 export function LocationSettingModalLayout({ open, onClose, dropzoneFiles, onApply }: LocationSettingModalLayoutProps) {
   const [showToast, setShowToast] = useState(false);
 
-  const { selectedIndex, imageFiles, selectedFile, markerPositions, currentPosition, handleImageSelect, handleReset, handleDialogEntered, mapRef } =
-    useLocationEditor({
-      open,
-      imageFiles: dropzoneFiles,
-    });
+  const {
+    selectedIndex,
+    imageFiles,
+    selectedFile,
+    markerPositions,
+    currentPosition,
+    handleImageSelect,
+    handleReset,
+    resetEditor,
+    handleDialogEntered,
+    mapRef,
+  } = useLocationEditor({
+    open,
+    imageFiles: dropzoneFiles,
+  });
 
   const handleImageSelectWithToast = (index: number) => {
     handleImageSelect(index);
@@ -53,12 +63,14 @@ export function LocationSettingModalLayout({ open, onClose, dropzoneFiles, onApp
       return file;
     });
 
+    resetEditor();
     onApply(updatedFiles);
     onClose();
   };
 
   // 취소
   const handleCancel = () => {
+    resetEditor();
     onClose();
   };
 
@@ -89,7 +101,12 @@ export function LocationSettingModalLayout({ open, onClose, dropzoneFiles, onApp
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
             위치 설정
           </Typography>
-          <IconButton onClick={onClose}>
+          <IconButton
+            onClick={() => {
+              resetEditor();
+              onClose();
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </Box>
