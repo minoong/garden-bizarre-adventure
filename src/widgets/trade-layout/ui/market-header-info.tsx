@@ -1,8 +1,10 @@
 'use client';
 
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef } from 'react';
 import { Box, Typography, Avatar } from '@mui/material';
 import gsap from 'gsap';
+
+import { formatPrice } from '@/entities/bithumb';
 
 export interface MarketHeaderInfoProps {
   /** 코인 심볼 (예: BTC) */
@@ -62,30 +64,25 @@ const RollingDigit = memo(({ char, color }: { char: string; color: string }) => 
 
   const prevIndexRef = useRef(targetIndex);
 
-  // useLayoutEffect 대신 useEffect 사용 (SSR 경고 방지 및 import 간소화)
-  // overwrite: true 옵션으로 애니메이션 충돌 방지
-  useEffect(() => {
+  // 숫자 위치를 paint 전에 동기화해서 이전 프레임 숫자가 잠깐 보이는 현상을 막습니다.
+  useLayoutEffect(() => {
     if (!isNumber || !columnRef.current) return;
 
-    if (prevIndexRef.current !== targetIndex) {
-      // 값이 변경되면 애니메이션
-      gsap.to(columnRef.current, {
-        y: `${-targetIndex}em`,
-        duration: 0.5,
-        ease: 'power2.out',
-        overwrite: true,
-      });
-      prevIndexRef.current = targetIndex;
-    }
-  }, [targetIndex, isNumber]);
+    gsap.killTweensOf(columnRef.current);
 
-  // 마운트 시 초기 위치 설정
-  useEffect(() => {
-    if (columnRef.current) {
+    if (prevIndexRef.current === targetIndex) {
       gsap.set(columnRef.current, { y: `${-targetIndex}em`, overwrite: true });
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    gsap.to(columnRef.current, {
+      y: `${-targetIndex}em`,
+      duration: 0.5,
+      ease: 'power2.out',
+      overwrite: true,
+    });
+    prevIndexRef.current = targetIndex;
+  }, [targetIndex, isNumber]);
 
   if (!isNumber) {
     return (
@@ -145,7 +142,7 @@ RollingDigit.displayName = 'RollingDigit';
  * 애니메이션이 적용된 가격 표시 컴포넌트
  */
 export const AnimatedPrice = memo(function AnimatedPrice({ price, quote, color = 'text.primary', change }: AnimatedPriceProps) {
-  const priceStr = String(price);
+  const priceStr = typeof price === 'number' ? formatPrice(price) : String(price);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 가격 등락 시 전체 반짝임 효과

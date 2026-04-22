@@ -27,7 +27,7 @@ export const HeaderInfo: StoryObj<typeof MarketHeaderInfo> = {
 
 export const PriceRolling: StoryObj<typeof AnimatedPrice> = {
   args: {
-    price: '95,420,000',
+    price: 95420000,
     quote: 'KRW',
     color: '#c84a31',
     change: 'RISE',
@@ -45,17 +45,15 @@ export const PriceRolling: StoryObj<typeof AnimatedPrice> = {
       }, 1500);
       return () => clearInterval(interval);
     }, []);
-
-    const formattedPrice = new Intl.NumberFormat('ko-KR').format(price);
     const color = change === 'RISE' ? '#c84a31' : '#1261c4';
 
-    return <AnimatedPrice {...args} price={formattedPrice} color={color} change={change} />;
+    return <AnimatedPrice {...args} price={price} color={color} change={change} />;
   },
 };
 
 export const ManualControl: StoryObj<typeof AnimatedPrice> = {
   args: {
-    price: '95,420,000',
+    price: 95420000,
     quote: 'KRW',
     color: '#c84a31',
     change: 'RISE',

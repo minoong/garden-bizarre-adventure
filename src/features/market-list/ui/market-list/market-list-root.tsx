@@ -76,7 +76,7 @@ export function MarketListRoot({
   const gridTemplateColumns = useMemo(() => columns.join(' '), [columns]);
 
   // 1. 데이터 fetching & WebSocket
-  const { data, realtimeTickers, isLoading, wsStatus } = useMarketListData({ enabledRealtime: realtime });
+  const { data, isLoading, wsStatus } = useMarketListData({ enabledRealtime: realtime });
 
   // 검색 인덱스 데이터 (초성 사전 계산 유지)
   const [searchIndex, setSearchIndex] = useState<Map<string, string>>(new Map());
@@ -158,7 +158,6 @@ export function MarketListRoot({
     () => ({
       data,
       sortedData,
-      realtimeTickers, // Map 자체는 전유물이므로 일단 유지하되, 내부 값 변경이 컨텍스트 참조 변경을 일으키지 않도록 함 (이미 useMarketListData에서 분리됨)
       isLoading,
       sortBy,
       sortOrder,
@@ -178,7 +177,6 @@ export function MarketListRoot({
     [
       data,
       sortedData,
-      realtimeTickers,
       isLoading,
       sortBy,
       sortOrder,
