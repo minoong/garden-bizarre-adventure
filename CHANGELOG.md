@@ -1,3 +1,9 @@
+## [1.44.2](https://github.com/minoong/garden-bizarre-adventure/compare/v1.44.1...v1.44.2) (2026-04-22)
+
+### 🐛 버그 수정
+
+* **trade:** 거래 화면 hydration 및 차트 안정화 ([#143](https://github.com/minoong/garden-bizarre-adventure/issues/143)) ([22f4080](https://github.com/minoong/garden-bizarre-adventure/commit/22f408052ae44196d73741e1efa6d2d5301bbde0))
+
 ## [1.44.1](https://github.com/minoong/garden-bizarre-adventure/compare/v1.44.0...v1.44.1) (2026-04-17)
 
 ### 🐛 버그 수정
