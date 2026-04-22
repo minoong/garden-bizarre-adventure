@@ -9,6 +9,49 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import typescriptParser from '@typescript-eslint/parser';
 import typescriptPlugin from '@typescript-eslint/eslint-plugin';
 
+const importOrderRule = importPlugin.rules.order;
+
+const compatibleImportPlugin = {
+  ...importPlugin,
+  rules: {
+    ...importPlugin.rules,
+    order: {
+      ...importOrderRule,
+      create(context) {
+        const sourceCode = context.sourceCode ?? context.getSourceCode();
+        const sourceCodeWithCompat = new Proxy(sourceCode, {
+          get(target, property, receiver) {
+            if (property === 'getTokenOrCommentAfter') {
+              return (nodeOrToken, options) =>
+                target.getTokenAfter(nodeOrToken, {
+                  ...options,
+                  includeComments: true,
+                });
+            }
+
+            return Reflect.get(target, property, receiver);
+          },
+        });
+        const contextWithCompat = new Proxy(context, {
+          get(target, property, receiver) {
+            if (property === 'sourceCode') {
+              return sourceCodeWithCompat;
+            }
+
+            if (property === 'getSourceCode') {
+              return () => sourceCodeWithCompat;
+            }
+
+            return Reflect.get(target, property, receiver);
+          },
+        });
+
+        return importOrderRule.create(contextWithCompat);
+      },
+    },
+  },
+};
+
 const eslintConfig = [
   {
     ignores: ['node_modules/**', '.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'storybook-static/**', '.claude/**', '.agent/**', '.agents/**'],
@@ -30,7 +73,7 @@ const eslintConfig = [
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
       '@typescript-eslint': typescriptPlugin,
-      import: importPlugin,
+      import: compatibleImportPlugin,
       prettier: prettierPlugin,
     },
     settings: {
