@@ -3,8 +3,6 @@
 import { createContext, useContext } from 'react';
 import type { Virtualizer } from '@tanstack/react-virtual';
 
-import type { WebSocketTicker } from '@/entities/bithumb';
-
 import type { MarketRowData, SortField, SortOrder } from '../../model/types';
 
 export interface HighlightState {
@@ -44,7 +42,6 @@ export interface MarketListContextValue {
   // 데이터
   data: MarketRowData[];
   sortedData: MarketRowData[];
-  realtimeTickers: Map<string, WebSocketTicker>;
   isLoading: boolean;
 
   // 정렬

@@ -3,16 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import type { WebSocketOrderbook, WebSocketTicker, WebSocketTrade } from '../model/types';
 import type { SubscriptionConfig, SubscriptionType } from '../model/websocket-types';
-import {
-  selectAllTickers,
-  selectOrderbook,
-  selectTicker,
-  selectTickerArray,
-  selectTrade,
-  selectWebSocketStatus,
-  useBithumbWebSocketStore,
-} from '../model/store';
+import { selectOrderbook, selectTicker, selectTrade, selectWebSocketStatus, useBithumbWebSocketStore } from '../model/store';
 
 // ============================================================
 // 기본 훅
@@ -47,21 +40,8 @@ export function useBithumbSocketActions() {
  * @param code - 마켓 코드 (예: 'KRW-BTC')
  */
 export function useRealtimeTicker(code: string) {
-  return useBithumbWebSocketStore(selectTicker(code));
-}
-
-/**
- * 전체 Ticker Map 구독
- */
-export function useRealtimeTickerMap() {
-  return useBithumbWebSocketStore(selectAllTickers);
-}
-
-/**
- * Ticker 배열로 구독
- */
-export function useRealtimeTickerArray() {
-  return useBithumbWebSocketStore(selectTickerArray);
+  const selected = useBithumbWebSocketStore(useShallow(selectTicker(code)));
+  return selected.ticker;
 }
 
 /**
@@ -69,15 +49,15 @@ export function useRealtimeTickerArray() {
  * @param codes - 마켓 코드 배열
  */
 export function useRealtimeTickers(codes: string[]) {
-  return useBithumbWebSocketStore(
-    useShallow((state) => {
-      const result: Record<string, (typeof state.tickers extends Map<string, infer V> ? V : never) | undefined> = {};
-      for (const code of codes) {
-        result[code] = state.tickers.get(code);
-      }
-      return result;
-    }),
-  );
+  const selected = useBithumbWebSocketStore(useShallow((state) => codes.flatMap((code) => [state.tickerVersionByCode[code] ?? 0, state.tickers.get(code)])));
+
+  return useMemo(() => {
+    const result: Record<string, WebSocketTicker | undefined> = {};
+    codes.forEach((code, index) => {
+      result[code] = selected[index * 2 + 1] as WebSocketTicker | undefined;
+    });
+    return result;
+  }, [codes, selected]);
 }
 
 // ============================================================
@@ -89,7 +69,8 @@ export function useRealtimeTickers(codes: string[]) {
  * @param code - 마켓 코드
  */
 export function useRealtimeOrderbook(code: string) {
-  return useBithumbWebSocketStore(selectOrderbook(code));
+  const selected = useBithumbWebSocketStore(useShallow(selectOrderbook(code)));
+  return selected.orderbook;
 }
 
 // ============================================================
@@ -105,7 +86,34 @@ export function useRealtimeOrderbook(code: string) {
  * @param code - 마켓 코드
  */
 export function useRealtimeTrade(code: string) {
-  return useBithumbWebSocketStore(selectTrade(code));
+  const selected = useBithumbWebSocketStore(useShallow(selectTrade(code)));
+  return selected.trade;
+}
+
+function useRealtimeOrderbooks(codes: string[]) {
+  const selected = useBithumbWebSocketStore(
+    useShallow((state) => codes.flatMap((code) => [state.orderbookVersionByCode[code] ?? 0, state.orderbooks.get(code)])),
+  );
+
+  return useMemo(() => {
+    const result: Record<string, WebSocketOrderbook | undefined> = {};
+    codes.forEach((code, index) => {
+      result[code] = selected[index * 2 + 1] as WebSocketOrderbook | undefined;
+    });
+    return result;
+  }, [codes, selected]);
+}
+
+function useRealtimeTrades(codes: string[]) {
+  const selected = useBithumbWebSocketStore(useShallow((state) => codes.flatMap((code) => [state.tradeVersionByCode[code] ?? 0, state.trades.get(code)])));
+
+  return useMemo(() => {
+    const result: Record<string, WebSocketTrade | undefined> = {};
+    codes.forEach((code, index) => {
+      result[code] = selected[index * 2 + 1] as WebSocketTrade | undefined;
+    });
+    return result;
+  }, [codes, selected]);
 }
 
 // ============================================================
@@ -200,13 +208,46 @@ export function useBithumbSocket(codes: string[], types: SubscriptionType[], opt
     prevTypesRef.current = types;
   }, [codes, types, subscriptions, autoConnect, connect, unsubscribe]);
 
-  // 데이터 선택
-  const tickers = useRealtimeTickerMap();
-  const orderbooks = useBithumbWebSocketStore((state) => state.orderbooks);
-  const trades = useBithumbWebSocketStore((state) => state.trades);
+  // 요청된 code만 구독해서 상위 리렌더 범위를 줄입니다.
+  const realtimeTickers = useRealtimeTickers(codes);
+  const realtimeOrderbooks = useRealtimeOrderbooks(codes);
+  const realtimeTrades = useRealtimeTrades(codes);
 
   const lastUpdated = useBithumbWebSocketStore((state) => state.lastUpdated);
   const error = useBithumbWebSocketStore((state) => state.error);
+
+  const tickers = useMemo(() => {
+    const next = new Map<string, WebSocketTicker>();
+    for (const code of codes) {
+      const ticker = realtimeTickers[code];
+      if (ticker) {
+        next.set(code, ticker);
+      }
+    }
+    return next;
+  }, [codes, realtimeTickers]);
+
+  const orderbooks = useMemo(() => {
+    const next = new Map<string, WebSocketOrderbook>();
+    for (const code of codes) {
+      const orderbook = realtimeOrderbooks[code];
+      if (orderbook) {
+        next.set(code, orderbook);
+      }
+    }
+    return next;
+  }, [codes, realtimeOrderbooks]);
+
+  const trades = useMemo(() => {
+    const next = new Map<string, WebSocketTrade>();
+    for (const code of codes) {
+      const trade = realtimeTrades[code];
+      if (trade) {
+        next.set(code, trade);
+      }
+    }
+    return next;
+  }, [codes, realtimeTrades]);
 
   return {
     status,

@@ -42,6 +42,15 @@ export interface BithumbWebSocketState {
   /** 체결 데이터 (마켓코드 → 최신 체결) */
   trades: Map<string, WebSocketTrade>;
 
+  /** 마켓별 ticker 업데이트 버전 */
+  tickerVersionByCode: Record<string, number>;
+
+  /** 마켓별 orderbook 업데이트 버전 */
+  orderbookVersionByCode: Record<string, number>;
+
+  /** 마켓별 trade 업데이트 버전 */
+  tradeVersionByCode: Record<string, number>;
+
   /** 마지막 업데이트 시간 */
   lastUpdated: number;
 
@@ -82,6 +91,15 @@ export type BithumbWebSocketStore = BithumbWebSocketState & BithumbWebSocketActi
 // ============================================================
 
 export interface WebSocketBuffer {
+  tickers: WebSocketTicker[];
+  orderbooks: WebSocketOrderbook[];
+  trades: WebSocketTrade[];
+}
+
+/**
+ * WebSocket flush 결과 델타
+ */
+export interface WebSocketDelta {
   tickers: WebSocketTicker[];
   orderbooks: WebSocketOrderbook[];
   trades: WebSocketTrade[];

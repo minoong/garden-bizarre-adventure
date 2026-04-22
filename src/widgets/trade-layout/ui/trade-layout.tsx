@@ -35,7 +35,10 @@ export const TradeLayout = memo(function TradeLayout({ initialMarket = 'KRW-BTC'
 
   // 마켓 정보 (한글명 등)
   const { data: markets } = useMarkets();
-  const currentMarketInfo = useMemo(() => markets?.find((m) => m.market === selectedMarket), [markets, selectedMarket]);
+  const marketByCode = useMemo(() => {
+    return new Map(markets?.map((market) => [market.market, market]) ?? []);
+  }, [markets]);
+  const currentMarketInfo = marketByCode.get(selectedMarket);
 
   // 전역 웹소켓 연결 관리 (컨테이너 역할)
   const { data: krwMarkets } = useKrwMarkets();

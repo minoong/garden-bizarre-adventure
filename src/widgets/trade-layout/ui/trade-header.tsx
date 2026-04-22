@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useRef } from 'react';
+import { memo, useState, useEffect, useRef, useMemo } from 'react';
 import { Box, Paper, Grid, Typography, useTheme, Tab, Tabs } from '@mui/material';
 import { motion } from 'framer-motion';
 
@@ -50,12 +50,18 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
     }
   }, [realtimeTicker, initialTicker]);
 
-  // 마켓이 변경되면 우선순위가 낮은 데이터는 지워줍니다.
-  useEffect(() => {
-    setPersistedTicker(null);
-  }, [market]);
+  const ticker = useMemo(() => {
+    const matchesMarket = (value: Ticker | WebSocketTicker | null | undefined) => {
+      if (!value) return false;
+      return ('code' in value ? value.code : value.market) === market;
+    };
 
-  const ticker = realtimeTicker || initialTicker || persistedTicker;
+    if (matchesMarket(realtimeTicker)) return realtimeTicker;
+    if (matchesMarket(initialTicker)) return initialTicker;
+    if (matchesMarket(persistedTicker)) return persistedTicker;
+
+    return null;
+  }, [initialTicker, market, persistedTicker, realtimeTicker]);
 
   // 테마에서 중앙화된 트레이딩 색상 가져오기
   const trading = theme.palette.trading;
@@ -139,7 +145,7 @@ export const TradeHeader = memo(function TradeHeader({ market, koreanName, base,
               <Grid>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   <MarketHeaderInfo base={base} quote={quote} koreanName={koreanName} />
-                  <AnimatedPrice price={ticker ? formatPrice(ticker.trade_price) : '---'} quote={quote} color={changeColor} change={ticker?.change} />
+                  <AnimatedPrice price={ticker ? ticker.trade_price : '---'} quote={quote} color={changeColor} change={ticker?.change} />
                   <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', mt: 0.2 }}>
                     <Box
                       sx={{

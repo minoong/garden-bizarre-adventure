@@ -37,6 +37,13 @@ function getKST24HourRange() {
   };
 }
 
+function applyVisibleRangeSafely(chart: IChartApi | null, hasData: boolean) {
+  if (!chart || !hasData) return;
+
+  const { start, end } = getKST24HourRange();
+  chart.timeScale().setVisibleRange({ from: start, to: end });
+}
+
 // 0시까지 반복 호출하여 캔들 수집
 async function fetchCandlesUntilMidnight(market: string): Promise<CandleData[]> {
   const allCandles: CandleData[] = [];
@@ -81,6 +88,10 @@ export const MiniBaselineChart = memo(function MiniBaselineChart({ market, baseP
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Baseline'> | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const latestDataRef = useRef<{ time: UTCTimestamp; value: number }[]>([]);
+  const initialBasePriceRef = useRef(basePrice);
+  const chartGenerationRef = useRef(0);
   const [isChartReady, setIsChartReady] = useState(false);
 
   // 첫 렌더링 때 0시까지 반복 호출하여 캔들 수집
@@ -95,12 +106,15 @@ export const MiniBaselineChart = memo(function MiniBaselineChart({ market, baseP
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
+    const generation = chartGenerationRef.current + 1;
+    chartGenerationRef.current = generation;
+
     if (!chartRef.current) {
       const chart = createChart(chartContainerRef.current, {
         layout: {
           background: {
             type: ColorType.Solid,
-            color: theme.palette.mode === 'dark' ? 'transparent' : '#f8f9fa',
+            color: 'transparent',
           },
           textColor: 'transparent',
           attributionLogo: false,
@@ -130,15 +144,14 @@ export const MiniBaselineChart = memo(function MiniBaselineChart({ market, baseP
         },
       });
 
-      const trading = theme.palette.trading;
       const series = chart.addSeries(BaselineSeries, {
-        baseValue: { type: 'price', price: basePrice },
-        topLineColor: trading.rise.main,
-        topFillColor1: alpha(trading.rise.main, 0.28),
-        topFillColor2: alpha(trading.rise.main, 0.05),
-        bottomLineColor: trading.fall.main,
-        bottomFillColor1: alpha(trading.fall.main, 0.05),
-        bottomFillColor2: alpha(trading.fall.main, 0.28),
+        baseValue: { type: 'price', price: initialBasePriceRef.current },
+        topLineColor: '#f44336',
+        topFillColor1: alpha('#f44336', 0.28),
+        topFillColor2: alpha('#f44336', 0.05),
+        bottomLineColor: '#1976d2',
+        bottomFillColor1: alpha('#1976d2', 0.05),
+        bottomFillColor2: alpha('#1976d2', 0.28),
         lineWidth: 2,
       });
 
@@ -147,44 +160,66 @@ export const MiniBaselineChart = memo(function MiniBaselineChart({ market, baseP
       setIsChartReady(true);
     }
 
-    const handleResize = () => {
-      if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.resize(chartContainerRef.current.clientWidth, 80);
-        const { start, end } = getKST24HourRange();
-        chartRef.current.timeScale().setVisibleRange({ from: start, to: end });
-      }
-    };
-    window.addEventListener('resize', handleResize);
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const chart = chartRef.current;
+      if (!entry || !chart || chartGenerationRef.current !== generation) return;
+
+      chart.resize(entry.contentRect.width, 80);
+      applyVisibleRangeSafely(chart, latestDataRef.current.length > 0);
+    });
+    resizeObserverRef.current.observe(chartContainerRef.current);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      if (chartRef.current) {
-        chartRef.current.remove();
+      chartGenerationRef.current += 1;
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
+      const chart = chartRef.current;
+      if (chart) {
         chartRef.current = null;
         seriesRef.current = null;
         setIsChartReady(false);
+        chart.remove();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme.palette.mode]); // 테마 모드 변경 시 재초기화
+  }, []);
 
-  // 기준가 변경 시 차트 옵션 업데이트
+  // 테마/기준가 변경 시 차트 옵션 업데이트
   useEffect(() => {
-    if (seriesRef.current) {
-      seriesRef.current.applyOptions({
-        baseValue: { type: 'price', price: basePrice },
-      });
-    }
-  }, [basePrice]);
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series) return;
 
-  // 데이터 렌더링
+    const trading = theme.palette.trading;
+    chart.applyOptions({
+      layout: {
+        background: {
+          type: ColorType.Solid,
+          color: theme.palette.mode === 'dark' ? 'transparent' : '#f8f9fa',
+        },
+      },
+    });
+    series.applyOptions({
+      baseValue: { type: 'price', price: basePrice },
+      topLineColor: trading.rise.main,
+      topFillColor1: alpha(trading.rise.main, 0.28),
+      topFillColor2: alpha(trading.rise.main, 0.05),
+      bottomLineColor: trading.fall.main,
+      bottomFillColor1: alpha(trading.fall.main, 0.05),
+      bottomFillColor2: alpha(trading.fall.main, 0.28),
+      lineWidth: 2,
+    });
+  }, [basePrice, theme.palette.mode, theme.palette.trading]);
+
+  // API 데이터 반영
   useEffect(() => {
     if (!isChartReady || !seriesRef.current || !chartRef.current) return;
 
-    const { start: startTimestamp, end: endTimestamp } = getKST24HourRange();
+    const { start: startTimestamp } = getKST24HourRange();
 
-    // 1. API 데이터 -> 차트 데이터로 변환
-    let chartData: { time: UTCTimestamp; value?: number }[] = [];
+    let chartData: { time: UTCTimestamp; value: number }[] = [];
     if (candleData && candleData.length > 0) {
       chartData = candleData.map((c) => ({
         time: Math.floor(new Date(c.candle_date_time_utc).getTime() / 1000) as UTCTimestamp,
@@ -192,22 +227,6 @@ export const MiniBaselineChart = memo(function MiniBaselineChart({ market, baseP
       }));
     }
 
-    // 2. 실시간 가격 반영
-    if (currentPrice) {
-      const now = Math.floor(Date.now() / 1000);
-      const currentCandleTime = (Math.floor(now / 600) * 600) as UTCTimestamp;
-
-      if (currentCandleTime >= startTimestamp && currentCandleTime < endTimestamp) {
-        const idx = chartData.findIndex((d) => d.time === currentCandleTime);
-        if (idx !== -1) {
-          chartData[idx].value = currentPrice;
-        } else {
-          chartData.push({ time: currentCandleTime, value: currentPrice });
-        }
-      }
-    }
-
-    // 정렬 및 중복 제거
     chartData = chartData.filter((v, i, a) => i === a.findIndex((t) => t.time === v.time)).sort((a, b) => (a.time as number) - (b.time as number));
 
     // 왼쪽 벽 채우기 (0시 시작점)
@@ -217,25 +236,39 @@ export const MiniBaselineChart = memo(function MiniBaselineChart({ market, baseP
       chartData.unshift({ time: startTimestamp, value: chartData[0].value });
     }
 
-    // 3. 미래 Whitespace (현재 시간 이후 ~ 24시)
-    const lastTime = chartData[chartData.length - 1].time as number;
-    const interval = 10 * 60;
-    const whitespaceData: { time: UTCTimestamp }[] = [];
+    latestDataRef.current = chartData;
+    seriesRef.current.setData(chartData);
 
-    for (let t = lastTime + interval; t < endTimestamp; t += interval) {
-      whitespaceData.push({ time: t as UTCTimestamp });
+    applyVisibleRangeSafely(chartRef.current, chartData.length > 0);
+  }, [isChartReady, candleData, basePrice, market]);
+
+  useEffect(() => {
+    if (!isChartReady || !seriesRef.current || !chartRef.current || !currentPrice) return;
+
+    const { start: startTimestamp, end: endTimestamp } = getKST24HourRange();
+    const now = Math.floor(Date.now() / 1000);
+    const currentCandleTime = (Math.floor(now / 600) * 600) as UTCTimestamp;
+
+    if (currentCandleTime < startTimestamp || currentCandleTime >= endTimestamp) {
+      return;
     }
-    whitespaceData.push({ time: endTimestamp });
 
-    // 차트에 데이터 주입
-    seriesRef.current.setData([...chartData, ...whitespaceData]);
+    const nextPoint = { time: currentCandleTime, value: currentPrice };
+    const previous = latestDataRef.current[latestDataRef.current.length - 1];
 
-    // 24시간 범위 고정 (0시 ~ 24시)
-    chartRef.current.timeScale().setVisibleRange({
-      from: startTimestamp,
-      to: endTimestamp,
-    });
-  }, [isChartReady, candleData, basePrice, currentPrice, theme.palette.mode]);
+    if (!previous || currentCandleTime > previous.time) {
+      latestDataRef.current = [...latestDataRef.current, nextPoint];
+      seriesRef.current.update(nextPoint);
+    } else if (currentCandleTime === previous.time) {
+      latestDataRef.current[latestDataRef.current.length - 1] = nextPoint;
+      seriesRef.current.update(nextPoint);
+    } else {
+      latestDataRef.current = latestDataRef.current.map((item) => (item.time === currentCandleTime ? nextPoint : item));
+      seriesRef.current.setData(latestDataRef.current);
+    }
+
+    applyVisibleRangeSafely(chartRef.current, latestDataRef.current.length > 0);
+  }, [currentPrice, isChartReady]);
 
   return <Box ref={chartContainerRef} sx={{ width: '100%', height: '100%', minHeight: 60 }} />;
 });

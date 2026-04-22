@@ -2,8 +2,20 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  background-color: #f4f7fa;
+}
+
+html.dark {
+  background-color: #17171c;
+}
+
 body {
   overflow-x: hidden;
+}
+
+body[data-theme-pending='true'] {
+  visibility: hidden;
 }
 
 @theme inline {

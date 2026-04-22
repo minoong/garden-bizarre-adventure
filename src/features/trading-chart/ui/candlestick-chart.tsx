@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, memo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { createChart, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, LineStyle } from 'lightweight-charts';
 import type {
   IChartApi,
@@ -16,11 +16,11 @@ import type {
 } from 'lightweight-charts';
 import { Box, CircularProgress, Typography, Button, IconButton, Menu, MenuItem, Divider, useTheme } from '@mui/material';
 import { CandlestickChart as CandlestickChartIcon, ShowChart, Functions, Refresh, RestartAlt, Undo, Redo, KeyboardArrowDown } from '@mui/icons-material';
-import { Group, Panel, Separator } from 'react-resizable-panels';
 
 import {
   useCandles,
   useBithumbSocket,
+  useRealtimeTicker,
   fetchCandles,
   type CandleTimeframe,
   type MinuteCandle,
@@ -43,6 +43,45 @@ const LOAD_MORE_COUNT = 100;
 
 /** 이동평균선 색상 (5, 20, 60일선) */
 const MA_COLORS = ['#5EBA7D', '#D60000', '#F5D027'];
+
+function parseKstTimestamp(kstDateString: string): number {
+  return Math.floor(new Date(kstDateString + '+09:00').getTime() / 1000);
+}
+
+function buildChartState(candles: CandleData[], upColor: string, downColor: string) {
+  const chartCandles = toChartCandles(candles).sort((a, b) => (a.time as number) - (b.time as number));
+  const volumeData = toVolumeDataArray(candles, upColor + '80', downColor + '80').sort((a, b) => (a.time as number) - (b.time as number));
+  const candleSnapshotByTime = new Map<
+    number,
+    {
+      candle: CandlestickData<Time>;
+      volume: HistogramData<Time>;
+    }
+  >();
+
+  for (let index = 0; index < chartCandles.length; index += 1) {
+    const candle = chartCandles[index];
+    const volume = volumeData[index];
+    if (!volume) continue;
+    candleSnapshotByTime.set(candle.time as number, { candle, volume });
+  }
+
+  return { chartCandles, volumeData, candleSnapshotByTime };
+}
+
+function getLatestSMAUpdate(candlesLatestFirst: CandleData[], period: number): { time: Time; value: number } | null {
+  if (candlesLatestFirst.length < period) {
+    return null;
+  }
+
+  const latestPeriodCandles = candlesLatestFirst.slice(0, period);
+  const sum = latestPeriodCandles.reduce((acc, candle) => acc + candle.trade_price, 0);
+
+  return {
+    time: parseKstTimestamp(latestPeriodCandles[0].candle_date_time_kst) as Time,
+    value: sum / period,
+  };
+}
 
 /**
  * ticker timestamp를 기준으로 캔들 시작 시간 계산
@@ -112,10 +151,8 @@ export const CandlestickChart = memo(function CandlestickChart({
   // 드롭다운 메뉴 상태
   const [dayMenuAnchor, setDayMenuAnchor] = useState<HTMLElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const volumeContainerRef = useRef<HTMLDivElement>(null);
 
   const mainChartRef = useRef<IChartApi | null>(null);
-  const volumeChartRef = useRef<IChartApi | null>(null);
 
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
@@ -126,6 +163,9 @@ export const CandlestickChart = memo(function CandlestickChart({
 
   // 모든 로드된 캔들 데이터 저장 (무한 스크롤용)
   const allCandlesRef = useRef<CandleData[]>([]);
+  const chartCandlesRef = useRef<ReturnType<typeof toChartCandles>>([]);
+  const volumeDataRef = useRef<HistogramData<Time>[]>([]);
+  const candleSnapshotByTimeRef = useRef<Map<number, { candle: CandlestickData<Time>; volume: HistogramData<Time> }>>(new Map());
   const isLoadingMoreRef = useRef(false);
   const hasMoreDataRef = useRef(true);
   const epochRef = useRef(0); // 타임프레임/마켓 변경 시 증가
@@ -147,46 +187,51 @@ export const CandlestickChart = memo(function CandlestickChart({
   const isRealtimeUpdatingRef = useRef(false);
   // 현재 호버 중인 시간과 소스 저장
   const hoveredTimeRef = useRef<Time | null>(null);
-  const hoveredPriceRef = useRef<number | null>(null);
-  const hoveredYRef = useRef<number | null>(null);
-  const hoveredSourceRef = useRef<'main' | 'volume' | null>(null);
   const latestProcessedTickerTimeRef = useRef<number | null>(null);
   const marketFittedRef = useRef<string | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const chartGenerationRef = useRef(0);
 
   // 옵션 병합
   const theme = useTheme();
   const themeMode = theme.palette.mode;
   const trading = theme.palette.trading;
 
-  const chartOptions = {
-    ...DEFAULT_CHART_OPTIONS,
-    upColor: trading.rise.main,
-    downColor: trading.fall.main,
-    ...options,
-    darkMode: themeMode === 'dark',
-  };
+  const chartOptions = useMemo(
+    () => ({
+      ...DEFAULT_CHART_OPTIONS,
+      upColor: trading.rise.main,
+      downColor: trading.fall.main,
+      ...options,
+      darkMode: themeMode === 'dark',
+    }),
+    [options, themeMode, trading.fall.main, trading.rise.main],
+  );
 
   const { height, darkMode, upColor, downColor, showGrid, showVolume, showMovingAverage, movingAveragePeriods, showMinMaxPrice } = chartOptions;
+  const movingAveragePeriodsKey = useMemo(() => movingAveragePeriods?.join(',') ?? '', [movingAveragePeriods]);
 
   // 색상 상수 (테마 기반으로 통일)
   const BG_COLOR = theme.palette.background.paper;
   const TEXT_COLOR = theme.palette.text.primary;
   const GRID_COLOR = theme.palette.divider;
   const BORDER_COLOR = theme.palette.divider;
+  const PANE_SEPARATOR_COLOR = darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  const PANE_SEPARATOR_HOVER_COLOR = darkMode ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.16)';
 
   // REST API로 초기 데이터 로드
   const { data: candles, isLoading, error } = useCandles(market, timeframe, { count: initialCount });
 
   // WebSocket ticker로 실시간 업데이트
-  const { tickers, status: wsStatus } = useBithumbSocket(realtime ? [market] : [], realtime ? ['ticker'] : [], {
+  const realtimeTicker = useRealtimeTicker(market);
+  const { status: wsStatus } = useBithumbSocket(realtime ? [market] : [], realtime ? ['ticker'] : [], {
     autoConnect: realtime,
   });
 
   // 최저/최고가 라인 업데이트 함수
   const updateMinMaxPriceLines = useCallback(() => {
     const chart = mainChartRef.current;
-    if (!chart || !candleSeriesRef.current || !showMinMaxPrice || allCandlesRef.current.length === 0) {
+    if (!chartInitializedRef.current || !chart || !candleSeriesRef.current || !showMinMaxPrice || chartCandlesRef.current.length === 0) {
       if (minPriceLineRef.current) {
         candleSeriesRef.current?.removePriceLine(minPriceLineRef.current);
         minPriceLineRef.current = null;
@@ -202,14 +247,9 @@ export const CandlestickChart = memo(function CandlestickChart({
     const visibleRange = chart.timeScale().getVisibleLogicalRange();
     if (!visibleRange) return;
 
-    // 모든 캔들 데이터 (시간 순 정렬됨)
-    const allChartCandles = toChartCandles(allCandlesRef.current).sort((a, b) => (a.time as number) - (b.time as number));
-
-    // 가시적 범위에 해당하는 캔들 필터링
-    // Lightweight-charts의 logical range는 인덱스 기반
-    const visibleCandles = allChartCandles.filter((_, index) => {
-      return index >= visibleRange.from && index <= visibleRange.to;
-    });
+    const fromIndex = Math.max(0, Math.floor(visibleRange.from));
+    const toIndex = Math.min(chartCandlesRef.current.length - 1, Math.ceil(visibleRange.to));
+    const visibleCandles = chartCandlesRef.current.slice(fromIndex, toIndex + 1);
 
     if (visibleCandles.length === 0) return;
 
@@ -305,25 +345,22 @@ export const CandlestickChart = memo(function CandlestickChart({
       allCandlesRef.current = [...allCandlesRef.current, ...newCandles];
 
       // allCandlesRef 기반으로 전체 데이터 재설정
-      const allChartCandles = toChartCandles(allCandlesRef.current);
+      const nextChartState = buildChartState(allCandlesRef.current, upColor, downColor);
+      chartCandlesRef.current = nextChartState.chartCandles;
+      volumeDataRef.current = nextChartState.volumeData;
+      candleSnapshotByTimeRef.current = nextChartState.candleSnapshotByTime;
 
-      // 시간순 정렬 보장 (타임존 변환 이슈 방지)
-      const sortedCandles = [...allChartCandles].sort((a, b) => (a.time as number) - (b.time as number));
-
-      candleSeriesRef.current.setData(sortedCandles);
+      candleSeriesRef.current.setData(nextChartState.chartCandles);
 
       if (showVolume && volumeSeriesRef.current) {
-        const allVolumeData = toVolumeDataArray(allCandlesRef.current, upColor + '80', downColor + '80');
-        // 볼륨도 같은 순서로 정렬
-        const sortedVolumeData = [...allVolumeData].sort((a, b) => (a.time as number) - (b.time as number));
-        volumeSeriesRef.current.setData(sortedVolumeData);
+        volumeSeriesRef.current.setData(nextChartState.volumeData);
       }
 
       // SMA 데이터 업데이트 (과거 데이터 로드 시)
       if (showMovingAverage && maSeriesRefs.current.length > 0 && movingAveragePeriods) {
         maSeriesRefs.current.forEach((series, index) => {
           const period = movingAveragePeriods[index];
-          const smaData = calculateSMA(sortedCandles, period);
+          const smaData = calculateSMA(nextChartState.chartCandles, period);
           series.setData(smaData);
         });
       }
@@ -360,35 +397,16 @@ export const CandlestickChart = memo(function CandlestickChart({
 
   // Helper to find data by time from allCandlesRef
   const getCandleDataByTime = useCallback((time: Time) => {
-    const timestamp = time as number;
-    for (let i = allCandlesRef.current.length - 1; i >= 0; i--) {
-      const c = allCandlesRef.current[i];
-      if (Math.floor(new Date(c.candle_date_time_kst + '+09:00').getTime() / 1000) === timestamp) {
-        return {
-          open: c.opening_price,
-          high: c.high_price,
-          low: c.low_price,
-          close: c.trade_price,
-        };
-      }
-    }
-    return undefined;
+    return candleSnapshotByTimeRef.current.get(time as number)?.candle;
   }, []);
 
   const getVolumeDataByTime = useCallback((time: Time) => {
-    const timestamp = time as number;
-    for (let i = allCandlesRef.current.length - 1; i >= 0; i--) {
-      const c = allCandlesRef.current[i];
-      if (Math.floor(new Date(c.candle_date_time_kst + '+09:00').getTime() / 1000) === timestamp) {
-        return { value: c.candle_acc_trade_volume };
-      }
-    }
-    return undefined;
+    return candleSnapshotByTimeRef.current.get(time as number)?.volume;
   }, []);
 
   // Tooltip Helper
   const updateTooltip = useCallback(
-    (param: MouseEventParams, source: 'main' | 'volume', cursorPrice?: number) => {
+    (param: MouseEventParams, cursorPrice?: number) => {
       if (param.time && !param.point) return;
 
       if (!param.time || !param.point || param.point.x < 0 || param.point.y < 0) {
@@ -396,13 +414,11 @@ export const CandlestickChart = memo(function CandlestickChart({
         if (!isRealtimeUpdatingRef.current) {
           setTooltip(null);
           hoveredTimeRef.current = null;
-          hoveredSourceRef.current = null;
         }
         return;
       }
 
       hoveredTimeRef.current = param.time;
-      hoveredSourceRef.current = source;
 
       const candleSeries = candleSeriesRef.current;
       const volSeries = volumeSeriesRef.current;
@@ -435,10 +451,41 @@ export const CandlestickChart = memo(function CandlestickChart({
     [getCandleDataByTime, getVolumeDataByTime],
   );
 
+  const applyPaneSeparatorStyles = useCallback(() => {
+    if (!showVolume || !chartContainerRef.current) return;
+
+    const separatorRow = chartContainerRef.current.querySelector('tr[style*="height: 1px"]');
+    if (!(separatorRow instanceof HTMLTableRowElement)) return;
+
+    const separatorCell = separatorRow.querySelector('td[colspan="3"]');
+    if (!(separatorCell instanceof HTMLTableCellElement)) return;
+
+    separatorCell.style.background = PANE_SEPARATOR_COLOR;
+
+    const dragLayers = separatorCell.querySelectorAll('div[style*="row-resize"]');
+    dragLayers.forEach((layer, index) => {
+      if (!(layer instanceof HTMLDivElement)) return;
+
+      if (index === 0) {
+        layer.style.background = 'transparent';
+      } else {
+        layer.style.top = '-4px';
+        layer.style.height = '9px';
+        layer.style.borderTop = '0';
+        layer.style.borderBottom = '0';
+        layer.style.background = 'transparent';
+        layer.style.boxShadow = `inset 0 1px 0 ${PANE_SEPARATOR_HOVER_COLOR}`;
+      }
+    });
+  }, [PANE_SEPARATOR_COLOR, PANE_SEPARATOR_HOVER_COLOR, showVolume]);
+
   // 마켓/타임프레임 변경 시 Refs 초기화
   useEffect(() => {
     epochRef.current += 1; // stale fetch 방지용 epoch 증가
     allCandlesRef.current = [];
+    chartCandlesRef.current = [];
+    volumeDataRef.current = [];
+    candleSnapshotByTimeRef.current = new Map();
     hasMoreDataRef.current = true;
     isLoadingMoreRef.current = false;
     chartInitializedRef.current = false; // 차트 초기화 대기
@@ -449,6 +496,9 @@ export const CandlestickChart = memo(function CandlestickChart({
   // 차트 생성 및 동기화
   useEffect(() => {
     if (!chartContainerRef.current) return;
+
+    const generation = chartGenerationRef.current + 1;
+    chartGenerationRef.current = generation;
 
     // Reset state
     setIsChartReady(false);
@@ -462,13 +512,22 @@ export const CandlestickChart = memo(function CandlestickChart({
 
     // Main Chart Options (Candles)
     const mainChartOptions: DeepPartial<LWChartOptions> = {
-      autoSize: true,
-      layout: { background: { color: BG_COLOR }, textColor: TEXT_COLOR },
+      layout: {
+        background: { color: BG_COLOR },
+        textColor: TEXT_COLOR,
+        panes: {
+          enableResize: true,
+          separatorColor: PANE_SEPARATOR_COLOR,
+          separatorHoverColor: PANE_SEPARATOR_HOVER_COLOR,
+        },
+      },
       grid: {
         vertLines: { color: showGrid ? GRID_COLOR : 'transparent' },
         horzLines: { color: showGrid ? GRID_COLOR : 'transparent' },
       },
-      crosshair: { mode: CrosshairMode.Normal },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+      },
       rightPriceScale: {
         borderColor: BORDER_COLOR,
         scaleMargins: { top: 0.1, bottom: 0.1 },
@@ -478,7 +537,7 @@ export const CandlestickChart = memo(function CandlestickChart({
         borderColor: BORDER_COLOR,
         timeVisible: true,
         secondsVisible: false,
-        visible: !showVolume,
+        visible: true,
       },
     };
 
@@ -511,197 +570,87 @@ export const CandlestickChart = memo(function CandlestickChart({
       });
     }
 
-    // Volume Chart setup
-    let volumeChart: IChartApi | null = null;
-    if (showVolume && volumeContainerRef.current) {
-      const volContainer = volumeContainerRef.current;
-      const volumeChartOptions: DeepPartial<LWChartOptions> = {
-        autoSize: true,
-        layout: { background: { color: BG_COLOR }, textColor: TEXT_COLOR },
-        grid: {
-          vertLines: { color: showGrid ? GRID_COLOR : 'transparent' },
-          horzLines: { color: showGrid ? GRID_COLOR : 'transparent' },
+    if (showVolume) {
+      const volumeSeries = mainChart.addSeries(
+        HistogramSeries,
+        {
+          priceFormat: { type: 'volume' },
+          color: upColor,
         },
-        crosshair: { mode: CrosshairMode.Normal },
-        rightPriceScale: {
-          borderColor: BORDER_COLOR,
-          scaleMargins: { top: 0.1, bottom: 0 },
-          minimumWidth: 130,
-        },
-        timeScale: {
-          borderColor: BORDER_COLOR,
-          timeVisible: true,
-          secondsVisible: false,
-          visible: true,
-        },
-      };
-
-      volumeChart = createChart(volContainer, volumeChartOptions);
-      volumeChartRef.current = volumeChart;
-
-      const volumeSeries = volumeChart.addSeries(HistogramSeries, {
-        priceFormat: { type: 'volume' },
-        color: upColor,
-      });
+        1,
+      );
       volumeSeriesRef.current = volumeSeries;
 
-      // Sync logic
-      const mainTimeScale = mainChart.timeScale();
-      const volumeTimeScale = volumeChart.timeScale();
-
-      mainTimeScale.subscribeVisibleLogicalRangeChange((range) => {
-        if (range) volumeTimeScale.setVisibleLogicalRange(range);
-        handleVisibleRangeChange(range);
+      candleSeries.getPane().setStretchFactor(3);
+      volumeSeries.getPane().setStretchFactor(1);
+      mainChart.priceScale('right', 1).applyOptions({
+        borderColor: BORDER_COLOR,
+        scaleMargins: { top: 0.1, bottom: 0 },
+        minimumWidth: 130,
       });
-
-      volumeTimeScale.subscribeVisibleLogicalRangeChange((range) => {
-        if (range) mainTimeScale.setVisibleLogicalRange(range);
-      });
-
-      // Unified Crosshair Move
-      const onCrosshairMove = (param: MouseEventParams, src: 'main' | 'volume') => {
-        // 실시간 업데이트 중에는 크로스헤어 동기화 건너뛰기
-        // update() 호출 시 이벤트가 다시 발생하면서 setCrosshairPosition이 호출되어
-        // 마우스 위치가 아닌 데이터 위치로 크로스헤어가 튀는 현상 방지
-        if (isRealtimeUpdatingRef.current) {
-          return;
-        }
-
-        let cursorPrice: number | undefined;
-
-        // 1. 호버 상태 추적
-        if (param.time) {
-          hoveredTimeRef.current = param.time;
-          hoveredSourceRef.current = src;
-
-          // Main Chart에서만 커서 가격 계산
-          if (param.point) {
-            if (src === 'main') {
-              const price = candleSeries.coordinateToPrice(param.point.y);
-              if (price !== null) {
-                hoveredPriceRef.current = price;
-                hoveredYRef.current = param.point.y;
-                cursorPrice = price;
-              }
-            } else {
-              // Volume Chart에서는 가격 표시 안함 (Close로 폴백)
-              hoveredPriceRef.current = null;
-              hoveredYRef.current = null;
-            }
-          }
-
-          // 2. 다른 차트에 크로스헤어 동기화 (시간축 연결)
-          // 마우스가 있는 차트는 라이브러리가 자동 처리, 다른 차트만 동기화
-          const targetChart = src === 'main' ? volumeChart : mainChart;
-          const targetSeries = src === 'main' ? volumeSeries : candleSeries;
-
-          if (targetChart && targetSeries) {
-            // 다른 차트의 Y값은 해당 시간의 데이터 값으로 설정
-            let syncPrice = 0;
-            if (src === 'main') {
-              // 메인→볼륨: 해당 시간의 볼륨 값
-              const volData = getVolumeDataByTime(param.time);
-              if (volData) syncPrice = volData.value as number;
-            } else {
-              // 볼륨→메인: 해당 시간의 종가
-              const candleData = getCandleDataByTime(param.time);
-              if (candleData) syncPrice = candleData.close;
-            }
-            targetChart.setCrosshairPosition(syncPrice, param.time, targetSeries);
-          }
-
-          // 3. 글로벌 이벤트 전송 (다른 마켓 차트용)
-          window.dispatchEvent(
-            new CustomEvent('chart-sync', {
-              detail: { time: param.time, sourceMarket: market },
-            }),
-          );
-        } else {
-          // 마우스가 차트 밖으로 나갔을 때만 클리어
-          hoveredTimeRef.current = null;
-          hoveredPriceRef.current = null;
-          hoveredSourceRef.current = null;
-          hoveredYRef.current = null;
-          mainChart.clearCrosshairPosition();
-          volumeChart?.clearCrosshairPosition();
-        }
-
-        // 4. 툴팁 업데이트
-        updateTooltip(param, src, cursorPrice);
-      };
-
-      mainChart.subscribeCrosshairMove((p) => onCrosshairMove(p, 'main'));
-      volumeChart.subscribeCrosshairMove((p) => onCrosshairMove(p, 'volume'));
     } else {
-      mainChart.timeScale().subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
-      mainChart.subscribeCrosshairMove((param) => {
-        let cursorPrice: number | undefined;
-        if (param.time) {
-          hoveredTimeRef.current = param.time;
-          hoveredSourceRef.current = 'main';
-          if (param.point) {
-            const price = candleSeries.coordinateToPrice(param.point.y);
-            if (price !== null) {
-              hoveredPriceRef.current = price;
-              hoveredYRef.current = param.point.y;
-              cursorPrice = price;
-            }
-          }
-
-          window.dispatchEvent(
-            new CustomEvent('chart-sync', {
-              detail: { time: param.time, sourceMarket: market },
-            }),
-          );
-        } else {
-          if (!isRealtimeUpdatingRef.current) {
-            hoveredTimeRef.current = null;
-            hoveredPriceRef.current = null;
-            hoveredSourceRef.current = null;
-            hoveredYRef.current = null;
-            mainChart.clearCrosshairPosition();
-          }
-        }
-        updateTooltip(param, 'main', cursorPrice);
-      });
+      volumeSeriesRef.current = null;
+      candleSeries.getPane().setStretchFactor(1);
     }
 
-    // Resize Observer setup
+    let handleMainRangeChange: ((range: LogicalRange | null) => void) | null = handleVisibleRangeChange;
+    let handleMainCrosshairMove: ((param: MouseEventParams) => void) | null = null;
+
+    mainChart.timeScale().subscribeVisibleLogicalRangeChange(handleMainRangeChange);
+
+    handleMainCrosshairMove = (param) => {
+      if (isRealtimeUpdatingRef.current) {
+        return;
+      }
+
+      let cursorPrice: number | undefined;
+
+      if (param.time) {
+        hoveredTimeRef.current = param.time;
+        if (param.paneIndex === 0 && param.point) {
+          const price = candleSeries.coordinateToPrice(param.point.y);
+          if (price !== null) {
+            cursorPrice = price;
+          }
+        }
+      } else {
+        if (!isRealtimeUpdatingRef.current) {
+          hoveredTimeRef.current = null;
+          mainChart.clearCrosshairPosition();
+        }
+      }
+
+      updateTooltip(param, cursorPrice);
+    };
+
+    mainChart.subscribeCrosshairMove(handleMainCrosshairMove);
+
     resizeObserverRef.current = new ResizeObserver((entries) => {
       if (entries.length === 0 || !entries[0].contentRect) return;
+      if (chartGenerationRef.current !== generation || mainChartRef.current !== mainChart || !chartInitializedRef.current) return;
+
       const { width, height: containerHeight } = entries[0].contentRect;
-      mainChart.resize(width, showVolume ? containerHeight * 0.75 : containerHeight);
-      if (volumeChart) {
-        volumeChart.resize(width, containerHeight * 0.25);
-      }
+      mainChart.resize(width, containerHeight);
+      requestAnimationFrame(() => applyPaneSeparatorStyles());
     });
     resizeObserverRef.current.observe(container);
 
-    const handleGlobalSync = (e: Event) => {
-      const customEvent = e as CustomEvent<{ time: Time; sourceMarket: string }>;
-      const { time: _time, sourceMarket } = customEvent.detail;
-      if (sourceMarket === market) return;
-      // 다른 마켓 차트와 크로스헤어 Y축 동기화하지 않음
-      // setCrosshairPosition(0, time, series)를 호출하면 Y=0 위치로 강제 이동됨
-    };
-
-    window.addEventListener('chart-sync', handleGlobalSync);
-
-    // Initial Data Load (if candles have already arrived)
-    // 이 시점에 데이터가 있으면 즉시 채워넣어 초기 렌더링 지연 방지
     if (candles && candles.length > 0) {
       allCandlesRef.current = [...candles];
-      const chartCandles = toChartCandles(candles);
-      candleSeries.setData(chartCandles);
+      const initialChartState = buildChartState(candles, upColor, downColor);
+      chartCandlesRef.current = initialChartState.chartCandles;
+      volumeDataRef.current = initialChartState.volumeData;
+      candleSnapshotByTimeRef.current = initialChartState.candleSnapshotByTime;
+      candleSeries.setData(initialChartState.chartCandles);
 
       if (showVolume && volumeSeriesRef.current) {
-        volumeSeriesRef.current.setData(toVolumeDataArray(candles, upColor + '80', downColor + '80'));
+        volumeSeriesRef.current.setData(initialChartState.volumeData);
       }
 
       if (showMovingAverage && maSeriesRefs.current.length > 0) {
         maSeriesRefs.current.forEach((series, index) => {
           const period = movingAveragePeriods![index];
-          series.setData(calculateSMA(chartCandles, period));
+          series.setData(calculateSMA(initialChartState.chartCandles, period));
         });
       }
 
@@ -710,67 +659,110 @@ export const CandlestickChart = memo(function CandlestickChart({
       updateMinMaxPriceLines();
     }
 
-    // 마우스 enter/leave 이벤트로 가로선 표시 제어
-    // 마우스가 있는 차트만 가로선 표시, 다른 차트는 숨김
-    const handleMainEnter = () => {
-      mainChart.applyOptions({ crosshair: { horzLine: { visible: true } } });
-      volumeChart?.applyOptions({ crosshair: { horzLine: { visible: false } } });
-    };
-    const handleVolumeEnter = () => {
-      mainChart.applyOptions({ crosshair: { horzLine: { visible: false } } });
-      volumeChart?.applyOptions({ crosshair: { horzLine: { visible: true } } });
-    };
-    const handleMouseLeave = () => {
-      // 차트 영역을 완전히 벗어나면 둘 다 가로선 복원
-      mainChart.applyOptions({ crosshair: { horzLine: { visible: true } } });
-      volumeChart?.applyOptions({ crosshair: { horzLine: { visible: true } } });
-    };
-
-    container.addEventListener('mouseenter', handleMainEnter);
-    container.addEventListener('mouseleave', handleMouseLeave);
-    const volContainer = volumeContainerRef.current;
-    if (volContainer) {
-      volContainer.addEventListener('mouseenter', handleVolumeEnter);
-      volContainer.addEventListener('mouseleave', handleMouseLeave);
-    }
-
     chartInitializedRef.current = true;
     setIsChartReady(true);
+    requestAnimationFrame(() => applyPaneSeparatorStyles());
 
     return () => {
+      chartGenerationRef.current += 1;
       setIsChartReady(false);
       chartInitializedRef.current = false;
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
       }
-      window.removeEventListener('chart-sync', handleGlobalSync);
-      container.removeEventListener('mouseenter', handleMainEnter);
-      container.removeEventListener('mouseleave', handleMouseLeave);
-      if (volContainer) {
-        volContainer.removeEventListener('mouseenter', handleVolumeEnter);
-        volContainer.removeEventListener('mouseleave', handleMouseLeave);
+      if (handleMainRangeChange) {
+        mainChart.timeScale().unsubscribeVisibleLogicalRangeChange(handleMainRangeChange);
       }
+      if (handleMainCrosshairMove) {
+        mainChart.unsubscribeCrosshairMove(handleMainCrosshairMove);
+      }
+      mainChartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
+      maSeriesRefs.current = [];
+      minPriceLineRef.current = null;
+      maxPriceLineRef.current = null;
       mainChart.remove();
-      if (volumeChart) volumeChart.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     market,
     timeframe,
-    height,
-    darkMode,
-    upColor,
-    downColor,
-    showGrid,
     showVolume,
     showMovingAverage,
-    movingAveragePeriods,
+    movingAveragePeriodsKey,
+    updateMinMaxPriceLines,
+    updateTooltip,
+    PANE_SEPARATOR_COLOR,
+    PANE_SEPARATOR_HOVER_COLOR,
+    applyPaneSeparatorStyles,
+  ]);
+
+  useEffect(() => {
+    const mainChart = mainChartRef.current;
+    const candleSeries = candleSeriesRef.current;
+    if (!mainChart || !candleSeries) return;
+
+    mainChart.applyOptions({
+      layout: {
+        background: { color: BG_COLOR },
+        textColor: TEXT_COLOR,
+        panes: {
+          enableResize: true,
+          separatorColor: PANE_SEPARATOR_COLOR,
+          separatorHoverColor: PANE_SEPARATOR_HOVER_COLOR,
+        },
+      },
+      grid: {
+        vertLines: { color: showGrid ? GRID_COLOR : 'transparent' },
+        horzLines: { color: showGrid ? GRID_COLOR : 'transparent' },
+      },
+      rightPriceScale: {
+        borderColor: BORDER_COLOR,
+      },
+      timeScale: {
+        borderColor: BORDER_COLOR,
+        visible: true,
+      },
+    });
+    candleSeries.applyOptions({
+      upColor,
+      downColor,
+      borderUpColor: upColor,
+      borderDownColor: downColor,
+      wickUpColor: upColor,
+      wickDownColor: downColor,
+    });
+
+    const volumeSeries = volumeSeriesRef.current;
+    if (showVolume && volumeSeries) {
+      volumeSeries.applyOptions({
+        color: upColor,
+      });
+      candleSeries.getPane().setStretchFactor(3);
+      volumeSeries.getPane().setStretchFactor(1);
+      mainChart.priceScale('right', 1).applyOptions({
+        borderColor: BORDER_COLOR,
+        scaleMargins: { top: 0.1, bottom: 0 },
+        minimumWidth: 130,
+      });
+    } else {
+      candleSeries.getPane().setStretchFactor(1);
+    }
+    requestAnimationFrame(() => applyPaneSeparatorStyles());
+  }, [
     BG_COLOR,
     TEXT_COLOR,
     GRID_COLOR,
     BORDER_COLOR,
-    updateMinMaxPriceLines,
-    updateTooltip,
+    showGrid,
+    showVolume,
+    upColor,
+    downColor,
+    PANE_SEPARATOR_COLOR,
+    PANE_SEPARATOR_HOVER_COLOR,
+    applyPaneSeparatorStyles,
   ]);
 
   // 데이터 업데이트 전용 useEffect
@@ -778,17 +770,21 @@ export const CandlestickChart = memo(function CandlestickChart({
     if (!isChartReady || !candleSeriesRef.current || !candles || candles.length === 0) return;
 
     allCandlesRef.current = [...candles];
-    const chartCandles = toChartCandles(candles);
-    candleSeriesRef.current.setData(chartCandles);
+    const nextChartState = buildChartState(candles, upColor, downColor);
+    chartCandlesRef.current = nextChartState.chartCandles;
+    volumeDataRef.current = nextChartState.volumeData;
+    candleSnapshotByTimeRef.current = nextChartState.candleSnapshotByTime;
+
+    candleSeriesRef.current.setData(nextChartState.chartCandles);
 
     if (showVolume && volumeSeriesRef.current) {
-      volumeSeriesRef.current.setData(toVolumeDataArray(candles, upColor + '80', downColor + '80'));
+      volumeSeriesRef.current.setData(nextChartState.volumeData);
     }
 
     if (showMovingAverage && maSeriesRefs.current.length > 0 && movingAveragePeriods) {
       maSeriesRefs.current.forEach((series, index) => {
         const period = movingAveragePeriods[index];
-        series.setData(calculateSMA(chartCandles, period));
+        series.setData(calculateSMA(nextChartState.chartCandles, period));
       });
     }
 
@@ -809,7 +805,7 @@ export const CandlestickChart = memo(function CandlestickChart({
     if (showVolume && !volumeSeriesRef.current) return;
 
     try {
-      const ticker = tickers.get(market);
+      const ticker = realtimeTicker;
       if (!ticker || !allCandlesRef.current.length) return;
 
       // 같은 타임스탬프면 중복 처리 방지 (이미 처리된 틱인 경우)
@@ -863,6 +859,17 @@ export const CandlestickChart = memo(function CandlestickChart({
         } as CandleData;
 
         allCandlesRef.current = [newCandleData, ...allCandlesRef.current];
+        chartCandlesRef.current = [...chartCandlesRef.current, newCandle];
+        const newVolumeData = {
+          time: candleTimestamp as Time,
+          value: newVolume,
+          color: upColor + '80',
+        } satisfies HistogramData<Time>;
+        volumeDataRef.current = [...volumeDataRef.current, newVolumeData];
+        candleSnapshotByTimeRef.current.set(candleTimestamp, {
+          candle: newCandle,
+          volume: newVolumeData,
+        });
 
         // 툴팁이 새 캔들 시간에 맞춰져 있으면 업데이트
         if (hoveredTimeRef.current === candleTimestamp) {
@@ -910,6 +917,17 @@ export const CandlestickChart = memo(function CandlestickChart({
           timestamp: ticker.timestamp,
           candle_acc_trade_volume: currentVolume,
         };
+        chartCandlesRef.current[chartCandlesRef.current.length - 1] = updatedCandle;
+        const updatedVolume = {
+          time: latestCandleTime as Time,
+          value: currentVolume,
+          color: currentTradePrice >= latestCandle.opening_price ? upColor + '80' : downColor + '80',
+        } satisfies HistogramData<Time>;
+        volumeDataRef.current[volumeDataRef.current.length - 1] = updatedVolume;
+        candleSnapshotByTimeRef.current.set(latestCandleTime, {
+          candle: updatedCandle,
+          volume: updatedVolume,
+        });
 
         // 툴팁이 현재 업데이트 중인 캔들 시간에 맞춰져 있으면 업데이트
         if (hoveredTimeRef.current === latestCandleTime) {
@@ -932,19 +950,16 @@ export const CandlestickChart = memo(function CandlestickChart({
       if (showMovingAverage && maSeriesRefs.current.length > 0 && movingAveragePeriods) {
         maSeriesRefs.current.forEach((series, index) => {
           const period = movingAveragePeriods[index];
-          // 필요한 만큼만 데이터 추출 (계산에 필요한 최소 개수)
-          if (allCandlesRef.current.length >= period) {
-            const latestItems = allCandlesRef.current.slice(0, period);
-            const chartItems = toChartCandles(latestItems);
-            const smaData = calculateSMA(chartItems, period);
-            if (smaData.length > 0) {
-              series.update(smaData[0]);
-            }
+          const latestSMA = getLatestSMAUpdate(allCandlesRef.current, period);
+          if (latestSMA) {
+            series.update(latestSMA);
           }
         });
       }
 
-      updateMinMaxPriceLines();
+      if (candleTimestamp > latestCandleTime) {
+        updateMinMaxPriceLines();
+      }
 
       // 크로스헤어는 강제로 복구하지 않음
       // 마우스가 차트 위에 있으면 lightweight-charts가 자동으로 크로스헤어를 유지함
@@ -956,20 +971,7 @@ export const CandlestickChart = memo(function CandlestickChart({
         isRealtimeUpdatingRef.current = false;
       }, 0);
     }
-  }, [
-    tickers,
-    market,
-    realtime,
-    timeframe,
-    showVolume,
-    showMovingAverage,
-    movingAveragePeriods,
-    upColor,
-    downColor,
-    updateMinMaxPriceLines,
-    getCandleDataByTime,
-    getVolumeDataByTime,
-  ]);
+  }, [realtimeTicker, market, realtime, timeframe, showVolume, showMovingAverage, movingAveragePeriods, upColor, downColor, updateMinMaxPriceLines]);
 
   return (
     <Box className={className} sx={{ position: 'relative', bgcolor: BG_COLOR, display: 'flex', flexDirection: 'column', height }}>
@@ -1243,56 +1245,27 @@ export const CandlestickChart = memo(function CandlestickChart({
       </Box>
 
       {/* Main Chart Container */}
-      {showVolume ? (
-        <Group orientation="vertical">
-          <Panel defaultSize={75} minSize={30}>
-            <div ref={chartContainerRef} style={{ width: '100%', height: '100%', position: 'relative' }} />
-          </Panel>
-          <Separator
-            style={{
-              height: '4px',
-              backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-              cursor: 'row-resize',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Box
-              sx={{
-                width: '40px',
-                height: '2px',
-                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
-                borderRadius: '1px',
-              }}
-            />
-          </Separator>
-          <Panel defaultSize={25} minSize={10}>
-            <div ref={volumeContainerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
-              {/* Volume Label Overlay */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 4,
-                  left: 12,
-                  zIndex: 5,
-                  pointerEvents: 'none',
-                  bgcolor: darkMode ? 'rgba(43, 43, 67, 0.4)' : 'rgba(240, 240, 240, 0.7)',
-                  border: '1px solid ' + (darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'),
-                  px: 0.6,
-                  py: 0.2,
-                  borderRadius: '2px',
-                }}
-              >
-                <Typography variant="caption" sx={{ color: TEXT_COLOR, fontWeight: 700, fontSize: '0.625rem', letterSpacing: '0.05em' }}>
-                  VOLUME
-                </Typography>
-              </Box>
-            </div>
-          </Panel>
-        </Group>
-      ) : (
-        <div ref={chartContainerRef} style={{ width: '100%', height: '100%', position: 'relative' }} />
+      <div ref={chartContainerRef} style={{ width: '100%', height: '100%', position: 'relative' }} />
+
+      {showVolume && (
+        <Box
+          sx={{
+            position: 'absolute',
+            left: 12,
+            bottom: 12,
+            zIndex: 5,
+            pointerEvents: 'none',
+            bgcolor: darkMode ? 'rgba(43, 43, 67, 0.4)' : 'rgba(240, 240, 240, 0.7)',
+            border: '1px solid ' + (darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'),
+            px: 0.6,
+            py: 0.2,
+            borderRadius: '2px',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: TEXT_COLOR, fontWeight: 700, fontSize: '0.625rem', letterSpacing: '0.05em' }}>
+            VOLUME
+          </Typography>
+        </Box>
       )}
 
       {/* 무한 스크롤 로딩 인디케이터 */}

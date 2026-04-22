@@ -1,6 +1,6 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 
-import { useKrwMarkets, useTicker, useBithumbSocket } from '@/entities/bithumb';
+import { useKrwMarkets, useTicker, useBithumbSocketStatus } from '@/entities/bithumb';
 
 import type { MarketRowData } from '../model/types';
 
@@ -10,7 +10,7 @@ import type { MarketRowData } from '../model/types';
  * - WebSocket으로 실시간 업데이트
  */
 export function useMarketListData(options: { enabledRealtime?: boolean } = {}) {
-  const { enabledRealtime = true } = options;
+  const { enabledRealtime: _enabledRealtime = true } = options;
   // 1. KRW 마켓 목록 조회 (REST API)
   const { data: markets, isLoading: isLoadingMarkets } = useKrwMarkets();
 
@@ -20,19 +20,8 @@ export function useMarketListData(options: { enabledRealtime?: boolean } = {}) {
     enabled: marketCodes.length > 0,
   });
 
-  // 3. 실시간 ticker WebSocket 구독
-  const {
-    tickers: realtimeTickers,
-    connect,
-    status: wsStatus,
-  } = useBithumbSocket(enabledRealtime && marketCodes.length > 0 ? marketCodes : [], enabledRealtime && marketCodes.length > 0 ? ['ticker'] : []);
-
-  // WebSocket 자동 연결
-  useEffect(() => {
-    if (enabledRealtime && wsStatus === 'disconnected' && marketCodes.length > 0) {
-      connect();
-    }
-  }, [connect, marketCodes.length, wsStatus, enabledRealtime]);
+  // 3. 연결 상태만 조회 - 실제 ticker 구독은 TradeLayout에서 전담
+  const wsStatus = useBithumbSocketStatus();
 
   // 4. 테이블 데이터 생성 (안정적인 데이터 구조 유지)
   const data = useMemo<MarketRowData[]>(() => {
@@ -62,7 +51,6 @@ export function useMarketListData(options: { enabledRealtime?: boolean } = {}) {
 
   return {
     data,
-    realtimeTickers,
     isLoading: isLoadingMarkets || isLoadingTickers,
     wsStatus,
   };

@@ -11,6 +11,9 @@ const initialState = {
   tickers: new Map<string, WebSocketTicker>(),
   orderbooks: new Map<string, WebSocketOrderbook>(),
   trades: new Map<string, WebSocketTrade>(),
+  tickerVersionByCode: {} as Record<string, number>,
+  orderbookVersionByCode: {} as Record<string, number>,
+  tradeVersionByCode: {} as Record<string, number>,
 
   lastUpdated: 0,
   error: null as string | null,
@@ -28,13 +31,45 @@ export const useBithumbWebSocketStore = create<BithumbWebSocketStore>()(
         set({ status, error: error ?? null });
       });
 
-      // 메시지 핸들러 - Map을 새로 생성하여 참조 변경
-      manager.setMessageHandler((tickers, orderbooks, trades) => {
-        set({
-          tickers: new Map(tickers),
-          orderbooks: new Map(orderbooks),
-          trades: new Map(trades),
-          lastUpdated: Date.now(),
+      // 메시지 핸들러 - 변경된 code만 버전 업데이트
+      manager.setMessageHandler((delta) => {
+        if (delta.tickers.length === 0 && delta.orderbooks.length === 0 && delta.trades.length === 0) {
+          return;
+        }
+
+        set((state) => {
+          const nextTickers = new Map(state.tickers);
+          const nextOrderbooks = new Map(state.orderbooks);
+          const nextTrades = new Map(state.trades);
+          const nextTickerVersionByCode = { ...state.tickerVersionByCode };
+          const nextOrderbookVersionByCode = { ...state.orderbookVersionByCode };
+          const nextTradeVersionByCode = { ...state.tradeVersionByCode };
+          const nextVersion = Date.now();
+
+          delta.tickers.forEach((ticker) => {
+            nextTickers.set(ticker.code, ticker);
+            nextTickerVersionByCode[ticker.code] = nextVersion;
+          });
+
+          delta.orderbooks.forEach((orderbook) => {
+            nextOrderbooks.set(orderbook.code, orderbook);
+            nextOrderbookVersionByCode[orderbook.code] = nextVersion;
+          });
+
+          delta.trades.forEach((trade) => {
+            nextTrades.set(trade.code, trade);
+            nextTradeVersionByCode[trade.code] = nextVersion;
+          });
+
+          return {
+            tickers: nextTickers,
+            orderbooks: nextOrderbooks,
+            trades: nextTrades,
+            tickerVersionByCode: nextTickerVersionByCode,
+            orderbookVersionByCode: nextOrderbookVersionByCode,
+            tradeVersionByCode: nextTradeVersionByCode,
+            lastUpdated: nextVersion,
+          };
         });
       });
 
@@ -60,21 +95,33 @@ export const useBithumbWebSocketStore = create<BithumbWebSocketStore>()(
         const state = get();
         if (type === 'ticker') {
           const newTickers = new Map(state.tickers);
+          const nextTickerVersionByCode = { ...state.tickerVersionByCode };
           codes.forEach((code) => newTickers.delete(code));
-          set({ tickers: newTickers });
+          codes.forEach((code) => {
+            delete nextTickerVersionByCode[code];
+          });
+          set({ tickers: newTickers, tickerVersionByCode: nextTickerVersionByCode });
         } else if (type === 'orderbook') {
           const newOrderbooks = new Map(state.orderbooks);
+          const nextOrderbookVersionByCode = { ...state.orderbookVersionByCode };
           codes.forEach((code) => newOrderbooks.delete(code));
-          set({ orderbooks: newOrderbooks });
+          codes.forEach((code) => {
+            delete nextOrderbookVersionByCode[code];
+          });
+          set({ orderbooks: newOrderbooks, orderbookVersionByCode: nextOrderbookVersionByCode });
         } else if (type === 'trade') {
           const newTrades = new Map(state.trades);
+          const nextTradeVersionByCode = { ...state.tradeVersionByCode };
           codes.forEach((code) => newTrades.delete(code));
-          set({ trades: newTrades });
+          codes.forEach((code) => {
+            delete nextTradeVersionByCode[code];
+          });
+          set({ trades: newTrades, tradeVersionByCode: nextTradeVersionByCode });
         }
       } else {
-        if (type === 'ticker') set({ tickers: new Map() });
-        else if (type === 'orderbook') set({ orderbooks: new Map() });
-        else if (type === 'trade') set({ trades: new Map() });
+        if (type === 'ticker') set({ tickers: new Map(), tickerVersionByCode: {} });
+        else if (type === 'orderbook') set({ orderbooks: new Map(), orderbookVersionByCode: {} });
+        else if (type === 'trade') set({ trades: new Map(), tradeVersionByCode: {} });
       }
     },
 
@@ -109,27 +156,26 @@ export const selectWebSocketStatus = (state: BithumbWebSocketStore) => state.sta
 /**
  * 특정 마켓의 Ticker만 구독
  */
-export const selectTicker = (code: string) => (state: BithumbWebSocketStore) => state.tickers.get(code);
+export const selectTicker = (code: string) => (state: BithumbWebSocketStore) => ({
+  version: state.tickerVersionByCode[code] ?? 0,
+  ticker: state.tickers.get(code),
+});
 
 /**
  * 특정 마켓의 Orderbook만 구독
  */
-export const selectOrderbook = (code: string) => (state: BithumbWebSocketStore) => state.orderbooks.get(code);
+export const selectOrderbook = (code: string) => (state: BithumbWebSocketStore) => ({
+  version: state.orderbookVersionByCode[code] ?? 0,
+  orderbook: state.orderbooks.get(code),
+});
 
 /**
  * 특정 마켓의 Trade만 구독
  */
-export const selectTrade = (code: string) => (state: BithumbWebSocketStore) => state.trades.get(code);
-
-/**
- * 전체 Ticker Map 구독
- */
-export const selectAllTickers = (state: BithumbWebSocketStore) => state.tickers;
-
-/**
- * Ticker 배열로 변환하여 구독
- */
-export const selectTickerArray = (state: BithumbWebSocketStore) => Array.from(state.tickers.values());
+export const selectTrade = (code: string) => (state: BithumbWebSocketStore) => ({
+  version: state.tradeVersionByCode[code] ?? 0,
+  trade: state.trades.get(code),
+});
 
 /**
  * 마지막 업데이트 시간 구독

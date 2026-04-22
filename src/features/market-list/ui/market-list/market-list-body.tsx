@@ -45,7 +45,7 @@ export const MarketListBody = memo(function MarketListBody({
   sx,
   children,
 }: MarketListBodyProps) {
-  const { sortedData, isFavorite, selectedMarket, setVirtualizer } = useMarketListContext();
+  const { sortedData, isFavorite, selectedMarket, selectMarket, onRowClick, gridTemplateColumns, setVirtualizer } = useMarketListContext();
 
   const osRef = useRef<OverlayScrollbarsComponentRef>(null);
 
@@ -57,6 +57,7 @@ export const MarketListBody = memo(function MarketListBody({
   const virtualizer = useVirtualizer({
     count: sortedData.length,
     getScrollElement,
+    getItemKey: useCallback((index: number) => sortedData[index]?.market ?? index, [sortedData]),
     estimateSize: useCallback(() => rowHeight, [rowHeight]),
     overscan,
   });
@@ -92,10 +93,7 @@ export const MarketListBody = memo(function MarketListBody({
   );
 
   // 컨테이너 스타일 (will-change 추가로 GPU 가속 유도)
-  const containerSx = useMemo<SxProps<Theme>>(
-    () => [{ height: totalSize, position: 'relative', willChange: 'transform' }, ...(Array.isArray(sx) ? sx : [sx])],
-    [totalSize, sx],
-  );
+  const containerSx = useMemo<SxProps<Theme>>(() => [{ height: totalSize, position: 'relative' }, ...(Array.isArray(sx) ? sx : [sx])], [totalSize, sx]);
 
   return (
     <OverlayScrollbarsComponent ref={osRef} element="div" options={osOptions} defer style={osStyle}>
@@ -104,25 +102,25 @@ export const MarketListBody = memo(function MarketListBody({
           const row = sortedData[virtualRow.index];
           if (!row) return null;
 
-          const { base, quote } = parseMarketCode(row.market);
-          const state: RowRenderState = {
-            isFavorite: isFavorite(row.market),
-            isSelected: selectedMarket === row.market,
-            highlight: undefined,
-            priceChange: calculatePriceChange(row.prev_closing_price, row.trade_price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL),
-            marketCode: { base, quote },
-          };
-
           const itemStyle = {
             position: 'absolute' as const,
             top: 0,
             left: 0,
             width: '100%',
+            height: virtualRow.size,
             transform: `translateY(${virtualRow.start}px)`,
-            willChange: 'transform', // 개별 아이템에도 GPU 가속 힌트
           };
 
           if (isRenderProps) {
+            const { base, quote } = parseMarketCode(row.market);
+            const state: RowRenderState = {
+              isFavorite: isFavorite(row.market),
+              isSelected: selectedMarket === row.market,
+              highlight: undefined,
+              priceChange: calculatePriceChange(row.prev_closing_price, row.trade_price, CHANGE_TYPE_COLORS.RISE, CHANGE_TYPE_COLORS.FALL),
+              marketCode: { base, quote },
+            };
+
             return (
               <Box key={row.market} data-index={virtualRow.index} ref={virtualizer.measureElement} sx={itemStyle}>
                 {children(row, state, virtualRow.index)}
@@ -134,10 +132,13 @@ export const MarketListBody = memo(function MarketListBody({
             <MarketListRow
               key={row.market}
               row={row}
-              state={state}
+              isFavorite={isFavorite(row.market)}
+              isSelected={selectedMarket === row.market}
               virtualRow={virtualRow}
-              measureElement={virtualizer.measureElement}
-              sx={{ willChange: 'transform' }}
+              rowHeight={rowHeight}
+              onSelectMarket={selectMarket}
+              isClickable={Boolean(onRowClick)}
+              gridTemplateColumns={gridTemplateColumns}
             />
           );
         })}

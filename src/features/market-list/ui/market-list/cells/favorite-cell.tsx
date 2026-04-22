@@ -14,6 +14,7 @@ export interface FavoriteCellRenderProps {
 }
 
 export interface FavoriteCellProps extends BaseCellProps {
+  isFavorite?: boolean;
   render?: (props: FavoriteCellRenderProps) => ReactNode;
 }
 
@@ -22,11 +23,11 @@ export interface FavoriteCellProps extends BaseCellProps {
  * - CSS Grid 셀로 렌더링 (너비는 부모 Row의 Grid에서 결정)
  * - React.memo로 최적화
  */
-export const FavoriteCell = memo(function FavoriteCell({ row, state, sx, render }: FavoriteCellProps) {
+export const FavoriteCell = memo(function FavoriteCell({ row, state, isFavorite: providedIsFavorite, sx, render }: FavoriteCellProps) {
   const theme = useTheme();
   const { toggleFavorite, isFavorite: checkFavorite } = useMarketListContext();
 
-  const isFavorite = state?.isFavorite ?? checkFavorite(row.market);
+  const isFavorite = providedIsFavorite ?? state?.isFavorite ?? checkFavorite(row.market);
 
   const handleToggle = useCallback(
     (e: React.MouseEvent) => {

@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useTransition, useCallback, type ChangeEvent } from 'react';
-import { Box, InputBase, IconButton, Divider, Tooltip } from '@mui/material';
-import { Search as SearchIcon, Settings as SettingsIcon, Close as CloseIcon, DarkMode as DarkModeIcon } from '@mui/icons-material';
+import { Box, InputBase, IconButton, Divider, Tooltip, useTheme } from '@mui/material';
+import { Search as SearchIcon, Settings as SettingsIcon, Close as CloseIcon, DarkMode as DarkModeIcon, LightMode as LightModeIcon } from '@mui/icons-material';
+import { useTheme as useNextTheme } from 'next-themes';
+
+import { createThemeCookie } from '@/shared/lib/theme/theme-cookie';
 
 export interface MarketSearchProps {
   /** 검색어 변경 핸들러 */
@@ -19,6 +22,8 @@ export interface MarketSearchProps {
 export function MarketSearch({ onSearch, value, placeholder = '코인명(초성) 또는 심볼명 검색' }: MarketSearchProps) {
   const [internalValue, setInternalValue] = useState(value);
   const [, startTransition] = useTransition();
+  const theme = useTheme();
+  const { resolvedTheme, setTheme } = useNextTheme();
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -38,6 +43,14 @@ export function MarketSearch({ onSearch, value, placeholder = '코인명(초성)
       onSearch('');
     });
   }, [onSearch]);
+
+  const handleThemeToggle = useCallback(() => {
+    const nextTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    document.cookie = createThemeCookie(nextTheme);
+  }, [resolvedTheme, setTheme]);
+
+  const isDarkMode = resolvedTheme === 'dark' || theme.palette.mode === 'dark';
 
   return (
     <Box
@@ -65,15 +78,21 @@ export function MarketSearch({ onSearch, value, placeholder = '코인명(초성)
         )}
       </Box>
       <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
-      <Tooltip title="현재 다크 테마 고정">
-        <span>
-          <IconButton sx={{ p: '10px' }} aria-label="theme-locked" size="small" disabled>
-            <DarkModeIcon sx={{ fontSize: 20, color: '#ffb74d' }} />
-          </IconButton>
-        </span>
+      <Tooltip title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}>
+        <IconButton
+          onClick={handleThemeToggle}
+          sx={{
+            p: '10px',
+            color: isDarkMode ? theme.palette.warning.light : theme.palette.warning.dark,
+          }}
+          aria-label={isDarkMode ? 'switch-to-light-mode' : 'switch-to-dark-mode'}
+          size="small"
+        >
+          {isDarkMode ? <DarkModeIcon sx={{ fontSize: 20 }} /> : <LightModeIcon sx={{ fontSize: 20 }} />}
+        </IconButton>
       </Tooltip>
-      <IconButton sx={{ p: '10px' }} aria-label="settings" size="small">
-        <SettingsIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
+      <IconButton sx={{ p: '10px', color: 'text.secondary' }} aria-label="settings" size="small">
+        <SettingsIcon sx={{ fontSize: 20 }} />
       </IconButton>
     </Box>
   );

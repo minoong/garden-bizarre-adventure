@@ -11,10 +11,10 @@
  */
 
 import type { WebSocketOrderbook, WebSocketTicker, WebSocketTrade } from '../model/types';
-import type { SubscriptionConfig, WebSocketBuffer, WebSocketStatus } from '../model/websocket-types';
+import type { SubscriptionConfig, WebSocketBuffer, WebSocketDelta, WebSocketStatus } from '../model/websocket-types';
 import { BITHUMB_WEBSOCKET_URL } from '../model/constants';
 
-type MessageHandler = (tickers: Map<string, WebSocketTicker>, orderbooks: Map<string, WebSocketOrderbook>, trades: Map<string, WebSocketTrade>) => void;
+type MessageHandler = (delta: WebSocketDelta) => void;
 
 type StatusHandler = (status: WebSocketStatus, error?: string) => void;
 
@@ -251,22 +251,33 @@ export class BithumbWebSocketManager {
       return;
     }
 
-    // Map에 병합 (마지막 값만 유지 - 최신 데이터)
+    const nextTickers = new Map<string, WebSocketTicker>();
+    const nextOrderbooks = new Map<string, WebSocketOrderbook>();
+    const nextTrades = new Map<string, WebSocketTrade>();
+
+    // Map에 병합 (같은 프레임에서는 마지막 값만 유지)
     for (const ticker of tickers) {
       this.tickerMap.set(ticker.code, ticker);
+      nextTickers.set(ticker.code, ticker);
     }
     for (const orderbook of orderbooks) {
       this.orderbookMap.set(orderbook.code, orderbook);
+      nextOrderbooks.set(orderbook.code, orderbook);
     }
     for (const trade of trades) {
       this.tradeMap.set(trade.code, trade);
+      nextTrades.set(trade.code, trade);
     }
 
     // 버퍼 초기화
     this.buffer = { tickers: [], orderbooks: [], trades: [] };
 
     // 핸들러 호출
-    this.onMessage?.(this.tickerMap, this.orderbookMap, this.tradeMap);
+    this.onMessage?.({
+      tickers: Array.from(nextTickers.values()),
+      orderbooks: Array.from(nextOrderbooks.values()),
+      trades: Array.from(nextTrades.values()),
+    });
   }
 
   /**
