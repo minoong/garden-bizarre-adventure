@@ -1,3 +1,9 @@
+## [1.44.3](https://github.com/minoong/garden-bizarre-adventure/compare/v1.44.2...v1.44.3) (2026-08-13)
+
+### 🐛 버그 수정
+
+* 빗썸 현재가 요청 URI 길이 초과 해결 ([#170](https://github.com/minoong/garden-bizarre-adventure/issues/170)) ([e32242a](https://github.com/minoong/garden-bizarre-adventure/commit/e32242a12afc9ccdf035d413d2fa35dbf7798579))
+
 ## [1.44.2](https://github.com/minoong/garden-bizarre-adventure/compare/v1.44.1...v1.44.2) (2026-04-22)
 
 ### 🐛 버그 수정
