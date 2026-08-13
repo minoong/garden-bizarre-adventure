@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { useState, useRef } from 'react';
 import { Button, Box, Stack, Typography } from '@mui/material';
 import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';

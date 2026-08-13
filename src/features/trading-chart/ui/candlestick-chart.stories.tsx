@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { Box, ToggleButton, ToggleButtonGroup, FormControlLabel, Switch, Typography, Stack, Autocomplete, TextField } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
