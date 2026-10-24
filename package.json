@@ -112,7 +112,7 @@
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/addon-docs": "^10.3.5",
     "@storybook/addon-onboarding": "^10.3.5",
-    "@storybook/addon-vitest": "^10.3.5",
+    "@storybook/addon-vitest": "^10.6.2",
     "@storybook/nextjs-vite": "^10.3.5",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/d3-scale": "^4.0.9",
